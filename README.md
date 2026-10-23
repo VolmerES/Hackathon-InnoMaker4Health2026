@@ -57,7 +57,7 @@ python -m venv .venv
 - [x] Ganadores de ediciones anteriores y [dos ideas candidatas](docs/CONTEXTO.md#ideas-candidatas)
 - [x] Qué le interesa a cada organizador y [plan del MVP en 24 h](docs/CONTEXTO.md#el-mvp-en-24-horas)
 - [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
-- [x] Necesidad concreta: **los huecos vacíos**. El 28 % de las citas no se realiza (15.254 h de consulta en 6 meses) y los huecos liberados no se reocupan nunca
+- [x] Necesidad concreta: **los huecos vacíos**. En España falta a consulta el 10‑15 % de los pacientes, y casi la mitad de las faltas tiene causa administrativa. Los CSV son sintéticos: sirven para la demo, no para dimensionar el problema
 - [ ] MVP: bandeja de trabajo (citas en riesgo y huecos que se reaprovechan)
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [ ] Pitch

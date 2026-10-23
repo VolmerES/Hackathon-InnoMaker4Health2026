@@ -5,11 +5,82 @@ Primera exploración de los 11 CSV, hecha el 23‑oct. Los números salen de
 `hallazgos2.py` (las cifras de abajo).
 
 **Periodo:** citas del 1‑ene al 30‑jun de 2025, es decir, **6 meses** en 6
-especialidades (CAR, DER, DIG, NRL, OFT, TRA) y 140 agendas. Los datos son
-sintéticos: las cifras sirven para dimensionar el problema, no son de La
-Princesa.
+especialidades (CAR, DER, DIG, NRL, OFT, TRA) y 140 agendas.
 
-## Resumen
+> **Los CSV son datos falsos (sintéticos).** Sirven para construir y enseñar la
+> herramienta con la misma estructura que tendrían los datos del hospital. **No
+> sirven para dimensionar el problema.** Varias de las cifras de abajo son,
+> casi seguro, la forma en que se generaron los datos y no algo que pase en La
+> Princesa. Para el pitch hay que usar las
+> [cifras reales publicadas](#cifras-reales-para-el-pitch).
+
+## Qué vale y qué no de estos datos
+
+**Señales de que los datos están generados:**
+
+- Las 140 agendas son idénticas: citas de 20 minutos, de 8:00 a 15:00 y 21
+  huecos al día.
+- El recordatorio sale siempre **exactamente** 2 días antes y siempre por el
+  canal preferido.
+- La tasa de faltas es del 28 % **en todo**: edad, sexo, accesibilidad, canal.
+  En la realidad varía según el perfil del paciente.
+- La prioridad no cambia la espera: un urgente de Dermatología espera lo mismo
+  que uno ordinario (97 días).
+- Ningún hueco liberado se reocupa nunca y ninguna oferta de adelanto se acepta.
+  Lo más probable es que el generador no simule esos casos, no que el hospital
+  falle en el 100 % de ellos.
+- Las pruebas dejan de tener fecha de realización el 31‑mar.
+
+**Cómo usar cada cifra:**
+
+| Cifra | ¿Se puede usar? |
+|---|---|
+| 28 % de citas no realizadas | **No.** En España se publica entre el 10 y el 15 % (ver abajo) |
+| No contestar al recordatorio: 46 % de faltas frente al 13 % | **Como idea, sí; como cifra, no.** La dirección es lógica, pero el tamaño lo puso el generador |
+| 0 huecos liberados reocupados, 0 adelantos aceptados | **No como hallazgo.** Hay que preguntar a los mentores cómo se reaprovechan hoy los huecos en La Princesa |
+| Reparto de horas de tareas administrativas | Solo como orden de magnitud entre tipos de tarea |
+| Estructura (tablas, estados, canales, tipos de tarea) | **Sí.** Es lo que la herramienta tiene que leer |
+
+## Cifras reales para el pitch
+
+| Dato | Cifra | Fuente |
+|---|---|---|
+| Consultas externas de La Princesa al año | **473.257** (178.888 primeras + 294.369 sucesivas) | [Memoria 2022 del hospital](https://www.comunidad.madrid/docs/assets/2023/11/29/memoria_2022_hulp_ok.pdf) |
+| Faltas a consultas externas en España | **10‑15 %**: 14,6 % en Albacete; 14,2 % en el Hospital Costa del Sol; 12,5 % en Medicina Preventiva de Zaragoza | Pereira‑Victorio et al., *Med Gen Fam* 2016; Costa del Sol y Zaragoza en *Rev Calid Asist* / *J Healthc Qual Res* |
+| **Casi la mitad de las faltas tiene causa administrativa** | En Albacete: no sabía que tenía cita (16,1 %), tenía doble cita (15,6 %), había cancelado pero la cita seguía en el sistema (15,1 %). En total, **47 %**. Los autores atribuyen a la administración cerca del 60 % | [Pereira‑Victorio et al. 2016](https://www.elsevier.es/es-revista-medicina-general-familia-edicion-digital--231-articulo-absentismo-pacientes-consulta-externa-especializada-S1889543316000372) |
+| Coste | Más de **3 M€ al año** en la Agencia Sanitaria Costa del Sol (13,8 % de faltas). Unos 3,6 M€ al año proyectados en Albacete | [iSanidad](https://isanidad.com/93355/no-acudir-a-las-citas-medicas-genera-perdidas-millonarias-para-la-sanidad/), Pereira‑Victorio et al. 2016 |
+| Efecto de un recordatorio simple | Pequeño: **la asistencia mejora un 10‑14 %** (RR 1,10‑1,14) | [Revisión Cochrane](https://cochranelibrary.com/es/cdsr/doi/10.1002/14651858.CD007458.pub2/full) |
+
+**Por qué esto refuerza la propuesta:**
+
+- **El problema es administrativo, justo lo que pide el reto.** Las tres
+  primeras causas en Albacete son fallos del circuito de citación, no del
+  paciente: no le llegó la cita, tenía dos o su cancelación no se registró.
+- **Un recordatorio solo no basta**, porque mejora poco la asistencia. Lo que
+  falta es **cerrar el circuito**: que alguien vea quién no ha confirmado, que
+  las cancelaciones liberen el hueco y que ese hueco se ofrezca.
+- **Las propuestas del propio estudio de Albacete son lo que hace la bandeja:**
+  - confirmar la cita antes de que llegue;
+  - verificar anulaciones y citas dobles;
+  - recoger las preferencias del paciente;
+  - sobreasignar alrededor de un 10 % según el absentismo previo.
+
+**Escenario para La Princesa** (hipótesis con cifras públicas):
+
+| | Con un 12 % de faltas | Con un 15 % de faltas |
+|---|---:|---:|
+| Citas perdidas al año | 56.800 | 71.000 |
+| Horas de consulta perdidas (con 20 min de media) | 18.900 | 23.700 |
+| De ellas, con causa administrativa (47 %) | 26.700 citas | 33.400 citas |
+| **Si la bandeja recupera una cuarta parte de las faltas** | **14.200 citas · 4.700 h** | **17.700 citas · 5.900 h** |
+
+Los 20 minutos por cita son una suposición: hay que preguntar la duración real
+de las primeras y las sucesivas. La tasa real de La Princesa la puede dar la
+Unidad de Datos.
+
+## Resumen de los CSV
+
+Cifras de los datos sintéticos. Ver arriba qué vale de cada una.
 
 1. **El 28 % de las citas programadas no se realiza.** Son 45.763 en 6 meses, es
    decir, **15.254 horas de consulta perdidas**, más 7.000 horas de trabajo
@@ -133,15 +204,17 @@ llegada a la admisión. Aquí no hay un problema grande.
 
 ## Qué significa para la propuesta
 
-- **El mayor robo de tiempo clínico son los huecos vacíos**: las faltas y los
-  huecos liberados que nadie reocupa. Son 15.000 horas de consulta en 6 meses y
-  se pueden anticipar con una regla.
+- **Los huecos vacíos siguen siendo el problema**, pero su tamaño sale de las
+  cifras reales (10‑15 % de faltas, la mitad por causas administrativas) y no
+  del 28 % de los CSV.
+- **Los CSV son el banco de pruebas**: la demo enseña que la bandeja funciona
+  con la estructura de datos del hospital.
 - **«Revisiones sin resultado» se descarta como núcleo**, porque los datos no la
   respaldan.
 - **El producto:** el día antes de la cita, la bandeja enseña las citas sin
-  confirmar y los huecos liberados. Propone un segundo contacto y, si no hay
-  respuesta, ofrecer el hueco a quien espera, por prioridad clínica.
-- **Escenario de impacto (hipótesis, para el pitch):** si se recupera la mitad de
-  las faltas sin respuesta (16.000 en 6 meses), salen **unas 5.400 horas de
-  consulta** cada 6 meses y menos gestión de no realizadas. Si se recupera una
-  cuarta parte, unas 2.700 horas.
+  confirmar, las posibles citas dobles y las cancelaciones que no han liberado
+  su hueco. Propone un segundo contacto y, si no hay respuesta, ofrecer el hueco
+  a quien espera, por prioridad clínica.
+- **Las citas dobles se pueden detectar en los CSV:** hay movimientos
+  «Duplicidad detectada» (1.821) y «Error de citación» (1.861). Encaja con la
+  segunda causa de Albacete.

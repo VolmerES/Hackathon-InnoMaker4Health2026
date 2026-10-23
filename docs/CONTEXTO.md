@@ -190,10 +190,14 @@ Una **bandeja de trabajo diaria** para el personal administrativo de consultas
 externas. Cada mañana enseña qué va a fallar en los próximos días y propone qué
 hacer. La persona revisa y confirma con un clic.
 
-> **Rehecho tras ver los datos** ([`HALLAZGOS.md`](HALLAZGOS.md)). El mayor robo
-> de tiempo clínico son los huecos vacíos: el 28 % de las citas no se realiza y
-> los huecos liberados no se reocupan nunca. «Revisiones sin resultado» se cae:
-> solo el 1,5 % de las pruebas está enlazado a su revisión.
+> **Rehecho tras ver los datos** ([`HALLAZGOS.md`](HALLAZGOS.md)). El problema son
+> los huecos vacíos. **Los CSV son falsos**, así que el tamaño del problema sale
+> de cifras publicadas: en España falta a consulta el 10‑15 % de los pacientes,
+> y casi la mitad de esas faltas tiene causa administrativa (no sabía la cita,
+> tenía doble cita o canceló sin que se registrara). En La Princesa son unas
+> 473.000 consultas al año. Los CSV quedan como banco de pruebas de la demo.
+> «Revisiones sin resultado» se cae: solo el 1,5 % de las pruebas está enlazado
+> a su revisión.
 
 **Módulo 1: citas en riesgo** (el núcleo, con una regla y sin modelo).
 
