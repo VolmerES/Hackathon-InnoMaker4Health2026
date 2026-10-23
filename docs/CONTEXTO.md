@@ -201,152 +201,161 @@ mínimo de las dos cosas:
   hora). Quien no puede pasa a una persona. **La automatización libera tiempo
   justo para atender a quien más lo necesita.**
 
-### La idea elegida: la puerta de entrada (Jano)
+### La idea decidida: Jano, el copiloto del médico
 
-**Decidido el 23‑oct por la tarde**, por tres motivos:
+**Decidido por el equipo el 23‑oct por la noche:** *Jano es un chatbot copiloto.
+El médico le pregunta en el ordenador por el paciente y Jano le contesta.*
 
-- **Media sala va a por los pacientes que faltan.** Hay que diferenciarse.
-- **Al director de La Princesa, que está en el jurado, le gusta la IA local.**
-- **Hay evidencia publicada.** Cuando la prueba ya está hecha, la primera
-  consulta resuelve el caso en una sola visita en el **49 %** de los pacientes,
-  frente al **22 %** sin ella (estudio multicéntrico, 795 primeras visitas). En
-  Digestivo sube del 34 al 57 %.
+**También decidido:**
 
-**Nombre provisional: Jano**, el dios romano de las puertas y los comienzos.
-Tiene dos caras: una mira a Primaria y la otra al hospital. Sigue la línea de
-nombres de los ganadores (Hera, Thea, Aeris). Alternativas: *Umbral*, *Prima*.
+- La IA es **local**: los datos no salen del hospital.
+- Se vende para **Mac mini M6** o **NVIDIA DGX Spark**.
+- Tiene que ser **muy fácil de instalar**.
 
-**La idea (decidida el 23‑oct por la noche):** *Jano es el asistente que
-prepara cada consulta.* Lee dentro del hospital las derivaciones de Primaria y
-el historial del paciente, y deja la consulta lista para que el especialista lo
-resuelva en una visita.
+**Nombre provisional: Jano.** Alternativas: *Umbral*, *Prima*. Hay que decidirlo
+en equipo.
 
-**Preparar no es resumir.** Los resúmenes previos a la visita ya existen:
-Epic Art, Navina, DeepScribe… Le ahorran al médico unos minutos de lectura,
-pero el paciente llega igual. Jano actúa **días antes**, y el paciente llega
-con la prueba hecha. Eso es lo que sube la resolución en una visita del 22 al
-49 %.
+**Qué hay de cada cosa** (para no vender lo que no existe):
 
-| Cuándo | Qué hace el asistente |
+| Estado | Qué |
 |---|---|
-| **Al llegar la derivación** (días o semanas antes) | La lee y comprueba qué falta. Propone las pruebas del protocolo del servicio, sin repetir las de Primaria, y el especialista las valida en bloque. Si faltan datos, pide al médico de cabecera lo concreto. Manda al paciente las instrucciones de la prueba en lectura fácil, en su idioma y en audio |
-| **La mañana de la consulta** | Una ficha por paciente de la agenda del día: por qué viene, qué se ha hecho, **resultados ya disponibles**, citas anteriores y faltas, pruebas duplicadas, y si necesita intérprete o accesibilidad |
-| **Durante la consulta** | «Pregúntale a Jano»: responde sobre el historial y enseña de dónde saca cada dato |
-| **Al cerrar** (si da tiempo) | Los trámites, la vuelta a Primaria y la versión del paciente |
+| **Construido** | Solo los scripts de análisis de los CSV (`analisis/`). `analisis/lector_ia.py` es de la idea anterior y nunca se ha ejecutado |
+| **Decidido por el equipo** | Chatbot copiloto, IA local, Mac mini M6 o DGX Spark, instalación fácil |
+| **Propuesto por Claude para construirlo** (falta que el equipo lo apruebe) | Todo lo de «Cómo construirlo», más abajo |
+| **Hoja de ruta** (ideas, no decididas) | Lo de la sección [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
 
-**El problema que ataca:**
+**El problema que ataca:** el tiempo que pasa el médico **buscando datos del
+paciente** en la historia clínica.
 
-- La Princesa hace **1,65 consultas sucesivas por cada primera**: 294.369
-  sucesivas al año (memoria de 2022).
-- Muchas de esas sucesivas solo sirven para ver el resultado de una prueba que se
-  podía haber hecho antes.
-- Además, en los CSV, **dos de cada tres derivaciones no son un problema nuevo**
-  ([HALLAZGOS](HALLAZGOS.md#7-la-puerta-de-entrada)):
-  - **revisiones** de pacientes que el servicio ya conoce;
-  - pacientes que **perdieron su revisión** y tienen que volver a pasar por su
-    médico de cabecera.
+- En EE. UU., cada consulta supone **16 minutos de historia clínica** y **un
+  tercio, 5 min 22 s, es solo revisarla** (Overhage y McCallie, *Annals of
+  Internal Medicine*, 2020; 100 millones de consultas). El estudio lo hizo
+  Cerner, que vende historias clínicas.
+- **En España no hemos encontrado una cifra** ⚠️. Hay que preguntar a los
+  mentores:
+  - cuántos sistemas abre un especialista de La Princesa antes de cada paciente
+    (HCIS, HORUS, Primaria…);
+  - cuánto tarda en hacerlo.
+- La Princesa tiene **473.257 consultas externas al año** (memoria de 2022).
 
-  El tamaño es sintético; hay que preguntar a la Unidad de Datos cuánto pesa en
-  La Princesa ⚠️.
+**¿Es innovador?** *Con honestidad: el chat con la historia clínica ya existe*
+(Epic, Dragon Copilot de Microsoft, Navina en EE. UU.). Jano solo se puede
+diferenciar si lo demuestra:
 
-### Qué construir
+- **Local**, en un equipo de unos 4.700 €, sin nube y sin cuota por médico.
+  Epic y Microsoft van en la nube.
+- **Enseña de dónde sale cada dato** y dice «no consta» cuando no lo sabe.
+- **Para la sanidad pública española:** en español, para HCIS y para consultas
+  externas.
+- **Se instala solo**, sin un proyecto de integración a medida.
 
-| Paso | Qué hace | Quién |
-|---|---|---|
-| 1. **Leer** | Cada noche, la IA local lee las derivaciones nuevas y saca una ficha: tipo (nueva, revisión o reanudar seguimiento), edad, antecedentes, tiempo de evolución, **pruebas ya hechas en Primaria**, datos que faltan, un resumen de una frase y lo segura que está | IA local |
-| 2. **Encaminar** | Reglas de cada servicio: *reanudar seguimiento* → cita de revisión directa, sin primera consulta ni nueva validación. *Revisión por empeoramiento* → revisión preferente. *Nueva* → protocolo de pruebas según el motivo, **sin repetir las que ya hizo Primaria**. *Faltan datos* → se devuelve al médico de cabecera con la pregunta concreta. *Poca confianza* → a una persona | Reglas |
-| 3. **Validar en bloque** | El especialista ve la lista de la semana con la ficha y la propuesta de cada derivación, y la aprueba o corrige con un clic. Hoy ya valida derivaciones; con la ficha tarda menos que leyendo el texto | Especialista |
-| 4. **Citar** | Las pruebas se programan antes de la primera consulta y la primera, cuando el resultado ya está. Si se puede, prueba y consulta el mismo día (acto único). El paciente elige la hora desde un enlace | Automático |
-| 5. **Consultar** | El especialista recibe al paciente con el resumen y los resultados, y lo resuelve en una visita | Especialista |
+### Cómo construirlo (propuesta de Claude, pendiente del equipo)
 
-**La IA solo lee y extrae; no decide nada clínico.** Lo clínico lo deciden los
-protocolos que aprueba cada servicio y el especialista, que valida en bloque.
+**Un agente con herramientas de solo lectura.** El modelo no se inventa la
+respuesta: consulta los datos del paciente y contesta con lo que encuentra.
 
-**Pantalla de impacto**, con los datos de la demo:
+```
+El médico escribe: «¿Ha estado antes en Digestivo? ¿Qué pruebas tiene pendientes?»
+      ↓
+Modelo local (Qwen3‑8B, Apache‑2.0, sabe llamar a funciones)
+      ↓  elige qué consultar
+Herramientas de solo lectura, siempre sobre UN paciente:
+  · derivaciones(paciente)     → motivo, observaciones del médico de cabecera, fecha
+  · citas(paciente)            → servicio, tipo de visita, estado, prioridad
+  · cambios_y_faltas(paciente) → reprogramaciones, anulaciones y motivos
+  · pruebas(paciente)          → solicitadas, hechas y con resultado disponible
+  · avisos(paciente)           → mensajes enviados y si respondió
+  · accesibilidad(paciente)    → necesidades de accesibilidad y canal de contacto
+      ↓  devuelven filas
+Respuesta en español + las filas en las que se basa, debajo
+```
 
-- derivaciones procesadas, y cuántas de cada tipo;
-- **acierto del lector frente al `motivo_derivacion` real de los CSV**;
-- pruebas adelantadas y pruebas duplicadas evitadas;
-- revisiones evitadas (escenario);
-- devoluciones por datos incompletos;
-- casos enviados a una persona.
+- **Herramientas cerradas, no SQL libre.** Un modelo pequeño se equivoca
+  escribiendo SQL, y con SQL libre podría leer datos de otros pacientes.
+- **Si no está en los datos, responde «no consta».**
+- **Cada pregunta queda registrada** con el médico que la hizo.
+- **El modelo funciona sin internet** (`HF_HUB_OFFLINE=1`) y habla por una API
+  compatible con OpenAI. El mismo código sirve para el M6 (Ollama) y para el
+  Spark (vLLM).
+
+**Qué se puede preguntar con los CSV:**
+
+| Pregunta | La responde |
+|---|---|
+| «¿Ha estado antes en este servicio?» | ✅ CITAS + AGENDAS |
+| «¿Por qué lo manda su médico de cabecera?» | ✅ DERIVACIONES_AP |
+| «¿Qué pruebas tiene hechas o pendientes?» | ✅ PRUEBAS |
+| «¿Ha faltado o le hemos cambiado la cita? ¿Por qué?» | ✅ MOVIMIENTOS_CITAS |
+| «¿Le llegaron los avisos?» | ✅ COMUNICACIONES |
+| «¿Necesita intérprete o apoyo de accesibilidad?» | ✅ PACIENTES. Sirve para el pilar de **accesibilidad** |
+| «¿Tiene alergias? ¿Qué diagnóstico tiene?» | ❌ No está en los CSV: tiene que responder **«no consta»**. Es la pregunta de la demo que demuestra que no se inventa nada |
+
+**El MVP en 24 h:**
+
+1. Las 6 herramientas sobre los CSV, con DuckDB (`analisis/datos.py` ya carga
+   las tablas).
+2. El modelo local con llamadas a funciones, detrás de una API compatible con
+   OpenAI.
+3. La pantalla:
+   - a la izquierda, la agenda del día;
+   - en el centro, el chat;
+   - debajo de cada respuesta, las filas en las que se basa.
+4. **Una prueba de acierto** con unas 30 preguntas cuya respuesta se conoce por
+   los CSV. Se mide qué porcentaje acierta y cuántas veces dice «no consta»
+   cuando debe.
+5. **Por si falla en directo:** las respuestas de la demo, precalculadas, y un
+   vídeo.
 
 **Fuera del MVP:**
 
-- La integración real con el HIS y la petición electrónica de pruebas.
-- Ajustar el modelo con texto real.
-- Que el propio paciente pueda volver a pedir su revisión perdida sin pasar por
-  Primaria (fase 2).
+- La conexión real con HCIS.
+- El asistente de instalación (en el pitch van pantallas diseñadas, no
+  funcionando).
+- Todo lo de la hoja de ruta.
 
-**Si la IA falla en directo:** se precalculan las fichas de la demo y hay una
-regla de respaldo. En los CSV el texto es de plantilla, así que una regla
-sencilla también clasifica bien.
+### El equipo (propuesta)
 
-### Por qué es viable
+| Quién | Papel |
+|---|---|
+| Dev 1 (software y robótica) | **El agente:** el modelo local, las herramientas, la prueba de acierto y la API. Cuenta la viabilidad en el pitch |
+| Dev 2 (software) | **La pantalla:** agenda, chat y fuentes. Lleva el portátil de la demo |
+| UI/UX | **Cómo se ve una respuesta con su fuente** en 5 segundos. Las pantallas de la instalación en tres pasos, las diapositivas y **presentar la demo** |
+| Biomédica | **Las preguntas reales** que hace un especialista antes de ver a un paciente, validadas con los mentores. La lista de 30 preguntas de la prueba, lo regulatorio y las cifras. **Abre el pitch** |
 
-Esto es lo que hay que contar en el pitch.
+El reparto lo decide el equipo.
 
-- **IA local:** corre en un servidor del hospital. **Ningún dato de un paciente
-  sale a la nube** y no se paga por uso.
-- **Poca carga:** La Princesa recibe unas 63.000 derivaciones de Primaria al año
-  (el 35 % de sus 178.888 primeras), unas **250 por día laborable**, que se
-  procesan de noche.
-- **Modelos abiertos con licencia libre** (Apache 2.0): sin coste de licencia y
-  se pueden usar en un producto comercial.
-- **Mes en paralelo:** durante un mes, Jano lee las mismas derivaciones que el
-  personal sin decidir nada, y se mide su acierto antes de activarlo.
-- **Las reglas son del servicio y se pueden auditar.** La IA solo extrae.
-- **No añade personal:** el especialista valida fichas en bloque en lugar de leer
-  derivaciones una a una, y admisión cita menos sucesivas.
-- **Privacidad:** los datos de salud no salen de la red del hospital.
-- **Lo mantiene su propio equipo**, la Unidad de Análisis de Datos del IIS‑Princesa.
-- ⚠️ **Lo regulatorio:** adelantar una prueba es una decisión clínica, aunque la
-  tome un protocolo. Se mitiga con protocolos aprobados por el servicio y
-  validación del especialista. Hay que confirmar con los mentores si entra en el
-  reglamento de productos sanitarios (MDR).
-- **Plan de piloto:** **Digestivo**, que es donde hay evidencia (del 34 al 57 %),
-  durante tres meses, midiendo antes y después:
-  - % de primeras resueltas en una visita;
-  - sucesivas por primera;
-  - días hasta el diagnóstico;
-  - pruebas duplicadas;
-  - minutos de validación.
+### Reparto del tiempo (orientativo)
 
-### Aparcado: los huecos vacíos
+| Bloque | Devs | UI/UX | Biomédica |
+|---|---|---|---|
+| 1 | Elegir el modelo y servirlo. Las 6 herramientas | Boceto: agenda, chat y fuentes | Mentores: ¿qué preguntan los especialistas? ¿Cuántos sistemas abren? ¿La Princesa tiene ya algo así? |
+| 2 | Agente completo y API. Pantalla con datos reales | Diseño final y pantallas de instalación | Las 30 preguntas con su respuesta correcta |
+| 3 | Prueba de acierto. Precalcular la demo | Diapositivas | Cifras y guion |
+| 4 | Congelar el código. Grabar un vídeo de la demo | Ensayar | Ensayar |
 
-El diseño anterior era un circuito automático contra las faltas: recordatorio
-con respuesta, citas dobles, segundo aviso y reofrecer el hueco, con una bandeja
-solo de excepciones. Se aparca porque media sala va a ir a por eso. Está en el
-historial de git (commit `8726248`) y sus cifras reales siguen en
-[`HALLAZGOS.md`](HALLAZGOS.md#cifras-reales-para-el-pitch). Si sobra tiempo, el
-enlace al paciente para elegir hora es la misma pieza.
+## Hoja de ruta (ideas, no decididas)
 
-### El equipo
+Son ideas que salieron el 23‑oct y **no forman parte de Jano** mientras el
+equipo no lo decida. En el pitch, como mucho, van en una diapositiva de «lo
+siguiente».
 
-| Quién | Perfil | Papel en el hackathon |
-|---|---|---|
-| Dev 1 | Software y robótica | **El lector y las reglas**: la IA local (instrucciones, ficha en JSON, medir el acierto contra los CSV), las reglas de encaminado y la API. Cuenta la viabilidad en el pitch |
-| Dev 2 | Software | **Frontend**: la bandeja de validación del especialista, la ficha y la pantalla de impacto |
-| UI/UX | Diseño | **La ficha** (lo que ve el especialista en 10 segundos), la devolución al médico de cabecera y el mensaje al paciente, con accesibilidad (WCAG). Hace las diapositivas y **presenta la demo** |
-| Biomédica | Ingeniería biomédica | **Los protocolos**: qué pruebas adelantar según el motivo en cada especialidad, validados con los mentores clínicos (Endocrinología, Urgencias, Enfermería de Consultas Externas). Lo regulatorio y la evidencia. **Abre el pitch** |
-
-Esto lo propone Claude; el reparto lo decide el equipo.
-
-**La robótica no hace falta aquí.** Este reto premia la viabilidad, y meter
-hardware la resta.
-
-### Herramientas (propuesta)
-
-- **IA local:** modelos preentrenados de Hugging Face (ver
-  [Modelos de Hugging Face](#modelos-de-hugging-face)), servidos dentro del
-  hospital. En [`analisis/lector_ia.py`](../analisis/lector_ia.py) hay un primer
-  lector, todavía sin probar, que mide el acierto contra los CSV.
-- **Backend:** Python + FastAPI + DuckDB sobre los CSV (ya está
-  [`analisis/datos.py`](../analisis/datos.py)).
-- **Frontend:** una web sencilla con el framework que mejor domine el Dev 2.
-- **Diseño:** Figma en las primeras horas, para que el frontend no espere.
+- **Preparar la consulta antes:** leer las derivaciones al llegar y proponer las
+  pruebas del protocolo, para que estén hechas en la primera consulta. Hay
+  evidencia: se resuelve en una visita el 49 % frente al 22 %, y el Infanta
+  Elena bajó de 2,25 a 1,72 revisiones por primera. El diseño completo está en
+  git (commit `8146b89`).
+- **Ficha previa** de cada paciente de la agenda del día.
+- **Cerrar la consulta:** los trámites, la vuelta a Primaria y la versión para el
+  paciente. También conectarse a un escriba.
+- **El paciente:** instrucciones en lectura fácil, en su idioma y en audio.
+- **El glosario de cada servicio**, que aprende de las correcciones.
+- **Escribir en HCIS:** citar o pedir pruebas.
+- Las del cuadro de usos de la IA local que sigue.
 
 ### Modelos de Hugging Face
+
+**Para el chat del MVP basta el generativo** (Qwen3‑8B o 4B, que saben llamar a
+funciones). Los del BSC son para la hoja de ruta (leer derivaciones).
 
 Todos se descargan una vez y después funcionan **sin internet**, dentro del
 hospital (`HF_HUB_OFFLINE=1`). Licencias y descargas comprobadas en el Hub el
@@ -393,7 +402,7 @@ ajustado con él acertará casi el 100 %, y esa cifra no vale nada. Lo que luce
 es la **ficha**: pruebas, antecedentes y negaciones sacadas del texto. Si se da
 una cifra de acierto, hay que decir que es sobre datos sintéticos.
 
-### Más usos de la IA local
+### Más usos de la IA local (hoja de ruta)
 
 Ideas para sumar a Jano, ordenadas de más a menos recomendable para estas 24
 horas. Todas funcionan dentro del hospital y con licencias que permiten uso
@@ -422,14 +431,14 @@ comercial (comprobadas en Hugging Face el 23‑oct).
 - **No meter el 7:** es otro producto y probablemente otros equipos hagan algo
   parecido.
 
-### Reparto del tiempo (orientativo)
+### Aparcado: los huecos vacíos
 
-| Bloque | Devs | UI/UX | Biomédica |
-|---|---|---|---|
-| 1 | Contrato de la API (la ficha en JSON). Lector con el modelo elegido y su acierto sobre una muestra | Boceto de la ficha y de la bandeja | Mentores: ¿pasa esto en La Princesa? ¿Quién valida las derivaciones? ¿MDR? |
-| 2 | Reglas de encaminado y backend. Bandeja con datos reales | Diseño final y textos (devolución al médico de cabecera, mensaje al paciente) | Protocolos de Digestivo (y de una segunda especialidad si da tiempo) |
-| 3 | Pantalla de impacto. Precalcular las fichas de la demo | Diapositivas | Cifras y guion del pitch |
-| 4 | Congelar el código. Grabar un vídeo de la demo por si falla | Ensayar | Ensayar |
+El diseño anterior era un circuito automático contra las faltas: recordatorio
+con respuesta, citas dobles, segundo aviso y reofrecer el hueco, con una bandeja
+solo de excepciones. Se aparca porque media sala va a ir a por eso. Está en el
+historial de git (commit `8726248`) y sus cifras reales siguen en
+[`HALLAZGOS.md`](HALLAZGOS.md#cifras-reales-para-el-pitch). Si sobra tiempo, el
+enlace al paciente para elegir hora es la misma pieza.
 
 ## Cómo funcionan las derivaciones en Madrid
 
@@ -473,6 +482,10 @@ que confirmarlo con los mentores.
   es quien gestiona las revisiones. No hay que cambiar nada en Primaria.
 
 ## Lo que ya existe y qué aporta Jano
+
+> Escrito para la idea anterior (preparar la consulta y adelantar pruebas). Para
+> el chatbot, la competencia directa es Epic, Dragon Copilot y Navina (ver
+> [La idea decidida](#la-idea-decidida-jano-el-copiloto-del-médico)).
 
 **Comprobado el 23‑oct.** Ninguna pieza de Jano es nueva por separado. Lo que no
 hemos encontrado es **todo junto**: en el hospital, local y para cualquier
@@ -536,6 +549,9 @@ Si La Princesa ya lo tiene, hay que saberlo antes del pitch, no durante.
 
 ## Cómo se conecta Jano al hospital: HCIS y HL7
 
+> **Propuesta, pendiente de Informática.** El chatbot necesita leer los datos del
+> paciente; esta es la forma que proponemos. No está construida.
+
 **Dato del equipo (23‑oct):** la historia clínica de La Princesa es **HCIS**, y
 se comunica con los demás sistemas mediante **HL7**.
 
@@ -569,6 +585,8 @@ conecta sin tocar HCIS. Librerías: `hl7apy` o `hl7` (MIT).
 - Cómo llega la derivación de Primaria.
 
 ### La pieza innovadora: el escriba escribe, Jano actúa
+
+> **Hoja de ruta, no decidido.** El chatbot no incluye nada del escriba.
 
 La Consejería ya está comprando un escriba con IA para Primaria, y Quirónsalud
 tiene «Scribe» en el Infanta Elena ([fuentes](#fuentes)). **No competimos con
@@ -607,6 +625,10 @@ puede usar un audio grabado de antemano y pasado por `whisper-large-v3-turbo`,
   mentores.
 
 ## Dónde corre Jano: Mac mini M6 o NVIDIA DGX Spark
+
+> **Para el chatbot vale la columna «solo chat»:** un Spark aguanta unos
+> 400–500 médicos conectados y un M6 unos 30–50 (estimado ⚠️). Las cifras «con
+> escriba» y las subsecciones sobre escribas son contexto y hoja de ruta.
 
 **Decidido el 23‑oct:** Jano se vende para **dos equipos**, el **Mac mini M6**
 y el **NVIDIA DGX Spark**. Tiene que instalarlo **cualquiera, sin saber
@@ -837,6 +859,8 @@ plantilla) ⚠️:
 
 ### Aprende el vocabulario de los médicos
 
+> Hoja de ruta, no decidido.
+
 1. **Glosario por servicio (MVP).** Un fichero con siglas, fármacos y
    expresiones, por ejemplo *FEVI, HbA1c, EPOC*. Se usa en dos sitios:
    - en Whisper, con `hotwords` e `initial_prompt` de `faster-whisper`, o el
@@ -858,6 +882,9 @@ plantilla) ⚠️:
 correcciones de vuestros médicos no se entrena el modelo de ninguna empresa.
 
 ### Sabe quién es cada médico
+
+> Propuesta: para el chatbot sirve el login, que limita a cada médico a sus
+> pacientes y registra las preguntas.
 
 - **Por el login y la agenda, no por la voz.** El médico entra con su usuario o
   con el directorio del hospital, y la agenda dice quién pasa consulta en cada
@@ -1209,3 +1236,4 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - Lo que ya existe: [Infanta Elena · IA en las derivaciones de Digestivo (AEG 2021)](https://www.elsevier.es/es-revista-gastroenterologia-hepatologia-14-congresos-24-reunion-anual-asociacion-espanola-gastroenterologia-134-sesion-neurogastroenterologia-y-motilidad-6428-comunicacion-puede-la-inteligencia-artificial-mejorar-77422-pdf) · [Asturias · IA en dermatología con Legit.Health](https://elreferente.es/startups/asturias-incorpora-ia-en-atencion-primaria-con-legit-health/) · [Docman10X · lectura de cartas en Primaria (Reino Unido)](https://htworld.co.uk/?p=2297)
 - Precios de escribas: [Microsoft · Dragon Copilot baja de precio (mayo 2026)](https://www.schneider.im/lu/microsoft-dragon-copilot-price-decrease-licensing-changes/) · [Commure · Nabla, precio y funciones](https://www.commure.com/blog-scribe/nabla-ai-review) · [Dupple · herramientas de documentación clínica 2026](https://dupple.com/learn/best-ai-clinical-documentation-tools) · [Plaud · Ambience](https://www.plaud.ai/blogs/articles/ambience-healthcare-review) · [Healee · cuentas de los escribas](https://blog.healee.com/the-review-tax-honest-math-on-ambient-ai-scribes-in-a-virtual-practice/)
 - Resúmenes previos a la visita: [Commure · pre-visit summaries](https://www.commure.com/blog/pre-visit-summaries-what-are-they-why-they-matter-and-how-ai-is-changing-pre-charting) · [Navina](https://tooldirectory.ai/tools/navina) · [Epic · AI Charting](https://www.healthcareitnews.com/news/epics-ai-charting-tool-now-available-ehr-clients) · [AAFP · herramientas para revisar historias](https://www.aafp.org/practice-operations/administrative-simplification/chart-review/technologies-chart-review-burden)
+- Tiempo en la historia clínica: [Overhage y McCallie, Annals of Internal Medicine 2020 (resumen en Fierce Healthcare)](https://www.fiercehealthcare.com/practices/for-each-patient-visit-physicians-spend-about-16-minutes-ehrs-study-finds) · [Healio](https://www.healio.com/news/primary-care/20200113/physicians-spend-16-minutes-using-ehr-for-each-patient-encounter)

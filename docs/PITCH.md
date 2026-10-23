@@ -1,275 +1,214 @@
 # Pitch · 5 minutos
 
+> **Rehecho el 23‑oct por la noche para la idea decidida: Jano, el chatbot
+> copiloto del médico.** La versión anterior, la de preparar la consulta y
+> adelantar pruebas, está en git (commit `8146b89`).
+>
+> **Regla:** en presente solo se dice lo que enseña la demo. Lo demás va como
+> plan («en el piloto», «lo siguiente»).
+
 **Jurado:** la dirección del Hospital Universitario de La Princesa, Wayra y dos
 personas de Pfizer. Cada uno escucha una cosa distinta (ver
 [CONTEXTO.md](CONTEXTO.md#qué-le-interesa-a-cada-organizador)):
 
 | Jurado | Lo que tiene que llevarse |
 |---|---|
-| Dirección de La Princesa | Menos revisiones inútiles con los mismos médicos y **IA local**, que es lo que le gusta: nada sale del hospital |
-| Wayra | Se puede implantar el mes que viene, cuesta casi nada y vale para cualquier hospital |
-| Pfizer | Diagnóstico antes, IA responsable y centrada en el paciente |
+| Dirección de La Princesa | Sus médicos dejan de buscar y empiezan a preguntar, con **IA local**: nada sale del hospital |
+| Wayra | Un equipo de unos 4.700 €, sin cuota por médico, que vale para cualquier hospital |
+| Pfizer | IA responsable: dice de dónde saca cada dato y no se inventa nada |
 
-**Nombre provisional: Jano**, el dios romano de las puertas: una cara mira a
-Primaria y otra al hospital. Alternativas: *Umbral* o *Prima*. Hay que decidirlo
+**Nombre provisional: Jano.** Alternativas: *Umbral* o *Prima*. Hay que decidirlo
 en equipo.
 
-**La frase:** *Jano es el asistente que prepara cada consulta: el paciente llega con
-la prueba hecha y el especialista, con todo lo que necesita saber.*
+**La frase:** *Jano es el copiloto del médico: le preguntas por el paciente y te
+contesta, con la fuente, sin que nada salga del hospital.*
 
-> ⚠️ **Antes de presentar, confirmar con los mentores** lo que va marcado con ⚠️
-> en el guion. Si alguna cosa no se confirma, se quita la frase.
-> - Quién valida hoy las derivaciones en La Princesa y cuánto tarda.
-> - Qué parte de las primeras consultas pide una prueba.
-> - Si La Princesa ya tiene algún circuito de alta resolución.
-> - Si adelantar pruebas con un protocolo entra en el reglamento de productos
->   sanitarios (MDR).
-> - Si la Unidad de Análisis de Datos tiene servidor con GPU.
-> - El precio público vigente de una consulta sucesiva.
+> ⚠️ **Antes de presentar, confirmar con los mentores** lo que va marcado con ⚠️.
+> Si algo no se confirma, se quita la frase.
+> - Cuántos sistemas abre un especialista de La Princesa antes de cada paciente
+>   (HCIS, HORUS…) y cuánto tarda.
+> - Si La Princesa ya tiene un asistente o un chat sobre la historia clínica.
+> - Cómo se podrían leer los datos del paciente: HL7, una réplica de solo
+>   lectura… (Informática).
+> - Si un chat que solo busca y muestra datos entra en el reglamento de
+>   productos sanitarios (MDR).
 
 ## Quién habla
 
-Tres voces como mucho: cada cambio de persona cuesta segundos. El Dev 2 lleva el
-portátil de la demo.
-
 | Tramo | Quién | Tiempo |
 |---|---|---|
-| 1. La visita que sobra | Biomédica | 0:00 – 0:45 |
-| 2. La evidencia | Biomédica | 0:45 – 1:20 |
-| 3. Jano y la demo | UI/UX | 1:20 – 2:50 |
-| 4. Por qué es viable | Dev 1 | 2:50 – 3:50 |
-| 5. Impacto y piloto | Dev 1 | 3:50 – 4:30 |
-| 6. Cierre | Biomédica | 4:30 – 5:00 |
+| 1. Buscar en vez de atender | Biomédica | 0:00 – 0:45 |
+| 2. Jano y la demo | UI/UX | 0:45 – 2:30 |
+| 3. Por qué es viable | Dev 1 | 2:30 – 3:40 |
+| 4. Impacto y piloto | Dev 1 | 3:40 – 4:30 |
+| 5. Cierre | Biomédica | 4:30 – 5:00 |
+
+El Dev 2 lleva el portátil de la demo.
 
 ## Diapositivas
 
 1. **Portada:** Jano y la frase.
-2. **La visita que sobra:** «294.369 consultas de revisión al año en La
-   Princesa», con «muchas solo para ver un resultado» debajo.
-3. **La evidencia:** 22 % → 49 % resueltos en una visita cuando la prueba ya
-   está hecha.
-4. **El circuito:** derivación → Jano lee (dentro del hospital) → protocolo del
-   servicio → el especialista valida en bloque → prueba → primera consulta que
-   resuelve. Un dibujo, sin texto.
-5. **Demo** en directo, con el vídeo de respaldo preparado.
-6. **Viable el mes que viene:** los seis puntos, un icono y tres palabras cada uno.
-7. **Impacto y piloto:** revisiones, horas y euros; los indicadores del piloto
-   en Digestivo y la licencia por hospital.
-8. **Cierre:** viable · accesible · personalizada, y la petición.
+2. **Buscar en vez de atender:** «5 minutos por paciente revisando la historia»
+   y, debajo, varias ventanas abiertas.
+3. **Demo** en directo, con el vídeo de respaldo preparado.
+4. **Cómo funciona:** pregunta → modelo local → solo lee los datos de ese
+   paciente → respuesta con su fuente. Un dibujo.
+5. **Viable:** un equipo encima de la mesa (Mac mini o Spark), sin nube, sin
+   cuota por médico, instalación en tres pasos.
+6. **Impacto y piloto:** horas de búsqueda y lo que se mide en el piloto.
+7. **Cierre:** viable · accesible · personalizada, y la petición.
 
 ## Guion
 
-Unas 650 palabras: 5 minutos a ritmo tranquilo. **Ensayar con cronómetro**: si
-pasa de 4:45, recortar del tramo 3, nunca del 4.
+Unas 550 palabras. **Ensayar con cronómetro.**
 
-### 1. La visita que sobra · Biomédica · 0:00
+### 1. Buscar en vez de atender · Biomédica · 0:00
 
-> María lleva cinco meses con molestias de estómago. Su médica de cabecera la
-> deriva a Digestivo. Tras semanas de espera, llega a su primera consulta. El
-> especialista la escucha veinte minutos… y le pide una ecografía. «Vuelva con
-> el resultado.»
+> Entra un paciente. Antes de mirarle a la cara, su médico tiene que averiguar
+> quién es: qué le pidió su médico de cabecera, qué pruebas tiene, si ya vino
+> antes, si faltó a alguna cita. Y eso está repartido en varias pantallas ⚠️.
 >
-> Esa segunda visita no aporta nada que no pudiéramos tener el primer día. Y no
-> es un caso raro: La Princesa hace **294.000 consultas de revisión al año**,
-> 1,65 por cada primera. Muchas solo sirven para ver un resultado.
+> En un estudio con cien millones de consultas, el médico pasaba **cinco minutos
+> por paciente solo revisando la historia clínica**. Cinco minutos que no son
+> para el paciente.
+>
+> En La Princesa hay **casi medio millón de consultas externas al año**.
 
-### 2. La evidencia · Biomédica · 0:45
+### 2. Jano y la demo · UI/UX · 0:45
 
-> Está medido. Cuando la prueba ya está hecha, la primera consulta resuelve el
-> caso en una sola visita **en el 49 % de los pacientes**. Sin ella, en el 22 %.
-> Más del doble.
+> Esto es Jano. Es el copiloto del médico. En vez de buscar, pregunta.
 >
-> Y aquí al lado ya se probó. En 2018, el Digestivo del **Infanta Elena** usó un
-> algoritmo para leer las derivaciones y adelantar las pruebas. Las revisiones
-> por cada primera bajaron **de 2,25 a 1,72**. Pero solo llegó a **un 31 % de los
-> pacientes**.
+> *(Demo, agenda del día; se elige a María.)*
 >
-> ¿Por qué no se hace en todas partes? Porque alguien tendría que leer cada
-> derivación antes de la cita y decidir qué prueba adelantar. Son 250 al día, en
-> texto libre. Y lo que más falta en un hospital son personas.
+> «¿Ha estado antes en Digestivo?» Jano contesta y, debajo, enseña **de dónde
+> lo saca**: la cita de marzo, en este registro.
+>
+> «¿Qué pruebas tiene pendientes?» La ecografía, solicitada y sin hacer.
+>
+> «¿Necesita algún apoyo para la consulta?» Sí: intérprete. El médico lo sabe
+> antes de que María entre.
+>
+> Y ahora una pregunta trampa: «¿Tiene alergias?» Jano contesta: **«No consta
+> en los datos disponibles.»** No se inventa nada. Si no lo sabe, lo dice.
+>
+> **Jano solo lee. No decide nada clínico.** Y solo ve al paciente que el médico
+> tiene delante.
 
-### 3. Jano y la demo · UI/UX · 1:20
+### 3. Por qué es viable · Dev 1 · 2:30
 
-> Por eso hemos creado **Jano**. Cada noche lee las derivaciones de Primaria con
-> **inteligencia artificial que funciona dentro del hospital**.
+> Todo lo que habéis visto corre **en este equipo**, sin internet. **Ningún dato
+> de un paciente sale del hospital.**
 >
-> *[Demo]* Esta es la derivación de María, tal como la escribe su médica. Jano
-> saca la ficha: problema nuevo, cinco meses de evolución, y algo importante: la
-> analítica **ya se la hicieron en Primaria**. Así que el protocolo de Digestivo
-> propone solo la ecografía. No repetimos pruebas.
+> Usamos modelos abiertos con licencia libre: sin coste por uso y sin cuota por
+> médico.
 >
-> Esta otra dice «perdió la cita de revisión». Jano la manda directa a revisión,
-> sin pasar otra vez por el médico de cabecera.
+> Lo diseñamos para un **Mac mini** o un **NVIDIA DGX Spark** de unos 4.700
+> euros. Calculamos que un Spark da para cientos de médicos conectados ⚠️; lo
+> mediremos con una prueba de carga.
 >
-> A esta le faltan datos: Jano se la devuelve a Primaria con la pregunta
-> concreta.
+> Y queremos que se instale como un router: se enchufa, se abre en el navegador
+> y en tres pasos está listo.
 >
-> El especialista ve la semana entera en una pantalla, revisa y aprueba **con un
-> clic**. María elige la hora de su ecografía desde el móvil, y llega a su
-> primera consulta con el resultado.
->
-> **Jano lee. El protocolo y el especialista deciden.**
+> En el piloto se conectaría a los datos del hospital por el estándar que ya
+> usan sus sistemas ⚠️, y en modo solo lectura.
 
-### 4. Por qué es viable · Dev 1 · 2:50
+### 4. Impacto y piloto · Dev 1 · 3:40
 
-> Se puede poner en marcha el mes que viene.
+> Si Jano le ahorra al médico **un solo minuto** de búsqueda por consulta, en La
+> Princesa son **casi 8.000 horas al año**: como **cinco especialistas más**,
+> sin contratar a nadie. Con dos minutos, diez.
 >
-> **Uno:** IA local. Corre en un servidor del hospital. **Ningún dato de un
-> paciente sale a la nube**, y no se paga por uso.
->
-> **Dos:** IA pública española. Usamos modelos del Barcelona Supercomputing
-> Center, entrenados con historias clínicas en español y con licencia libre.
-> Funcionan sin GPU.
->
-> **Tres:** la IA solo extrae datos. Lo clínico lo deciden los protocolos que
-> aprueba cada servicio ⚠️.
->
-> **Cuatro:** no añade personal. El especialista valida fichas en bloque en
-> lugar de leer derivaciones una a una.
->
-> **Cinco:** se prueba primero un mes en paralelo, sin decidir nada, y se mide
-> cuánto acierta.
->
-> **Seis:** lo puede mantener vuestra propia Unidad de Análisis de Datos.
+> No lo prometemos: lo medimos. Proponemos un piloto de tres meses en un
+> servicio, midiendo:
+> - los minutos de búsqueda antes y después;
+> - cuántas respuestas son correctas;
+> - si los médicos lo siguen usando.
 
-### 5. Impacto y piloto · Dev 1 · 3:50
+### 5. Cierre · Biomédica · 4:30
 
-> Si un 30 % de las primeras consultas necesita una prueba ⚠️, y tenerla hecha
-> sube la resolución del 22 al 49 %, son **unas 14.500 revisiones menos al año**
-> en La Princesa. 4.800 horas de consulta: tres especialistas más sin contratar
-> a nadie. **Un millón de euros al año** a precio público ⚠️. Y 14.500 viajes
-> menos al hospital.
+> Jano es **viable**, porque cabe encima de una mesa y no saca nada del
+> hospital. Es **accesible**, porque el médico sabe antes de que entre el
+> paciente si necesita intérprete o ayuda. Y es **personalizado**, porque
+> contesta sobre ese paciente y no sobre un protocolo genérico.
 >
-> Proponemos un piloto de tres meses en **Digestivo**, midiendo antes y después:
-> - qué parte de las primeras se resuelve en una visita;
-> - cuántas revisiones hay por cada primera;
-> - los días hasta el diagnóstico;
-> - las pruebas duplicadas.
->
-> Y como cualquier hospital recibe derivaciones, el modelo es una licencia anual
-> por hospital.
-
-### 6. Cierre · Biomédica · 4:30
-
-> Jano es **viable**, porque funciona dentro del hospital y con lo que ya tiene.
-> Es **accesible**, porque cada viaje que ahorra pesa más para quien más le
-> cuesta venir. Y es **personalizado**, porque prepara cada caso según su
-> historia, sin repetir lo que ya se hizo.
->
-> Solo os pedimos una cosa: **un servicio, tres meses y un equipo del tamaño de
-> un libro encima de una mesa**. Gracias.
+> Os pedimos **un servicio, tres meses y un equipo encima de la mesa**.
+> Gracias.
 
 ## De dónde sale cada cifra
 
 | Frase | Cálculo y fuente |
 |---|---|
-| 294.000 revisiones, 1,65 por primera | Memoria 2022 de La Princesa: 294.369 sucesivas y 178.888 primeras |
-| 49 % frente al 22 % | Estudio multicéntrico de 795 primeras visitas (*Rev Calid Asist*); en Digestivo, 57 % frente al 34 % ([HALLAZGOS](HALLAZGOS.md#7-la-puerta-de-entrada)) |
-| 250 derivaciones al día | 35,35 % de las primeras vienen de Primaria (memoria 2022) = 63.237 al año ÷ unos 250 días laborables |
-| 30 % de primeras con prueba | **Suposición**: en los CSV sintéticos es el 32 %. Hay que preguntar la cifra real ⚠️ |
-| 14.500 revisiones menos | 178.888 × 30 % × (49 % − 22 %) = 14.490 |
-| 4.800 horas, tres especialistas | 14.490 × 20 min = 4.830 h ÷ 1.540 h al año de consulta por especialista (7 h × 220 días; suposición) |
-| Un millón de euros | 14.490 × 71 € (precio público de la sucesiva, Orden 727/2017 ⚠️). Es **valor de la actividad recuperada, no un ahorro de caja** |
+| Cinco minutos por paciente revisando la historia | 5 min 22 s por consulta, el 33 % de 16 minutos de historia clínica por consulta (Overhage y McCallie, *Annals of Internal Medicine* 2020; 100 M de consultas en EE. UU.; estudio de Cerner). **No es una cifra española** |
+| Casi medio millón de consultas | 473.257 consultas externas: 178.888 primeras + 294.369 sucesivas (memoria 2022 de La Princesa) |
+| 8.000 horas, cinco especialistas | **Hipótesis:** 1 minuto ahorrado × 473.257 consultas = 7.888 h ÷ 1.540 h de consulta al año por especialista (7 h × 220 días; suposición) ≈ 5,1. Con 2 minutos, unos 10 |
+| 4.700 € el Spark | Precio de la Founders Edition en la UE, con IVA (oct‑2026) |
+| Cientos de médicos por Spark | **Estimado** a partir del benchmark de LMSYS (8B, 32 peticiones a la vez); falta una prueba de carga ⚠️ |
 
-Si os preguntan por los CSV: **son sintéticos**. Sirven para enseñar que Jano
+Si os preguntan por los CSV: **son sintéticos.** Sirven para enseñar que Jano
 funciona con la estructura de datos del hospital, no para medir el problema.
-Decirlo antes de que lo pregunten da credibilidad.
 
 ## Lo que la demo tiene que enseñar
 
 Si algo no llega a tiempo, se cambia el guion, no al revés.
 
-- [ ] **La derivación de María**, en texto libre y con su ficha al lado: tipo,
-      evolución, **analítica ya hecha en Primaria**, antecedentes.
-- [ ] **El protocolo** propone solo la prueba que falta.
-- [ ] **«Perdió la cita de revisión»** → directa a revisión.
-- [ ] **Faltan datos** → devolución a Primaria con la pregunta.
-- [ ] **La bandeja del especialista**: la semana entera, aprobar con un clic.
-- [ ] **Contadores**: derivaciones leídas, pruebas adelantadas, duplicadas
-      evitadas y casos enviados a una persona.
-- [ ] Fichas **precalculadas** por si la IA falla en directo.
+- [ ] La agenda del día y María seleccionada.
+- [ ] «¿Ha estado antes en Digestivo?», con la fila de la cita debajo.
+- [ ] «¿Qué pruebas tiene pendientes?», con la fila de la prueba.
+- [ ] «¿Necesita algún apoyo para la consulta?», sacado de PACIENTES.
+- [ ] «¿Tiene alergias?» → **«No consta»**.
+- [ ] Todo funcionando **sin internet** (se puede enseñar con el wifi apagado).
+- [ ] Respuestas precalculadas y vídeo por si falla en directo.
 
-María y los demás son pacientes de los CSV sintéticos, con nombres inventados
-para la demo.
+María es una paciente de los CSV sintéticos, con un nombre inventado para la
+demo.
 
 ## Preguntas que pueden hacer
 
 ### Dirección de La Princesa
 
-- **«¿Y si la IA se equivoca?»** Solo extrae datos. Si no está segura, la
-  derivación va a una persona. Y el especialista valida todo en bloque antes de
-  que se pida ninguna prueba. Además, el primer mes funciona en paralelo, sin
-  decidir nada.
-- **«¿Qué servidor hace falta?»** Uno de dos equipos:
-  - un **Mac mini M6**, para un servicio o un piloto pequeño (8–10 médicos con
-    escriba);
-  - un **NVIDIA DGX Spark, de unos 4.700 €**, para 30–50 médicos con escriba, o
-    para todo el hospital si solo se usa Jano.
-
-  Con **tres Spark, unos 14.000 € en total**, se cubren todas las consultas
-  externas: unos 60 médicos a la vez, de los ~558 de plantilla. **Sin cuota por
-  médico.** Son cifras estimadas, que se confirman con una prueba de carga antes
-  del piloto ⚠️.
-- **«¿Es difícil de instalarlo?»** Se instala como un router: se enchufa, se abre
-  `jano.local` y se siguen tres pasos (conectar con HCIS, elegir el servicio y
-  crear los usuarios). No necesita internet, y las actualizaciones van en un USB.
-- **«¿No vamos a pedir pruebas de más?»** El protocolo solo incluye las pruebas
-  que ese servicio pide casi siempre en ese motivo. Y Jano quita las que ya hizo
-  Primaria, así que en total se piden menos. Las pruebas que no se usen se miden
-  en el piloto.
-- **«¿Cómo se integra con nuestro sistema?»** Por **HL7**, como cualquier otro
-  sistema del hospital. Recibe los mensajes que HCIS ya envía (citas, pruebas,
-  derivaciones, notas) y **no toca la base de datos de HCIS**. En el piloto solo
-  lee y propone; escribir en HCIS es la fase 2 ⚠️.
-- **«Ya vamos a tener un escriba.»** Perfecto: Jano recibe su nota por HL7 y
-  hace todo lo que viene antes y después. Y si el escriba manda el audio a la
-  nube, Jano trae uno que no saca nada del hospital.
-- **«La Comunidad ya ha comprado un escriba.»** Sí, a T‑Systems, por 1,13 M€
-  con IVA (BOCM, 7‑ago‑2026). Es **solo para Primaria** y va **en nube
-  pública**: solo la nube estaba presupuestada en 400.000 € para tres meses.
-  Ese escriba **escribe** la derivación en Primaria; **Jano la lee** en el
-  hospital y prepara la consulta. Somos el paso siguiente, dentro de casa y con
-  un equipo que se compra una vez. *No decir «lo mismo por menos»: casi 1 M€ de
-  ese contrato son servicios de integración y despliegue.*
-- **«¿Y la protección de datos?»** No sale nada del hospital. Además, un modelo
-  del BSC anonimiza el texto antes de guardar ningún registro.
+- **«¿Y si se inventa algo?»** Solo responde con lo que encuentra en los datos
+  de ese paciente, enseña la fila de la que lo saca y, si no está, dice «no
+  consta». Lo hemos medido con 30 preguntas de respuesta conocida *(dar la cifra
+  real de la prueba; si no se hizo, quitar la frase)*.
+- **«¿Qué servidor hace falta?»** Un Mac mini para un servicio, o un DGX Spark
+  de unos 4.700 € para muchos médicos. Las cifras exactas, con una prueba de
+  carga antes del piloto ⚠️.
+- **«¿Cómo se conecta con HCIS?»** No lo tenemos hecho. La propuesta es leer los
+  mensajes HL7 que HCIS ya envía, o una réplica de solo lectura, sin tocar su
+  base de datos. Lo decidiríamos con Informática ⚠️.
+- **«¿Y la protección de datos?»** Nada sale del hospital. Cada médico solo ve a
+  sus pacientes y cada pregunta queda registrada con su nombre.
+- **«La Comunidad ya ha comprado un escriba.»** Es otra cosa: el escriba de
+  T‑Systems escribe la nota en Primaria. Jano responde preguntas en el
+  hospital. Se pueden complementar.
 
 ### Wayra
 
-- **«¿Quién paga y cuánto?»** El hospital, con una licencia anual pequeña. Por
-  ejemplo, 50.000 € al año se pagarían con unas 700 revisiones evitadas, el 5 %
-  del escenario.
-  - **Con el equipo incluido:** unos 55.000 € al año para todo el hospital,
-    unos **15 € por médico al mes**.
-  - **Un escriba comercial** cuesta entre **110 y 600 $ por médico al mes**,
-    según estimaciones de terceros en EE. UU. ⚠️.
-  - **Y Jano no solo escribe.**
-- **«¿No es como los resúmenes previos de Epic o Navina?»** Ellos resumen la historia para que el médico lea menos, pero el paciente llega igual. Jano actúa días antes y el paciente llega con la prueba hecha, que es lo que cambia el resultado (del 22 al 49 %). Y además es local y para la sanidad pública española.
-- **«¿Competencia?» / «¿Esto no existe ya?»** Cada pieza existe por separado:
-  - escribas en la nube;
-  - chat con la historia clínica;
-  - consultas de alta resolución hechas a mano;
-  - el algoritmo del Infanta Elena de 2018.
+- **«¿Competencia?»** El chat con la historia clínica ya existe en EE. UU.
+  (Epic, Dragon Copilot de Microsoft, Navina), en la nube y con cuota por
+  médico. Lo nuestro:
+  - corre en local, en un equipo que se compra una vez;
+  - enseña de dónde sale cada dato;
+  - está pensado para la sanidad pública española;
+  - se instala solo.
 
-  **Lo que no hemos encontrado es todo junto:** que lea el 100 % de las
-  derivaciones, prepare la consulta y cierre la vuelta a Primaria, dentro del
-  hospital, por HL7 y en un equipo que se instala solo. El Infanta Elena
-  demostró que funciona (de 2,25 a 1,72 revisiones por primera), pero llegó a un
-  31 % de los pacientes. *No decir nunca «no existe nada parecido»; decir «no lo
-  hemos encontrado junto».*
-- **«¿Cómo escala?»** Cada servicio carga su protocolo, y los modelos se
-  reajustan con las derivaciones que el propio hospital ya etiqueta.
+  *No decir que no existe nada parecido.*
+- **«¿Quién paga y cuánto?»** El hospital: el equipo una vez, más una licencia
+  anual por hospital. El precio está por definir; hay que pactarlo en el equipo
+  antes de subir.
+- **«¿Y después?»** Lo siguiente sería que Jano prepare la consulta antes de
+  que llegue el paciente. Hay evidencia de que cuando la prueba ya está hecha se
+  resuelven más casos en una visita (49 % frente a 22 %). Es la hoja de ruta, no
+  lo que enseñamos hoy.
 - **«¿Vais a seguir con esto?»** La respuesta tiene que ser sincera y estar
   pactada en el equipo antes de subir.
 
 ### Pfizer
 
-- **«¿Qué tiene de medicina personalizada?»** Cada caso se prepara con su
-  historia: lo que ya se hizo en Primaria, sus antecedentes y el motivo concreto.
-  No es una cola igual para todos.
-- **«¿Y los sesgos?»** La IA solo extrae datos del texto, y el piloto mide su
-  acierto por edad y sexo. Si falla más en algún grupo, esos casos van a una
-  persona.
+- **«¿Qué tiene de medicina personalizada?»** Responde sobre ese paciente
+  concreto: su historia, sus pruebas y lo que necesita para la consulta.
+- **«¿Y los sesgos?»** No decide nada: busca y muestra datos con su fuente. En
+  el piloto se mide si acierta igual con todos los pacientes.
 - **«¿Por qué no un modelo grande en la nube?»** Por privacidad y por coste. La
-  dirección del hospital lo quiere local, y los modelos clínicos españoles
-  pequeños bastan para esta tarea.
+  dirección del hospital lo quiere local, y para buscar en los datos de un
+  paciente basta un modelo pequeño.

@@ -58,10 +58,10 @@ python -m venv .venv
 - [x] Qué le interesa a cada organizador y [plan del MVP en 24 h](docs/CONTEXTO.md#el-mvp-en-24-horas)
 - [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
 - [x] ~~Los huecos vacíos~~: aparcado, porque media sala va a por las faltas. Sus cifras reales siguen en [HALLAZGOS](docs/HALLAZGOS.md)
-- [x] **Idea elegida: Jano, la puerta de entrada.** IA local lee las derivaciones de Primaria y prepara cada caso (pruebas antes de la primera consulta, revisiones perdidas directas, devolución si faltan datos) para que la primera visita lo resuelva. Al director del hospital le gusta la IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-elegida-la-puerta-de-entrada-jano)
-- [x] Conexión con HCIS por HL7, Jano como capa de acción sobre el escriba, «Pregúntale a Jano» y el vocabulario de cada servicio. Ver [CONTEXTO](docs/CONTEXTO.md#cómo-se-conecta-jano-al-hospital-hcis-y-hl7)
-- [x] Hardware: **Mac mini M6** o **NVIDIA DGX Spark**, con cuántos médicos aguanta cada uno y una instalación pensada para cualquiera. Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-jano-mac-mini-m6-o-nvidia-dgx-spark)
-- [ ] MVP: lector con modelos de Hugging Face, reglas por servicio, bandeja de validación del especialista e impacto
+- [x] **Idea decidida: Jano, el chatbot copiloto del médico.** El médico le pregunta en el ordenador por el paciente y Jano le contesta, con la fuente de cada dato y con IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-decidida-jano-el-copiloto-del-médico)
+- [x] Hardware decidido: **Mac mini M6** o **NVIDIA DGX Spark**, con una instalación muy sencilla. Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-jano-mac-mini-m6-o-nvidia-dgx-spark)
+- [x] Ideas que no entran (preparar la consulta, escriba, HL7…): en la [hoja de ruta](docs/CONTEXTO.md#hoja-de-ruta-ideas-no-decididas)
+- [ ] MVP: agente con herramientas de solo lectura sobre los CSV, modelo local, pantalla con agenda, chat y fuentes, y prueba de acierto
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado
 - [ ] Confirmar con los mentores lo marcado con ⚠️ en el guion
