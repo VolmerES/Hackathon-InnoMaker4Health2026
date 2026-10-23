@@ -199,8 +199,82 @@ A quién preguntar:
 - **Integración con los sistemas del hospital y privacidad:** Informática y Tecnologías y sistemas de información.
 - **Si se podría pilotar:** Dirección Médica y Unidad de Innovación.
 
+## Ganadores de ediciones anteriores
+
+Datos de la página de cada edición en la web de la Fundación Pfizer.
+
+| Año | Reto | 1.º | 2.º | 3.º |
+|---|---|---|---|---|
+| 2025 | Acelerar el uso de biomarcadores en la práctica clínica | **BioPatch**: parche que detecta el cáncer de mama midiendo la conductividad eléctrica de las células, sin invasión y barato | — | — |
+| 2024 | Resistencia a los antimicrobianos | **Aeris** (3.000 €): plataforma con IA que detecta pronto las infecciones hospitalarias | **ReCero** (2.000 €): dispositivo para depositar antibióticos sobrantes, con incentivos | **Acté** (1.000 €): tejido antimicrobiano |
+| 2023 | Riesgo cardiovascular | **Thea** (3.000 €): pulsera que mide la tensión en tiempo real y la manda a una app | **Microbuddy** (2.000 €): parche que mide biomarcadores cardiovasculares y envía los resultados al móvil | **Coda by Ateraid** (1.000 €): parche que vigila de forma continua el riesgo de aterosclerosis |
+| 2022 | Salud mental con tecnología / sanidad sostenible | **Biopamp** (3.000 €): polímeros que limpian las aguas residuales de bacterias resistentes | **Medea** (2.000 €): software con datos para personalizar tratamientos de salud mental | **InMed** (1.000 €): que se reciclen más medicamentos con el punto SIGRE |
+| 2021 | Que el paciente entienda su enfermedad / verificar la información sanitaria en internet | **Cori – Better Diabetes**: asistente digital para personas con diabetes | **Paigo**: app que explica a los niños su enfermedad antes, durante y después de la consulta | **ALMA**: IA que valida la información de salud que circula en internet |
+| 2020 | Stock y dispensación de medicamentos / eficiencia de la telemedicina | **Pharmawhale** (3.000 €): conectar las farmacias de hospital para gestionar y planificar existencias, con IA | **The Warriors – Care4u** (2.000 €): telemedicina útil para pacientes y profesionales | **Valhalla – Health EDI** (1.000 €): app de dispensación y stock con IA que ajusta las compras |
+| 2019 | Adherencia al tratamiento y diagnóstico precoz | **BioMakers – Hera** (3.000 €): sistema que acompaña a pacientes con depresión | **Contigo** (2.000 €): seguimiento por visión con IA para avisar de caídas o riesgos en mayores | **Previctus** (1.000 €): app con machine learning y pulseras para detectar pronto el ictus |
+
+En 2021 se repartieron 6.000 € entre los tres, sin decir cuánto a cada uno. En
+2025 solo se publicó el ganador.
+
+El precedente más cercano a este año es **2020**: es el único reto de gestión
+del hospital y no de un dispositivo clínico, y en él ganaron Pharmawhale y
+Health EDI con IA aplicada a la logística.
+
+### Qué tienen en común los primeros puestos
+
+Son patrones sacados de 7 casos con una sola frase de descripción cada uno, no
+criterios oficiales del jurado.
+
+1. **Un nombre corto y fácil de recordar.** Hera, Pharmawhale, Cori, Biopamp, Thea,
+   Aeris y BioPatch. Ninguno se llama «Plataforma de…».
+2. **Se explican en una frase de «X que hace Y»**, como «pulsera que mide la
+   tensión en tiempo real». Cada uno es un solo objeto que resuelve un solo
+   problema.
+3. **Responden a la pregunta del año al pie de la letra.**
+4. **La mayoría se adelanta al problema en vez de reaccionar** (5 de 7): detectar
+   o vigilar antes de que pase (Aeris, BioPatch, Thea), planificar antes de que
+   falte (Pharmawhale) o acompañar para que el paciente no abandone el
+   tratamiento (Hera).
+5. **Se entienden y se ven sin explicaciones**: un dispositivo que se puede
+   enseñar o un asistente o plataforma con una tarea clara.
+
+No todos son hardware ni todos llevan IA. Unos se centran en el paciente y
+otros en el sistema sanitario.
+
+## Ideas candidatas
+
+Siguen la fórmula de los ganadores: un producto con nombre que se adelanta a un
+problema concreto de consultas externas, con una cifra de impacto calculada con
+los datos de la organización (el paso 5 de su hoja).
+
+### 1. Revisiones sin resultado
+
+Detectar, con días de margen, las citas de revisión a las que la prueba no habrá
+llegado y moverlas antes de que se pierdan.
+
+- **Datos:** `PRUEBAS` (`fecha_programada`, `fecha_realizacion`,
+  `resultado_disponible`, `id_cita_revision`) cruzado con `CITAS` y su hueco en
+  `HUECOS_AGENDA`.
+- **Impacto que se puede medir:** revisiones que se hicieron sin el resultado,
+  cuántas se recolocaron después (`MOVIMIENTOS_CITAS`) y los minutos de
+  `TAREAS_ADMINISTRATIVAS` ligados a esas citas.
+
+### 2. Huecos vacíos
+
+Prever qué citas se van a anular o el paciente no va a venir, y ofrecer ese hueco
+antes de que quede libre.
+
+- **Datos:** el historial de `MOVIMIENTOS_CITAS` y `COMUNICACIONES`
+  (`respuesta_paciente`, `resultado`, `id_hueco_ofertado`) para aprender quién
+  falla. Después `OCUPACIONES_HUECO` y `HUECOS_AGENDA` para ver los huecos que se
+  quedaron sin usar, y `DERIVACIONES_AP` para saber quién espera.
+- **Impacto que se puede medir:** huecos perdidos al mes, ofertas que acabaron en
+  cita, llamadas manuales evitadas (`TAREAS_ADMINISTRATIVAS` con
+  `automatizable`) y días de espera recortados.
+
 ## Fuentes
 
 - [Fundación Pfizer · Innomakers4Health](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health)
+- Ediciones anteriores: [2025](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2025) · [2024](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2024) · [2023](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2023) · [2022](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2022) · [2021](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2021) · [2020](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2020) · [2019](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2019)
 - [Wayra · anuncio del reto](https://wayra.com/news/wayra-pfizer-and-the-pfizer-foundation-launch-a-challenge-to-optimise-efficiency-in-hospital-outpatient-clinics)
 - [La Ecuación Digital](https://www.laecuaciondigital.com/empresas/healthtech/wayra-pfizer-reto-consultas-externas-hospitalarias/)

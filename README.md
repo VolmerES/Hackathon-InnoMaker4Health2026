@@ -31,6 +31,7 @@ data/             Los 11 CSV (no se suben: son material de la organización)
 ## Estado
 
 - [x] Contexto del reto y modelo de datos
+- [x] Ganadores de ediciones anteriores y [dos ideas candidatas](docs/CONTEXTO.md#ideas-candidatas)
 - [ ] Cargar y explorar los 11 CSV
 - [ ] Elegir **una** necesidad concreta
 - [ ] Prototipo
