@@ -668,6 +668,137 @@ puede usar un audio grabado de antemano y pasado por `whisper-large-v3-turbo`,
 - El aviso de prueba duplicada solo informa, pero hay que confirmarlo con los
   mentores.
 
+## Infraestructura para todo el hospital (propuesta de Claude, pendiente del equipo)
+
+**Lo que se pide:** conectar a todo el hospital a Medici, con un Spark (o
+similar) o con Mac mini M6. Solo el chatbot, que es lo decidido.
+
+### Lo que no cambia en ninguna de las dos vías
+
+- **Los médicos no instalan nada.** Abren `https://medici` en el navegador del
+  ordenador de la consulta, con su usuario del hospital.
+- **Todo dentro de la red del hospital, en el CPD.** Nada en las consultas y
+  sin salida a internet.
+- **Los equipos de IA no guardan datos de pacientes.** Reciben la pregunta y
+  los datos de ese momento, contestan y lo olvidan. Los datos y el registro de
+  preguntas están en un único sitio.
+- **El mismo software** para M6 y para Spark. Solo cambia el motor de IA (Ollama
+  en el Mac, vLLM en el Spark), detrás de la misma API compatible con OpenAI.
+
+```
+ Ordenadores de las consultas (navegador)
+            │  HTTPS dentro de la red del hospital, usuario del Directorio Activo
+            ▼
+ ┌──────────────── CPD del hospital, red aislada (VLAN), sin internet ────────────────┐
+ │                                                                                    │
+ │  Medici · aplicación         ← proxy HTTPS (Caddy) + API (FastAPI) + la web          │
+ │     │   · herramientas de solo lectura, siempre de UN paciente                     │
+ │     │   · registro: quién preguntó qué y cuándo                                    │
+ │     │                                                                              │
+ │     ├──► Datos de Medici (PostgreSQL): copia de solo lectura con lo justo           │
+ │     │        ▲  citas, derivaciones, pruebas, avisos, accesibilidad                │
+ │     │        └── motor de integración del hospital → mensajes HL7 desde HCIS ⚠️    │
+ │     │            (o una exportación nocturna si es más fácil al principio)         │
+ │     │                                                                              │
+ │     └──► Reparto de peticiones (LiteLLM, MIT) ──► Equipos de IA                    │
+ │                                                  · Vía A: 2 × DGX Spark            │
+ │                                                  · Vía B: 3 × Mac mini M6          │
+ └────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Cuánto hay que aguantar en La Princesa
+
+- **~558 médicos de plantilla**, y **~60 en consulta a la vez**.
+- **Con el chat, cada médico ocupa la IA unos segundos por pregunta**, ~6 % del
+  tiempo de la consulta. Con 60 médicos son **unas 4–8 preguntas a la vez en la
+  punta** de la mañana.
+- **Lo que aguanta cada equipo** (estimado ⚠️):
+  - **un Spark:** unas **30** preguntas a la vez;
+  - **un M6:** unas **2–4**.
+
+### Vía A: centralizado con DGX Spark (o similar)
+
+| | |
+|---|---|
+| Equipos | **2 × DGX Spark** en el CPD: uno trabaja y el otro está de reserva, o los dos repartiendo trabajo |
+| Modelo | **Qwen3‑30B‑A3B** (Apache‑2.0). Cabe sobrado en 128 GB y **acierta más llamando a las herramientas** que un 8B |
+| Capacidad | Con uno basta para todo el hospital (~30 preguntas a la vez). El segundo es por si falla el primero |
+| Coste del equipo | **~9.400 €** (2 × ~4.700 € con IVA) |
+| A favor | Un solo sitio que mantener, actualizar y auditar. Las respuestas más rápidas y el mejor modelo. Hay margen para crecer (el escriba, la hoja de ruta) |
+| En contra | El Spark es un equipo de escritorio: no va en rack y no tiene fuente redundante. Va en una bandeja del rack, y la redundancia la da el segundo equipo |
+| **«O similar»** | Para producción, Informática quizá prefiera un **servidor de rack con una GPU profesional** (fuente redundante, gestión remota). El software es el mismo; el precio, a pedir al proveedor ⚠️ |
+
+### Vía B: Mac mini M6
+
+| | |
+|---|---|
+| Equipos | **3 × Mac mini M6** con 32 GB en el CPD: 2 trabajando y 1 de reserva |
+| Modelo | **Qwen3‑8B** en Q4. El de 30B no cabe con holgura en 32 GB |
+| Capacidad | 2–4 preguntas a la vez cada uno. Dos cubren la punta (4–8) **por poco** |
+| Coste del equipo | **Más barato**: 3 × M6 con 32 GB, precio en € por confirmar ⚠️ (desde 899 $ el de 16 GB) |
+| A favor | Barato, silencioso, consume poco. Muy fácil para empezar: **un M6 basta para un piloto** de un servicio |
+| En contra | **Un modelo más pequeño, que se equivoca más** al elegir herramientas. Más lento en la punta. Más equipos que mantener. No hay sitio para crecer (escriba) |
+| Alternativa | El **Mac mini M5 Pro** (hasta 64 GB, 307 GB/s), con más margen por equipo |
+
+**Lo que no recomiendo: un M6 en cada servicio o en cada planta.** Cada equipo
+tendría una copia de datos de pacientes fuera del CPD (riesgo de robo y peor
+para la protección de datos), habría que actualizar y vigilar N equipos, y el
+día que falla uno, ese servicio se queda sin Medici. Los M6 siempre en el CPD
+y repartiéndose el trabajo.
+
+### Comparación
+
+| | **A · 2 × Spark** | **B · 3 × M6** |
+|---|---|---|
+| Coste del equipo | ~9.400 € | Menos (por confirmar) |
+| Calidad de las respuestas | **Mejor** (modelo de 30B) | Buena (8B) |
+| Velocidad en la punta | **Sobrada** | Justa |
+| Aguanta que se rompa uno | Sí | Sí |
+| Crecer (más usos, escriba) | **Sí** | No |
+| Piloto pequeño | Vale, pero sobra | **Ideal** |
+
+### Recomendación
+
+**Un camino que use las dos:**
+
+1. **Piloto (un servicio, 3 meses):** **1 Mac mini M6** en el CPD. Cuesta muy
+   poco, demuestra que funciona y que se instala solo. Si se quiere probar ya
+   con el mejor modelo, 1 Spark.
+2. **Todo el hospital:** **2 × DGX Spark** con el modelo de 30B. El M6 del
+   piloto queda **de reserva o para pruebas**.
+3. **Hospitales pequeños o centros de especialidades:** Medici con M6.
+
+**Para vender:** *«Medici empieza con un Mac mini y crece a un Spark sin cambiar
+nada, porque el software es el mismo.»*
+
+### Lo que hace falta del hospital
+
+| Qué | Quién | Nota |
+|---|---|---|
+| Un hueco en el CPD, red y una VLAN | Informática | |
+| Acceso a los datos: mensajes HL7 desde el motor de integración, o una exportación nocturna para empezar | Informática | ⚠️ Es lo que más tarda |
+| Usuarios del Directorio Activo y grupos por servicio | Informática | Cada médico ve solo a sus pacientes |
+| Certificado HTTPS de la autoridad interna | Informática | |
+| Copias de seguridad de la base de Medici en su sistema | Informática | |
+| **Evaluación de impacto de protección de datos (EIPD)** | Delegado de protección de datos | ⚠️ Obligatoria al tratar datos de salud con un sistema nuevo |
+| **Esquema Nacional de Seguridad (ENS)** | Seguridad | ⚠️ Los sistemas del sector público lo tienen que cumplir. Lo ayuda que no tenga internet, que use TLS, que tenga registro y que dé el mínimo acceso |
+| Si entra en el reglamento de productos sanitarios o en el de IA | Mentores / regulatorio | ⚠️ Solo busca y muestra datos: probablemente no, pero hay que confirmarlo |
+
+### Abrir Medici desde HCIS (si se puede)
+
+**Lo ideal:** el médico tiene abierto al paciente en HCIS y pulsa «Medici». Se
+abre el chat ya con ese paciente, sin buscarlo. Depende de que HCIS pueda
+lanzar una dirección web con el código del paciente ⚠️. Si no se puede, el
+médico lo elige en la agenda del día dentro de Medici.
+
+### Mantenimiento
+
+- **Página de estado** con semáforo: datos al día, equipos de IA y última copia.
+- **Actualizaciones sin internet**, con un fichero desde un servidor interno o un
+  USB, y vuelta atrás con un botón.
+- **Lo mantiene la Unidad de Análisis de Datos o Informática.** No hace falta un
+  equipo nuevo.
+
 ## Dónde corre Medici: Mac mini M6 o NVIDIA DGX Spark
 
 > **Para el chatbot vale la columna «solo chat»:** un Spark aguanta unos
@@ -1282,3 +1413,4 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - Resúmenes previos a la visita: [Commure · pre-visit summaries](https://www.commure.com/blog/pre-visit-summaries-what-are-they-why-they-matter-and-how-ai-is-changing-pre-charting) · [Navina](https://tooldirectory.ai/tools/navina) · [Epic · AI Charting](https://www.healthcareitnews.com/news/epics-ai-charting-tool-now-available-ehr-clients) · [AAFP · herramientas para revisar historias](https://www.aafp.org/practice-operations/administrative-simplification/chart-review/technologies-chart-review-burden)
 - Tiempo en la historia clínica: [Overhage y McCallie, Annals of Internal Medicine 2020 (resumen en Fierce Healthcare)](https://www.fiercehealthcare.com/practices/for-each-patient-visit-physicians-spend-about-16-minutes-ehrs-study-finds) · [Healio](https://www.healio.com/news/primary-care/20200113/physicians-spend-16-minutes-using-ehr-for-each-patient-encounter)
 - HORUS: [Comunidad de Madrid · Libre elección (qué ve el profesional)](https://www.comunidad.madrid/salud/libre-eleccion-sanitaria) · [Plataformas informáticas del SERMAS](https://www.vence.es/auxiliar-administrativo-sermas/temario/tema-26) · [iSanidad · premio a HORUS](https://isanidad.com/32259/premio-a-la-comunidad-de-madrid-por-la-plataforma-horus-que-auna-datos-clinicos-de-los-pacientes-y-se-pueden-consultar-en-cualquier-lugar/) · [El Médico Interactivo (2013)](https://elmedicointeractivo.com/principal-ventaja-horus-posibilidad-conocer-informacion-previa-pacientes-hayan-sido-atendidos-cualquier-centro-sermas-20130617132816023000/)
+- Infraestructura: [LiteLLM (MIT)](https://github.com/BerriAI/litellm) · [vLLM](https://github.com/vllm-project/vllm) · [Ollama](https://github.com/ollama/ollama) · [Caddy](https://caddyserver.com/)

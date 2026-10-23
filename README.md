@@ -59,7 +59,7 @@ python -m venv .venv
 - [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
 - [x] ~~Los huecos vacíos~~: aparcado, porque media sala va a por las faltas. Sus cifras reales siguen en [HALLAZGOS](docs/HALLAZGOS.md)
 - [x] **Idea decidida: Medici, el chatbot copiloto del médico.** El médico le pregunta en el ordenador por el paciente y Medici le contesta, con la fuente de cada dato y con IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-decidida-medici-el-copiloto-del-médico)
-- [x] Hardware decidido: **Mac mini M6** o **NVIDIA DGX Spark**, con una instalación muy sencilla. Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-medici-mac-mini-m6-o-nvidia-dgx-spark)
+- [x] Hardware decidido: **Mac mini M6** o **NVIDIA DGX Spark**, con una instalación muy sencilla. [Propuesta de infraestructura para todo el hospital](docs/CONTEXTO.md#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo). Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-medici-mac-mini-m6-o-nvidia-dgx-spark)
 - [x] Ideas que no entran (preparar la consulta, escriba, HL7…): en la [hoja de ruta](docs/CONTEXTO.md#hoja-de-ruta-ideas-no-decididas)
 - [ ] MVP: agente con herramientas de solo lectura sobre los CSV, modelo local, pantalla con agenda, chat y fuentes, y prueba de acierto
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
