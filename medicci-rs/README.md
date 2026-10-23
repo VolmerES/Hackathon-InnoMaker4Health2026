@@ -23,17 +23,19 @@ ventana. Si falta algo, dice el comando para instalarlo.
 
 ### Windows
 
-1. `winget install Rustlang.Rustup` y `winget install Casey.Just`
+1. Rust: `winget install Rustlang.Rustup`
 2. Las herramientas de C++ de Visual Studio (las pide Rust para enlazar):
    `winget install Microsoft.VisualStudio.2022.BuildTools --override "--quiet --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"`
-3. Abrir otra PowerShell en la carpeta del repositorio y `just`.
+3. Abrir otra PowerShell e instalar just: `cargo install just`
+4. En la carpeta del repositorio: `just`.
 
 Sale `medicci.exe`, que abre sin consola. La burbuja se coloca por encima de
 la barra de tareas.
 
 ### Ubuntu
 
-`just`. Si falta algo, `just revisa` dice qué instalar. En Wayland una ventana
+`cargo install just` (una vez) y `just`. Si falta algo, `just revisa` dice
+qué instalar. En Wayland una ventana
 no puede colocarse sola en la esquina, así que Medicci arranca sobre XWayland
 por su cuenta.
 

@@ -5,6 +5,7 @@
 #   just rapido       abre sin revisar (cuando ya se ha revisado)
 #   just compila      deja el ejecutable listo y dice dónde está
 #
+# Para tener just: cargo install just
 # En Windows funciona desde PowerShell; en Ubuntu, desde cualquier terminal.
 
 set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
