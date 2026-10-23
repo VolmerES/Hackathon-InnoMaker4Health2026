@@ -78,13 +78,23 @@ const SECCIONES = [
   ["PRUEBAS", "Pruebas"], ["COMUNICACIONES", "Avisos al paciente"]];
 let agenda = [];
 
+let abierto = null, pintado = "";
 async function abrePaciente(p){
+  abierto = p; pintado = "";
   document.querySelectorAll(".cita").forEach(b => b.setAttribute("aria-current", String(b.dataset.nhc === p.nhc)));
   $("#c-nhc").textContent = p.nhc;
   $("#c-nombre").textContent = p.nombre.toUpperCase();
   $("#c-datos").textContent = `${p.sexo === "F" ? "Mujer" : "Varón"}, ${p.edad} años`;
   $("#hoja").innerHTML = `<p class="vacia">Cargando…</p>`;
+  await pintaHistoria(p);
+}
+async function pintaHistoria(p){
   const r = await fetch(`/api/hcis/paciente/${encodeURIComponent(p.nhc)}`).then(r => r.json());
+  if (p !== abierto || !r.filas) return;
+  const clave = JSON.stringify(r.filas);
+  if (clave === pintado) return;
+  pintado = clave;
+  const arriba = $("#hoja").scrollTop;
   $("#hoja").innerHTML = `<div class="titulo">HISTORIA CLÍNICA · ${esc(p.nombre)} · ${r.filas.length} registros</div>
     <div class="aviso">Nombre inventado para la demo. Los datos son de los CSV sintéticos del reto.</div>` +
     SECCIONES.map(([tabla, titulo]) => {
@@ -93,14 +103,22 @@ async function abrePaciente(p){
         ? filas.map(f => `<div class="fila"><span class="r">${f.ref}</span><span>${esc(f.texto)}</span></div>`).join("")
         : `<div class="vacia">Sin registros</div>`}</fieldset>`;
     }).join("");
+  $("#hoja").scrollTop = arriba;
 }
+setInterval(() => { if (abierto) pintaHistoria(abierto).catch(() => {}); }, 4000);
 
-(async () => {
-  agenda = await fetch("/api/hcis/agenda").then(r => r.json());
-  $("#agenda").innerHTML = agenda.map(p => `<button class="cita" data-nhc="${p.nhc}">
-    <span class="h">${p.hora}</span><span>${esc(p.nombre)}<small>${p.nhc} · ${p.edad} años</small></span></button>`).join("");
-  $("#agenda").onclick = e => { const b = e.target.closest(".cita"); if (b) abrePaciente(agenda.find(p => p.nhc === b.dataset.nhc)); };
-})();
+async function pintaAgenda(){
+  const nueva = await fetch("/api/hcis/agenda").then(r => r.json()).catch(() => []);
+  if (JSON.stringify(nueva) === JSON.stringify(agenda)) return;
+  agenda = nueva;
+  $("#agenda").innerHTML = agenda.length ? agenda.map(p => `<button class="cita" data-nhc="${p.nhc}"
+    aria-current="${abierto && abierto.nhc === p.nhc}">
+    <span class="h">${p.hora}</span><span>${esc(p.nombre)}<small>${p.nhc} · ${p.edad} años</small></span></button>`).join("")
+    : `<p class="vacia" style="padding:8px">Agenda vacía: esperando datos de HCIS…</p>`;
+}
+$("#agenda").onclick = e => { const b = e.target.closest(".cita"); if (b) abrePaciente(agenda.find(p => p.nhc === b.dataset.nhc)); };
+pintaAgenda();
+setInterval(() => { if (agenda.length < 8) pintaAgenda(); }, 3000);   // con HL7 la agenda se va llenando
 </script>
 
 <!-- Medici: en el hospital lo pondría la extensión del navegador; aquí, estas dos líneas -->

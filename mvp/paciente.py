@@ -45,6 +45,21 @@ def cargar():
     return con
 
 
+def cargar_vacia():
+    """La copia de Medici vacía, para llenarla con mensajes HL7.
+
+    Los avisos al paciente no van por HL7 (vienen de la plataforma de SMS):
+    esos sí se cargan de su CSV.
+    """
+    con = conectar()
+    for t in TABLAS_MEDICI:
+        filtro = "" if t == "comunicaciones" else " LIMIT 0"
+        con.execute(f"CREATE TABLE {t}_m AS SELECT * FROM {t}{filtro}")
+        con.execute(f"DROP VIEW {t}")
+        con.execute(f"ALTER TABLE {t}_m RENAME TO {t}")
+    return con
+
+
 def _fecha(valor) -> str:
     return valor.strftime("%d/%m/%Y") if valor else "sin fecha"
 

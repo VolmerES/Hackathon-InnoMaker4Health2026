@@ -16,8 +16,17 @@ pregunte, con la fuente de cada dato y con IA local. Nada sale del hospital.
 | ✅ **Construido** (Daniel) | Réplicas de HCIS y SELENE con dos historias sintéticas y un agente con respuestas **precalculadas** | [`demo/`](../demo/README.md) |
 | 🟡 **Propuesto, pendiente del equipo** | Medici como **pestaña dentro de HCIS**; infraestructura (1 Mac mini M6 para el piloto, 2 × DGX Spark para todo el hospital); datos por HL7 | [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo) · [Infraestructura](#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo) |
 | ✅ **Construido** | **La demo:** réplica de HCIS con la agenda del día y la **pestaña Medici** (tarjeta + chat + fuentes). La pestaña solo lee el NHC de la cinta, como lo haría la extensión. `docker compose up` y `http://localhost:8000` | [`mvp/README.md`](../mvp/README.md#la-demo-hcis-con-la-pestaña-medici) |
-| ⬜ **Falta para la demo** | Los datos por HL7 (emisor y receptor), el vídeo de respaldo y ensayar | [HCIS y HL7](#cómo-se-conecta-medici-al-hospital-hcis-y-hl7) |
+| ✅ **Construido y comprobado** | **Los datos por HL7:** un emisor hace de HCIS y manda mensajes estándar (`ADT`, `REF`, `SIU`, `OMG`, `ORU`) por MLLP; Medici los guarda en su copia y contesta ACK. 43/43 mensajes aceptados y las 8 tarjetas idénticas a las de los CSV. En directo: se anula una cita y la tarjeta lo dice sola | [`mvp/README.md`](../mvp/README.md#los-datos-por-hl7) |
+| ⬜ **Falta para la demo** | Revisarla en el navegador, el vídeo de respaldo y ensayar | |
 | 📍 **Hoja de ruta** | Preparar la consulta antes, escriba, escribir en HCIS, texto libre de las historias… | [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
+
+**Validación (24‑oct):** el equipo lo consultó con **médicos por teléfono y con
+los mentores**, y dijeron que **sería muy útil**. Para el pitch falta concretarlo
+⚠️:
+
+- qué parte valoraron (la tarjeta, el chat, que esté dentro de HCIS);
+- una frase citable, con el cargo y sin el nombre;
+- cuánto tardan hoy en revisar la historia antes de cada paciente.
 
 **Preguntar a los mentores hoy ⚠️:**
 
@@ -750,15 +759,23 @@ cambia HCIS, Medici sigue funcionando.
 peticiones (`SRM^S01`, `OMG^O19` o FHIR). En el piloto, Medici solo lee y
 propone, y la persona confirma en HCIS. Escribir directamente es la fase 2 ⚠️.
 
-**Hoy no se usa HL7 en ningún sitio.** El MVP lee los CSV con DuckDB y consulta
-su copia con SQL. HL7 no es un lenguaje de base de datos: son los mensajes que
-se mandan los sistemas del hospital. Medici los recibiría y los guardaría en su
-copia, y luego seguiría consultando esa copia con SQL.
+**HL7 no es un lenguaje de base de datos:** son los mensajes que se mandan los
+sistemas del hospital. Medici los recibe, los guarda en su copia y la consulta
+con SQL.
 
-**Si sobra tiempo en la demo (no está hecho):** un script que convierta los CSV
-en mensajes HL7 v2 y se los envíe a Medici por MLLP, como haría el motor de
-integración. Así el jurado vería que se conecta sin tocar HCIS. Librerías:
-`hl7apy` o `hl7` (MIT).
+**En la demo (construido el 24‑oct):** `mvp/hl7_emisor.py` hace de HCIS. Lee los
+CSV y manda cada hecho como su mensaje HL7 v2 por MLLP. El servidor de Medici
+arranca con la copia vacía, la llena con los mensajes y contesta `ACK`.
+
+- **Comprobado:** 43/43 mensajes aceptados, y las tarjetas y las filas de los 8
+  pacientes son idénticas a las de los CSV.
+- **En directo:** se anula una cita (`SIU^S15`) o llega un resultado
+  (`ORU^R01`) y la tarjeta lo enseña arriba con «Nuevo:».
+- **Los mensajes se ven llegar** en `/hl7.html`.
+
+El lector de HL7 es mínimo y usa la biblioteca estándar. En el hospital: `hl7apy`
+y el perfil de mensajes de Informática ⚠️. Detalle en
+[`mvp/README.md`](../mvp/README.md#los-datos-por-hl7).
 
 **Preguntas para Informática ⚠️:**
 

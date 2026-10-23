@@ -15,10 +15,15 @@ API de Medici (lo que llamaría la pestaña desde HCIS):
 Lo que hace de HCIS en la demo (en el hospital es el propio HCIS):
     GET  /api/hcis/agenda                        → la agenda del día
     GET  /api/hcis/paciente/<nhc>                → lo que HCIS enseña del paciente
+
+Con --datos hl7 arranca con la copia vacía y un receptor MLLP (puerto 2575):
+los datos llegan como mensajes HL7 (mvp/hl7_emisor.py hace de HCIS).
+    GET  /api/hl7/ultimos                        → los últimos mensajes recibidos
 """
 
 import argparse
 import json
+import os
 import sys
 import threading
 import time
@@ -28,77 +33,59 @@ from datetime import datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from alertas import alertas, tarjeta
-from paciente import cargar, datos_del_paciente
+from agenda import elegir_agenda
+from alertas import tarjeta
+from paciente import cargar, cargar_vacia, datos_del_paciente
 from responder import MODELO, URL, responder
 
 AQUI = Path(__file__).resolve().parent
 WEB = AQUI / "web"
 REGISTRO = AQUI / "resultados" / "registro.jsonl"
 
-# La agenda necesita nombres y los CSV no los traen: son inventados para la demo.
-NOMBRES = {"F": ["María Alonso", "Carmen Ruiz", "Lucía Sanz", "Ana Gil", "Pilar Mora",
-                 "Rosa Navarro", "Elena Prieto", "Teresa Vidal"],
-           "M": ["José Pardo", "Antonio Vega", "Manuel Ortiz", "Javier Lozano", "Luis Cano",
-                 "Pedro Ibáñez", "Ramón Soler", "Andrés Molina"]}
-
 
 class Medici:
-    def __init__(self):
-        print("Cargando los datos…", flush=True)
-        self.con = cargar()
+    def __init__(self, datos: str = "csv"):
+        print("Cargando los datos…" if datos == "csv" else "Copia vacía: esperando mensajes HL7…", flush=True)
+        self.con = cargar() if datos == "csv" else cargar_vacia()
         self.cerrojo = threading.Lock()       # DuckDB: una consulta a la vez en esta conexión
         self.sesiones: dict[str, str] = {}
-        self.agenda = self._agenda()
+        self.hl7_recibidos: list[dict] = []   # los últimos mensajes, para enseñarlos en la demo
+        self._agenda: list[dict] = []
+        self._agenda_fija = datos == "csv"
+        self._version = 0                     # sube con cada mensaje HL7
+        self._version_agenda = -1
+        self._ultimo_hl7 = 0.0
 
     def filas(self, nhc: str):
         with self.cerrojo:
             return datos_del_paciente(self.con, nhc)
 
-    def _agenda(self) -> list[dict]:
-        """8 pacientes con tarjetas variadas: tres con 3 cosas, dos con 2, dos con 1 y uno sin nada.
+    @property
+    def agenda(self) -> list[dict]:
+        # Con HL7 la copia se va llenando: la agenda se recalcula mientras llegan
+        # mensajes y se fija cuando está completa y lleva 3 s sin llegar ninguno.
+        # Así un evento en directo (anular una cita) no cambia la agenda.
+        if self._agenda_fija and self._agenda:
+            return self._agenda
+        if self._version != self._version_agenda or not self._agenda:
+            with self.cerrojo:
+                self._version_agenda = self._version
+                self._agenda = elegir_agenda(self.con, lambda n: datos_del_paciente(self.con, n))
+        if len(self._agenda) == 8 and time.monotonic() - self._ultimo_hl7 > 3:
+            self._agenda_fija = True
+        return self._agenda
 
-        La primera es «María», la del guion: mujer, con una necesidad de
-        accesibilidad, una prueba pendiente y una derivación de Primaria.
-        """
+    def recibir_hl7(self, m):
+        """Lo que hace el receptor con cada mensaje: guardarlo en la copia y contestar ACK."""
+        from hl7 import ack, aplicar
         with self.cerrojo:
-            maria = [r[0] for r in self.con.execute(
-                "SELECT p.id_paciente FROM pacientes p WHERE p.sexo = 'F' "
-                "AND p.necesidades_accesibilidad <> 'NINGUNA' "
-                "AND EXISTS (SELECT 1 FROM pruebas r WHERE r.id_paciente = p.id_paciente AND r.estado_prueba = 'PROGRAMADA') "
-                "AND EXISTS (SELECT 1 FROM derivaciones_ap d WHERE d.id_paciente = p.id_paciente) "
-                "ORDER BY hash(p.id_paciente || 'maria') LIMIT 200").fetchall()]
-            candidatos = [r[0] for r in self.con.execute(
-                "SELECT DISTINCT id_paciente FROM citas ORDER BY hash(id_paciente || 'agenda') LIMIT 400"
-            ).fetchall()]
-        faltan = {3: 3, 2: 2, 1: 2, 0: 1}
-        elegidos = []
-        for nhc in maria:
-            filas = self.filas(nhc)
-            if len(alertas(filas)) >= 3 and len(filas) <= 20:
-                faltan[3] -= 1
-                elegidos.append((9, nhc, filas[0].campos))      # 9: siempre la primera
-                break
-        for nhc in candidatos:
-            filas = self.filas(nhc)
-            n = min(len(alertas(filas)), 3)
-            if faltan.get(n) and len(filas) <= 25 and nhc not in {e[1] for e in elegidos}:
-                faltan[n] -= 1
-                elegidos.append((n, nhc, filas[0].campos))
-            if not any(faltan.values()):
-                break
-        elegidos.sort(key=lambda e: (-e[0], e[1]))
-        orden = [elegidos[i] for i in (0, 3, 5, 1, 7, 4, 2, 6) if i < len(elegidos)]
-        usados = {"F": 0, "M": 0}
-        agenda = []
-        for i, (_, nhc, ficha) in enumerate(orden):
-            sexo = self.con.execute("SELECT sexo FROM pacientes WHERE id_paciente = ?", [nhc]).fetchone()[0]
-            lista = NOMBRES.get(sexo, NOMBRES["F"])
-            nombre = lista[usados.get(sexo, 0) % len(lista)]
-            usados[sexo] = usados.get(sexo, 0) + 1
-            agenda.append({"nhc": nhc, "hora": f"{9 + (i * 20) // 60:02d}:{(i * 20) % 60:02d}",
-                           "nombre": nombre, "edad": ficha["edad"], "sexo": sexo})
-        return agenda
+            resumen = aplicar(self.con, m)
+            self._version += 1
+            self._ultimo_hl7 = time.monotonic()
+        self.hl7_recibidos = ([{"hora": datetime.now().strftime("%H:%M:%S"), "tipo": m.tipo,
+                                "control": m.control, "resumen": resumen, "texto": m.texto}]
+                              + self.hl7_recibidos)[:40]
+        return ack(m)
 
     def fuentes(self, filas, refs: list[str]) -> list[dict]:
         por_ref = {f.ref: f for f in filas}
@@ -159,6 +146,8 @@ class Peticion(SimpleHTTPRequestHandler):
             return self._json(200, {"modelo": self.modelo, "responde": ok})
         if partes[1:] == ["hcis", "agenda"]:
             return self._json(200, m.agenda)
+        if partes[1:] == ["hl7", "ultimos"]:
+            return self._json(200, m.hl7_recibidos)
         if partes[1:3] == ["hcis", "paciente"] and len(partes) == 4:
             filas = m.filas(partes[3])
             if not filas:
@@ -219,9 +208,17 @@ def main() -> None:
     ap.add_argument("--puerto", type=int, default=8000)
     ap.add_argument("--url", default=URL, help="servidor del modelo, compatible con OpenAI")
     ap.add_argument("--modelo", default=MODELO)
+    ap.add_argument("--datos", choices=["csv", "hl7"], default=os.environ.get("MEDICI_DATOS", "csv"),
+                    help="csv: lee los CSV; hl7: copia vacía que se llena con mensajes HL7")
+    ap.add_argument("--hl7-puerto", type=int, default=2575)
     args = ap.parse_args()
 
-    Peticion.medici = Medici()
+    Peticion.medici = Medici(args.datos)
+    if args.datos == "hl7":
+        from hl7 import escuchar
+        receptor = escuchar(args.host, args.hl7_puerto, Peticion.medici.recibir_hl7)
+        threading.Thread(target=receptor.serve_forever, daemon=True).start()
+        print(f"Receptor HL7 (MLLP) escuchando en el puerto {args.hl7_puerto}", flush=True)
     Peticion.url_modelo, Peticion.modelo = args.url, args.modelo
     servidor = ThreadingHTTPServer((args.host, args.puerto), Peticion)
     print(f"Medici listo: http://localhost:{args.puerto}  (modelo {args.modelo} en {args.url})", flush=True)

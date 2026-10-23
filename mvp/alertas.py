@@ -13,10 +13,12 @@ import json
 import sys
 from collections import Counter
 from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
 
 from paciente import ESPECIALIDADES, Fila, cargar, datos_del_paciente
 
 MAXIMO = 3
+RECIENTE = timedelta(hours=48)
 
 ACCESIBILIDAD = {
     "INTERPRETE": "Necesita intérprete",
@@ -126,6 +128,15 @@ def alertas(filas: list[Fila]) -> list[Alerta]:
         lista.append(Alerta("citas_cambiadas", 50 if len(cambios) >= 2 else 35,
             f"{_lista(partes).capitalize()} ({_lista(motivos)}).", [f.ref for f in cambios]))
 
+    # Lo que ha pasado en las últimas 48 horas (una cita anulada, un resultado que
+    # acaba de llegar por HL7) sube arriba del todo: es lo que el médico no sabe.
+    por_ref = {f.ref: f for f in filas}
+    hace_poco = datetime.now() - RECIENTE
+    for a in lista:
+        fechas = [por_ref[r].campos.get(c) for r in a.fuentes if r in por_ref for c in ("fecha", "realizada")]
+        if any(isinstance(f, datetime) and f >= hace_poco for f in fechas):
+            a.prioridad += 100
+            a.texto = "Nuevo: " + a.texto[0].lower() + a.texto[1:]
     return sorted(lista, key=lambda a: -a.prioridad)
 
 

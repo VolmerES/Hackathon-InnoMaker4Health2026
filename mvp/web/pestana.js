@@ -74,7 +74,32 @@
     raiz.querySelector(".num").textContent = "";
   }
 
+  // La tarjeta se vuelve a pedir cada pocos segundos: si llega un mensaje HL7
+  // (una cita anulada, un resultado), cambia sola y se marca un momento.
+  let tarjetaActual = "";
+  async function pintaTarjeta(nhc) {
+    const t = await pide(`/sesion/${sesion}/tarjeta`);
+    if (nhc !== nhcActual) return;
+    const clave = JSON.stringify(t);
+    if (clave === tarjetaActual) return;
+    const habiaOtra = tarjetaActual !== "";
+    tarjetaActual = clave;
+    $("#m-tarjeta").innerHTML = t.alertas.length
+      ? t.alertas.map(a => `<li class="${a.prioridad >= 75 ? "alta" : ""}"><span class="p"></span>
+          <span>${esc(a.texto)}${refs(a.fuentes)}</span></li>`).join("")
+        + (t.mas ? `<li class="mas">y ${t.mas} cosa${t.mas > 1 ? "s" : ""} más: pregunte.</li>` : "")
+      : `<li class="nada">Nada que destacar en sus datos.</li>`;
+    raiz.querySelector(".num").textContent = t.alertas.length || "";
+    if (habiaOtra) {
+      const caja = raiz.querySelector(".tarjeta");
+      caja.classList.add("cambio");
+      setTimeout(() => caja.classList.remove("cambio"), 2500);
+    }
+  }
+  setInterval(() => { if (sesion) pintaTarjeta(nhcActual).catch(() => {}); }, 4000);
+
   async function cambioDePaciente(nhc) {
+    tarjetaActual = "";
     nhcActual = nhc; sesion = null;
     const nombre = ($(SELECTOR_NOMBRE)?.textContent || "").trim();
     $("#m-nombre").textContent = nombre || (nhc ? `Paciente ${nhc}` : "Abra un paciente en HCIS");
@@ -86,14 +111,8 @@
       if (nhc !== nhcActual) return;                // el médico ya ha cambiado de paciente
       sesion = s.sesion;
       $("#m-sub").textContent = `NHC ${nhc} · ${s.edad} años · ${s.filas} registros`;
-      const t = await pide(`/sesion/${sesion}/tarjeta`);
+      await pintaTarjeta(nhc);
       if (nhc !== nhcActual) return;
-      $("#m-tarjeta").innerHTML = t.alertas.length
-        ? t.alertas.map(a => `<li class="${a.prioridad >= 75 ? "alta" : ""}"><span class="p"></span>
-            <span>${esc(a.texto)}${refs(a.fuentes)}</span></li>`).join("")
-          + (t.mas ? `<li class="mas">y ${t.mas} cosa${t.mas > 1 ? "s" : ""} más: pregunte.</li>` : "")
-        : `<li class="nada">Nada que destacar en sus datos.</li>`;
-      raiz.querySelector(".num").textContent = t.alertas.length || "";
       $("#m-chat").innerHTML = `<p class="vacio">Pregunte lo que necesite de este paciente.<br>
         Responde solo con sus datos y enseña de dónde sale cada cosa.</p>`;
       $("#m-chips").innerHTML = PREGUNTAS.map(p => `<button type="button">${esc(p)}</button>`).join("");

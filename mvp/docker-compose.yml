@@ -3,6 +3,12 @@
 #   docker compose -f mvp/docker-compose.yml up -d                                # modelo + demo
 #   docker exec medici-ollama ollama pull qwen3:8b                                # la primera vez
 #   abrir http://localhost:8000
+#
+# Con los datos llegando por HL7 (la copia empieza vacía):
+#   MEDICI_DATOS=hl7 docker compose -f mvp/docker-compose.yml up -d
+#   docker compose -f mvp/docker-compose.yml run --rm emisor --comprobar        # la historia
+#   docker compose -f mvp/docker-compose.yml run --rm emisor --evento anular    # en directo
+#   abrir http://localhost:8000/hl7.html para ver los mensajes
 #   docker compose -f mvp/docker-compose.yml run --rm prueba                      # qwen3:8b
 #   docker compose -f mvp/docker-compose.yml run --rm prueba --modelo qwen3:4b
 #
@@ -34,12 +40,24 @@ services:
       - ..:/app
     ports:
       - "8000:8000"
+      - "2575:2575"                       # receptor HL7 (MLLP), con MEDICI_DATOS=hl7
     environment:
       - MEDICI_URL=http://ollama:11434/v1
       - MEDICI_MODELO=qwen3:8b
+      - MEDICI_DATOS=${MEDICI_DATOS:-csv}
     entrypoint: ["python", "mvp/servidor.py", "--host", "0.0.0.0"]
     depends_on:
       - ollama
+
+  emisor:                                 # hace de HCIS: manda la historia por HL7
+    build: .
+    working_dir: /app
+    volumes:
+      - ..:/app
+    entrypoint: ["python", "mvp/hl7_emisor.py", "--host", "medici", "--api", "http://medici:8000/api"]
+    depends_on:
+      - medici
+    profiles: ["hl7"]
 
   prueba:
     build: .

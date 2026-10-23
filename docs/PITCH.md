@@ -81,6 +81,9 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 > para el paciente.
 >
 > En La Princesa hay **casi medio millón de consultas externas al año**.
+>
+> Lo hemos preguntado a médicos y a los mentores: nos dicen que les sería muy
+> útil ⚠️ *(poner aquí la frase real, con el cargo y sin el nombre)*.
 
 ### 2. Medici y la demo · UI/UX · 0:45
 

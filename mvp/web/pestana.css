@@ -21,6 +21,8 @@ html.medici-abierta body{margin-right:420px}
 #medici header .x:hover{background:rgba(255,255,255,.15)}
 
 #medici .tarjeta{padding:10px 12px 8px;border-bottom:1px solid #dfe7ee;background:#fbfcfd}
+#medici .tarjeta{transition:background-color .4s}
+#medici .tarjeta.cambio{background:#fff3d6}
 #medici .tarjeta h3{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#4a5d6c}
 #medici .tarjeta ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
 #medici .tarjeta li{display:flex;gap:8px;align-items:flex-start;line-height:1.4}

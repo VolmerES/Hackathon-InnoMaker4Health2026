@@ -45,6 +45,45 @@ web/pestana.js    la pestaña: solo lee el NHC de la cinta (#c-nhc) y habla con 
 reducida, una radiografía pendiente y una derivación preferente de Primaria.
 Cada pregunta queda registrada en `resultados/registro.jsonl`.
 
+## Los datos por HL7
+
+Así se conectaría Medici en el hospital: **sin tocar la base de datos de HCIS**,
+recibiendo los mensajes HL7 v2 que HCIS ya manda por el motor de integración.
+En la demo, `hl7_emisor.py` hace de HCIS: lee los CSV y manda cada hecho como
+su mensaje. Medici arranca con la copia vacía y la va llenando.
+
+```bash
+export MEDICI_DATOS=hl7                    # la copia empieza vacía
+docker compose -f mvp/docker-compose.yml up -d
+docker compose -f mvp/docker-compose.yml run --rm --no-deps emisor --comprobar
+# en directo, con María abierta en la pantalla:
+docker compose -f mvp/docker-compose.yml run --rm --no-deps emisor --evento resultado
+docker compose -f mvp/docker-compose.yml run --rm --no-deps emisor --evento anular
+```
+
+Sin Docker: `python mvp/servidor.py --datos hl7` y `python mvp/hl7_emisor.py
+--comprobar`. Los mensajes se ven llegar en **http://localhost:8000/hl7.html**.
+
+| Hecho | Mensaje | Hecho | Mensaje |
+|---|---|---|---|
+| Paciente | `ADT^A04` | Cita reprogramada | `SIU^S13` |
+| Derivación de Primaria | `REF^I12` | Cita atendida | `SIU^S14` |
+| Cita nueva | `SIU^S12` | Cita anulada | `SIU^S15` |
+| Petición de prueba | `OMG^O19` | Cita no realizada | `SIU^S26` |
+| Resultado | `ORU^R01` | Avisos (SMS, email) | No van por HL7: se cargan de su CSV |
+
+**Comprobado el 24‑oct:**
+
+- Los 43 mensajes de los 8 pacientes de la agenda llegan todos con `ACK AA`.
+- Las 8 tarjetas y todas las filas son **idénticas** a las que salen de los
+  CSV.
+- Los dos eventos en directo salen arriba de la tarjeta con «Nuevo:».
+
+`hl7.py` es un lector, escritor y transporte MLLP mínimo, con la biblioteca
+estándar. En el hospital se usaría `hl7apy` y el perfil de mensajes que dé
+Informática ⚠️. Con `docker compose run`, poned `--no-deps`: sin él, Compose
+vuelve a crear el servidor en modo CSV si `MEDICI_DATOS` no está en la consola.
+
 ## La tarjeta «3 cosas antes de que entre»
 
 ```bash
@@ -54,7 +93,9 @@ Cada pregunta queda registrada en `resultados/registro.jsonl`.
 .venv/Scripts/python mvp/prueba_alertas.py              # 2.000 pacientes contra SQL directo
 ```
 
-Resultado del 24‑oct: **0 alertas que no cuadren** en 2.000 pacientes. Qué sale
+Resultado del 24‑oct: **0 alertas que no cuadren** en 2.000 pacientes. Lo
+ocurrido en las últimas 48 horas sube arriba con «Nuevo:», por ejemplo una cita
+que se acaba de anular o un resultado que acaba de llegar. Qué sale
 y por qué, en
 [`docs/CONTEXTO.md`](../docs/CONTEXTO.md#la-tarjeta-3-cosas-antes-de-que-entre-construida-el-24oct).
 
