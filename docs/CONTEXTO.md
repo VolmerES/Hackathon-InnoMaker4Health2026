@@ -378,6 +378,35 @@ ajustado con él acertará casi el 100 %, y esa cifra no vale nada. Lo que luce
 es la **ficha**: pruebas, antecedentes y negaciones sacadas del texto. Si se da
 una cifra de acierto, hay que decir que es sobre datos sintéticos.
 
+### Más usos de la IA local
+
+Ideas para sumar a Jano, ordenadas de más a menos recomendable para estas 24
+horas. Todas funcionan dentro del hospital y con licencias que permiten uso
+comercial (comprobadas en Hugging Face el 23‑oct).
+
+| # | Uso | Modelos | Pilar | Esfuerzo |
+|---|---|---|---|---|
+| 1 | **Instrucciones de la prueba accesibles.** La cita y la preparación («ven en ayunas») en lectura fácil, **en el idioma del paciente y en audio**, para quien necesita intérprete o tiene discapacidad visual | Generativo de la capa 2 para la lectura fácil. Traducción: `Helsinki-NLP/opus-mt-es-*` o `google/madlad400-3b-mt` (Apache 2.0). Voz: `hexgrad/Kokoro-82M` (Apache 2.0) o Piper (MIT) | Accesibilidad | Bajo |
+| 2 | **Devolución redactada.** Si faltan datos, la IA escribe al médico de cabecera la pregunta concreta | Generativo | Viabilidad | Bajo |
+| 3 | **Resumen antes de la consulta.** Derivación y resultados en tres líneas para el especialista | Generativo | Tiempo clínico | Bajo |
+| 4 | **Candidatas a e‑consulta.** Marca las derivaciones que podrían resolverse por escrito, sin visita (por ejemplo, dudas sobre una analítica), y redacta un borrador de respuesta que el especialista firma. En Cardiología, la interconsulta no presencial cerró el 54 % de los casos sin visita | Clasificador y generativo | Tiempo clínico | Medio · ⚠️ clínico |
+| 5 | **Señales de alarma.** Detecta en el texto cosas como «pérdida de peso» o «sangrado», sin negación, y avisa al especialista de que revise la prioridad | `carmen-distemist` + `negation-tagger` | Personalizada | Medio · ⚠️ MDR |
+| 6 | **Anonimizar** las derivaciones para que la Unidad de Datos pueda usarlas en investigación | `meddocan` | Viabilidad | Bajo |
+| 7 | **Dictado del informe.** El especialista dicta y se escribe solo | `openai/whisper-large-v3-turbo` (MIT) | Tiempo clínico | Alto: otro producto, fase 2 |
+
+**Evitar** `facebook/nllb-*`, que tiene licencia no comercial, y
+`BSC-LT/salamandraTA-7b-instruct`, que es GPL‑3.0.
+
+**Recomendación:**
+
+- **Sumar el 1 a la demo.** María recibe las instrucciones de su ecografía en
+  árabe y en audio. Es barato, se ve muy bien y apuntala la accesibilidad, que
+  es lo de la Fundación Pfizer.
+- **El 2 y el 3** salen casi gratis si ya hay modelo generativo.
+- **El 4 y el 5** van como una frase de fase 2 en el pitch.
+- **No meter el 7:** es otro producto y probablemente otros equipos hagan algo
+  parecido.
+
 ### Reparto del tiempo (orientativo)
 
 | Bloque | Devs | UI/UX | Biomédica |
@@ -386,6 +415,47 @@ una cifra de acierto, hay que decir que es sobre datos sintéticos.
 | 2 | Reglas de encaminado y backend. Bandeja con datos reales | Diseño final y textos (devolución al médico de cabecera, mensaje al paciente) | Protocolos de Digestivo (y de una segunda especialidad si da tiempo) |
 | 3 | Pantalla de impacto. Precalcular las fichas de la demo | Diapositivas | Cifras y guion del pitch |
 | 4 | Congelar el código. Grabar un vídeo de la demo por si falla | Ensayar | Ensayar |
+
+## Cómo funcionan las derivaciones en Madrid
+
+Según la web de la Comunidad de Madrid (Cita Sanitaria). Lo marcado con ⚠️ hay
+que confirmarlo con los mentores.
+
+1. **El médico de cabecera decide derivar.** Escribe el **parte de
+   interconsulta** (texto libre: motivo, antecedentes, pruebas hechas) y da al
+   paciente un **justificante de petición de cita** con un número.
+2. **El paciente pide la primera cita:**
+   - por internet, con la app *Cita Sanitaria Madrid* o en el quiosco del centro
+     de salud;
+   - o le llama el **Centro de Gestión de Citas** en menos de 3 días laborables.
+3. **Libre elección:** puede elegir cualquier hospital o centro de
+   especialidades con agenda abierta. **Todas las pruebas y consultas de ese
+   proceso se hacen en el centro elegido.**
+4. **La cita cae en una agenda del hospital.** Si el hospital revisa la
+   derivación y quién lo hace (admisión o el especialista), no lo dice la web ⚠️.
+   En los CSV existen `VALIDACION_DERIVACION` y los estados `EN_REVISION` y
+   `RECHAZADA`.
+5. **El día de la consulta**, el paciente lleva el parte de interconsulta y sus
+   informes. Los profesionales pueden ver la historia de Primaria con el visor
+   **HORUS**.
+6. **Las revisiones las gestiona el propio hospital.** En algunos hospitales el
+   paciente puede cambiarlas por internet. Si pierde la revisión, en la práctica
+   vuelve a su médico de cabecera para una derivación nueva. Eso es lo que
+   reflejan los CSV con «Reanudar seguimiento» ⚠️.
+7. **Lo urgente no va por aquí**, sino por Urgencias. Y en varias comunidades
+   existe la **interconsulta no presencial** (e‑consulta): el médico de cabecera
+   pregunta por escrito y el especialista responde sin ver al paciente.
+
+**Lo que significa para Jano:**
+
+- **Entre la cita y la primera consulta pasan semanas.** Esa espera es el hueco
+  para hacer las pruebas antes.
+- **Jano lee el parte de interconsulta cuando la cita llega al hospital.** Hay
+  que preguntar a Informática cómo llega: si electrónico, por HORUS o en papel ⚠️.
+- **Con la libre elección, cada hospital solo ve a quien lo ha elegido**, y las
+  pruebas se hacen allí mismo. Encaja: Jano funciona en el hospital que recibe.
+- **La vuelta directa tras perder una revisión depende solo del hospital**, que
+  es quien gestiona las revisiones. No hay que cambiar nada en Primaria.
 
 ## Cómo usar los datos
 
@@ -644,6 +714,8 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 ## Fuentes
 
 - [Fundación Pfizer · Innomakers4Health](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health)
+- [Comunidad de Madrid · Cita Sanitaria](https://www.comunidad.madrid/salud/cita-sanitaria) · [Libre elección](https://www.comunidad.madrid/salud/libre-eleccion-sanitaria)
+- [Evaluación de la interconsulta virtual por Primaria](https://www.elsevier.es/es-revista-atencion-primaria-27-articulo-evaluacion-interconsulta-virtual-por-profesionales-S0212656723002512) · [Interconsulta digital en Cardiología (Univadis)](https://www.univadis.es/viewarticle/interconsulta-digital-resolver-m%C3%A1s-casos-sin-desplazar-2026a10010jk) · [e‑consulta en Neurología](https://www.elsevier.es/en-revista-neurology-perspectives-17-articulo-electronic-consultation-e-consultation-between-primary-S2667049623000017)
 - [La Princesa · premios Best in Class en IA 2026](https://www.comunidad.madrid/hospital/laprincesa/noticia/hospital-publico-princesa-obtiene-dos-premios-primera-edicion-best-in-class-inteligencia-artificial)
 - [IIS‑Princesa · Unidad de Apoyo a la Innovación](https://www.iis-princesa.org/innovacion/unidad-innovacion/)
 - [Roche · humanización en La Princesa](https://www.roche.es/historias/humanizacion-hospitales/hospital-universitario-princesa-madrid)
