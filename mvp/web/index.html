@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HCIS · Consultas externas</title>
+<style>
+/* Réplica sencilla de HCIS para los pacientes de los CSV sintéticos, con el
+   estilo de demo/web/hcis.html. Hace de «HCIS»: no sabe nada de Medici. */
+:root{--verde:#009b6b;--gris:#ececec;--borde:#c6c6c6;--rojo:#cc0000;--azul:#1a4fa0}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--gris);color:#000;font:12px/1.3 Verdana,Tahoma,Arial,sans-serif}
+button{font:inherit;color:inherit}
+.app{display:grid;grid-template-rows:auto auto 1fr;height:100vh}
+.cinta{background:#fff;padding:3px 8px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-weight:bold;border-bottom:1px solid #ddd;min-height:22px}
+.cinta .epi{color:#2a6ebb}
+.cinta .fin{margin-left:auto;font-weight:normal;font-size:11px;color:#555}
+.iconos{background:#fff;border-bottom:1px solid var(--borde);padding:2px 6px;display:flex;gap:5px}
+.iconos .i{width:19px;height:18px;border-radius:2px}
+.iconos .sep{width:1px;height:18px;background:#bbb;margin:0 4px}
+.marco{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:0}
+.izq{background:#fff;border-right:1px solid var(--borde);overflow:auto}
+.verde{background:var(--verde);color:#fff;font-weight:bold;padding:5px 9px}
+.cita{display:flex;gap:8px;width:100%;background:none;border:0;border-bottom:1px solid #eee;padding:7px 9px;text-align:left;cursor:pointer}
+.cita:hover{background:#eef7f3}
+.cita[aria-current="true"]{background:#d6ece3}
+.cita .h{font-weight:bold;color:#2a6ebb;flex:0 0 auto}
+.cita small{display:block;color:#666}
+.der{display:flex;flex-direction:column;min-height:0}
+.pest{display:flex;gap:3px;padding:3px 6px 0}
+.pest span{background:#fff;border:1px solid var(--borde);border-bottom:0;border-radius:10px 10px 0 0;padding:5px 16px;color:var(--azul);text-decoration:underline}
+.pest span.sel{color:#000;text-decoration:none;font-weight:bold}
+.hoja{flex:1;min-height:0;overflow:auto;background:#fff;border-top:1px solid var(--borde);padding:8px 12px 16px}
+.titulo{font-weight:bold;font-size:13px;margin:4px 0 12px}
+fieldset{border:1px solid #d7d7d7;border-radius:9px;margin:0 0 12px;padding:8px 12px 10px}
+legend{padding:0 6px;font-size:11.5px;color:#333}
+legend b{color:var(--verde)}
+.fila{display:flex;gap:10px;padding:3px 0;border-bottom:1px solid #f1f1f1;font:11.5px/1.45 "Courier New",monospace}
+.fila:last-child{border-bottom:0}
+.fila .r{color:#999;flex:0 0 32px}
+.vacia{color:#888;font-style:italic}
+.aviso{background:#fff8e1;border:1px solid #e8d48a;padding:6px 9px;margin-bottom:10px;font-size:11px;color:#6b5a1e}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="cinta">
+    <span class="nhc" id="c-nhc"></span>
+    <span id="c-nombre"></span>
+    <span id="c-datos"></span>
+    <span>Episodio: <span class="epi">CEX · 24/10/2026</span></span>
+    <span class="fin">HCIS · Consultas externas · réplica con datos sintéticos</span>
+  </div>
+  <div class="iconos">
+    <span class="i" style="background:#b7c9e2"></span><span class="i" style="background:#9fd3a8"></span>
+    <span class="sep"></span><span class="i" style="background:#e8dcc0"></span><span class="i" style="background:#cfd9e8"></span>
+    <span class="sep"></span><span class="i" style="background:#f6e08a"></span><span class="i" style="background:#a9d9b4"></span>
+  </div>
+  <div class="marco">
+    <aside class="izq">
+      <div class="verde">Agenda de hoy</div>
+      <div id="agenda"></div>
+    </aside>
+    <section class="der">
+      <div class="pest"><span class="sel">Historia Clínica</span><span>Consulta</span><span>Pedidos Recientes</span><span>Prescripción</span></div>
+      <div class="hoja" id="hoja"><p class="vacia">Elija un paciente de la agenda.</p></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $ = s => document.querySelector(s);
+const SECCIONES = [
+  ["PACIENTES", "Datos del paciente"], ["DERIVACIONES_AP", "Derivaciones de Atención Primaria"],
+  ["CITAS", "Citas"], ["MOVIMIENTOS_CITAS", "Cambios y cierres de citas"],
+  ["PRUEBAS", "Pruebas"], ["COMUNICACIONES", "Avisos al paciente"]];
+let agenda = [];
+
+async function abrePaciente(p){
+  document.querySelectorAll(".cita").forEach(b => b.setAttribute("aria-current", String(b.dataset.nhc === p.nhc)));
+  $("#c-nhc").textContent = p.nhc;
+  $("#c-nombre").textContent = p.nombre.toUpperCase();
+  $("#c-datos").textContent = `${p.sexo === "F" ? "Mujer" : "Varón"}, ${p.edad} años`;
+  $("#hoja").innerHTML = `<p class="vacia">Cargando…</p>`;
+  const r = await fetch(`/api/hcis/paciente/${encodeURIComponent(p.nhc)}`).then(r => r.json());
+  $("#hoja").innerHTML = `<div class="titulo">HISTORIA CLÍNICA · ${esc(p.nombre)} · ${r.filas.length} registros</div>
+    <div class="aviso">Nombre inventado para la demo. Los datos son de los CSV sintéticos del reto.</div>` +
+    SECCIONES.map(([tabla, titulo]) => {
+      const filas = r.filas.filter(f => f.tabla === tabla);
+      return `<fieldset><legend><b>▲</b> ${titulo} (${filas.length})</legend>${filas.length
+        ? filas.map(f => `<div class="fila"><span class="r">${f.ref}</span><span>${esc(f.texto)}</span></div>`).join("")
+        : `<div class="vacia">Sin registros</div>`}</fieldset>`;
+    }).join("");
+}
+
+(async () => {
+  agenda = await fetch("/api/hcis/agenda").then(r => r.json());
+  $("#agenda").innerHTML = agenda.map(p => `<button class="cita" data-nhc="${p.nhc}">
+    <span class="h">${p.hora}</span><span>${esc(p.nombre)}<small>${p.nhc} · ${p.edad} años</small></span></button>`).join("");
+  $("#agenda").onclick = e => { const b = e.target.closest(".cita"); if (b) abrePaciente(agenda.find(p => p.nhc === b.dataset.nhc)); };
+})();
+</script>
+
+<!-- Medici: en el hospital lo pondría la extensión del navegador; aquí, estas dos líneas -->
+<link rel="stylesheet" href="pestana.css">
+<script src="pestana.js"></script>
+</body>
+</html>

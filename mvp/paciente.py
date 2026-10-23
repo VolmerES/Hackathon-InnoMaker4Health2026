@@ -135,6 +135,19 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         {"canal": a[2], "fecha": a[4], "resultado": a[5]})
         for a in avisos])
 
+    # Una tabla vacía también es un dato: si no se dice, el modelo rellena el hueco
+    # con lo que tiene (preguntado por pruebas, contestaba con citas).
+    vacias = {
+        "DERIVACIONES_AP": ("D", "No hay derivaciones de Primaria registradas para este paciente."),
+        "CITAS": ("C", "No hay citas registradas para este paciente."),
+        "MOVIMIENTOS_CITAS": ("M", "No hay citas reprogramadas, anuladas ni cerradas sin atender."),
+        "PRUEBAS": ("P", "No hay pruebas registradas para este paciente: ni pedidas, ni pendientes, ni hechas."),
+        "COMUNICACIONES": ("A", "No hay avisos enviados a este paciente."),
+    }
+    hay = {f.tabla for f in filas}
+    for tabla, (prefijo, texto) in vacias.items():
+        if filas and tabla not in hay:
+            filas.append(Fila(f"{prefijo}0", tabla, "", texto, {"vacia": True}))
     return filas
 
 

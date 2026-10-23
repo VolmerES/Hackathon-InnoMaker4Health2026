@@ -15,7 +15,8 @@ pregunte, con la fuente de cada dato y con IA local. Nada sale del hospital.
 | ✅ **Construido y medido** | **Tarjeta «3 cosas antes de que entre»:** alertas por reglas, sin IA, cada una con su fuente. Contrastadas con SQL directo en 2.000 pacientes: 0 errores | [La tarjeta](#la-tarjeta-3-cosas-antes-de-que-entre-construida-el-24oct) |
 | ✅ **Construido** (Daniel) | Réplicas de HCIS y SELENE con dos historias sintéticas y un agente con respuestas **precalculadas** | [`demo/`](../demo/README.md) |
 | 🟡 **Propuesto, pendiente del equipo** | Medici como **pestaña dentro de HCIS**; infraestructura (1 Mac mini M6 para el piloto, 2 × DGX Spark para todo el hospital); datos por HL7 | [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo) · [Infraestructura](#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo) |
-| ⬜ **Falta para la demo** | El servidor (FastAPI, 3 llamadas) y la pestaña con la tarjeta y el chat sobre `demo/web/hcis.html` | [El MVP en 24 h](#cómo-construirlo-propuesta-pendiente-del-equipo) |
+| ✅ **Construido** | **La demo:** réplica de HCIS con la agenda del día y la **pestaña Medici** (tarjeta + chat + fuentes). La pestaña solo lee el NHC de la cinta, como lo haría la extensión. `docker compose up` y `http://localhost:8000` | [`mvp/README.md`](../mvp/README.md#la-demo-hcis-con-la-pestaña-medici) |
+| ⬜ **Falta para la demo** | Los datos por HL7 (emisor y receptor), el vídeo de respaldo y ensayar | [HCIS y HL7](#cómo-se-conecta-medici-al-hospital-hcis-y-hl7) |
 | 📍 **Hoja de ruta** | Preparar la consulta antes, escriba, escribir en HCIS, texto libre de las historias… | [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
 
 **Preguntar a los mentores hoy ⚠️:**

@@ -16,6 +16,35 @@ resultados/       el detalle de cada prueba (no se sube: lleva filas de los CSV)
 Solo usa la biblioteca estándar y `duckdb`. Los CSV tienen que estar en `data/`.
 Los datos se leen con SQL sobre los CSV; HL7 todavía no se usa.
 
+## La demo: HCIS con la pestaña Medici
+
+```bash
+docker compose -f mvp/docker-compose.yml up -d            # modelo + servidor
+# o sin Docker, con Ollama en marcha:
+.venv/Scripts/python mvp/servidor.py
+```
+
+Abrir **http://localhost:8000**. Es una réplica de HCIS con la agenda del día
+(8 pacientes de los CSV con nombres inventados). Al abrir un paciente, la
+pestaña Medici de la derecha:
+
+1. lee el NHC de la cinta del paciente, como haría la extensión del navegador;
+2. abre una sesión atada a ese paciente;
+3. enseña la tarjeta «antes de que entre» y deja preguntar.
+
+Cada dato lleva un botón con su fuente (`P1`, `M2`…). Al pulsarlo se ve la
+fila tal cual. Si el modelo no responde, la tarjeta sigue funcionando.
+
+```text
+servidor.py       API (sesión, tarjeta, pregunta) y la réplica de HCIS; solo biblioteca estándar
+web/index.html    la réplica de HCIS: no sabe nada de Medici
+web/pestana.js    la pestaña: solo lee el NHC de la cinta (#c-nhc) y habla con la API
+```
+
+**María Alonso**, la primera de la agenda, es la del guion. Tiene movilidad
+reducida, una radiografía pendiente y una derivación preferente de Primaria.
+Cada pregunta queda registrada en `resultados/registro.jsonl`.
+
 ## La tarjeta «3 cosas antes de que entre»
 
 ```bash

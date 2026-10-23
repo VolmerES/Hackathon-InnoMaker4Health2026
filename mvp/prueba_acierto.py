@@ -163,14 +163,14 @@ def esperado(caso: dict, filas) -> dict:
         valor = re.search(r"Contacto preferido: (\w+)", filas[0].texto).group(1)
         return {"refs": ["F1"], "claves": [CLAVES_CONTACTO[valor]], "texto": valor}
     if t == "motivo":
-        der = [f for f in filas if f.tabla == "DERIVACIONES_AP"]
+        der = [f for f in filas if f.tabla == "DERIVACIONES_AP" and not f.campos.get("vacia")]
         motivos = [re.search(r"Motivo: ([^.]+)\.", f.texto).group(1) for f in der]
         # Vale el motivo («Revisión») o lo que cuenta el médico en las observaciones.
         palabras = {p for f in der for p in re.findall(r"[a-z]{6,}", normal(f.texto))} - GENERICAS
         return {"refs": [f.ref for f in der], "claves": [normal(m.split()[-1]) for m in motivos],
                 "palabras": sorted(palabras), "texto": " / ".join(motivos)}
     if t == "cambios":
-        mov = [f for f in filas if f.tabla == "MOVIMIENTOS_CITAS"]
+        mov = [f for f in filas if f.tabla == "MOVIMIENTOS_CITAS" and not f.campos.get("vacia")]
         motivos = [re.search(r"Motivo: ([^.]+)\.", f.texto).group(1) for f in mov]
         return {"refs": [f.ref for f in mov], "claves": [_clave_motivo(m) for m in motivos],
                 "hay_anulacion": any("fue anulada" in f.texto for f in mov),

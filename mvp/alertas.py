@@ -55,7 +55,7 @@ def _lista(partes: list[str]) -> str:
 
 def alertas(filas: list[Fila]) -> list[Alerta]:
     """Todas las alertas del paciente, de más a menos importante."""
-    de = {t: [f for f in filas if f.tabla == t] for t in
+    de = {t: [f for f in filas if f.tabla == t and not f.campos.get("vacia")] for t in
           ("PACIENTES", "DERIVACIONES_AP", "CITAS", "MOVIMIENTOS_CITAS", "PRUEBAS", "COMUNICACIONES")}
     servicio_de = {f.ref: ESPECIALIDADES.get(f.campos["especialidad"], "otro servicio") for f in de["CITAS"]}
     lista: list[Alerta] = []
