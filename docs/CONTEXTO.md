@@ -725,6 +725,47 @@ Es el expediente **A/SER‑000964/2026** de la Consejería de Digitalización
   piloto (la integración HL7 con Informática y la formación) también cuestan, y
   hay que estimarlos ⚠️.
 
+### Cuánto cuesta un escriba comercial frente a Jano
+
+**Los escribas comerciales se pagan por médico y por mes.** Casi ninguno publica
+precios. Las cifras son de comparadores de terceros y del mercado de EE. UU. ⚠️:
+
+| Producto | Precio por médico y mes |
+|---|---|
+| Heidi (plan Clinician, EE. UU.) | ~110 $ (publicado) |
+| Nabla (Pro) | ~119 $ (estimado) |
+| Abridge (empresas) | ~208 $ (estimado) |
+| Ambience | ~233–267 $ (estimado) |
+| Dragon Copilot (con la historia clínica integrada) | ~400–700 $, cifra antigua. Microsoft lo abarató en mayo de 2026 |
+| **Rango típico para hospitales** | **~300–500 $** |
+
+**En La Princesa,** suponiendo que **300 médicos** pasan consulta (de ~558 en
+plantilla) ⚠️:
+
+| | Al año |
+|---|---|
+| Escriba barato (110 $) | ~400.000 $ |
+| Escriba de empresa (208 $) | ~750.000 $ |
+| Escriba de gama alta (600 $) | ~2,2 M$ |
+| **Jano entero**: 3 Spark amortizados en 4 años (~3.500 €), luz (~1.000 €) y una licencia anual de hospital (~50.000 €, hipótesis nuestra ⚠️) | **~55.000 €** |
+
+- **Por médico:** unos **15 € al mes** con Jano, frente a **110–600 $** de un
+  escriba.
+- **Y Jano hace más que escribir:** lee las derivaciones, responde a preguntas
+  sobre el historial y cierra la consulta.
+
+**Con cuidado:**
+
+- Los precios de los escribas son **estimaciones de terceros en EE. UU.**; en
+  España se negocian por volumen.
+- **Los escribas comerciales llevan años de producto y Jano es un piloto.** Si
+  el jurado pregunta por la calidad, la respuesta es el mes en paralelo midiendo
+  el acierto, no prometer que somos igual de buenos.
+- **La integración HL7 y la formación del piloto** cuestan aparte y hay que
+  estimarlas ⚠️.
+- **La licencia de 50.000 € es una hipótesis** del modelo de negocio. Se paga con
+  unas 700 revisiones evitadas, el 5 % del escenario del pitch.
+
 ### Aprende el vocabulario de los médicos
 
 1. **Glosario por servicio (MVP).** Un fichero con siglas, fármacos y
@@ -1097,3 +1138,4 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - Hardware: [LMSYS · review del DGX Spark](https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark) · [Foro NVIDIA · subida de precio del Spark](https://forums.developer.nvidia.com/t/dgx-spark-price-increase/361640) · [Kipmion · Spark Founders Edition EU](https://kipmion.com/producto/dgx-spark-founders-edition-eu) · [TidBITS · Mac mini M6](https://tidbits.com/2026/08/25/m6-and-m5-ultra-debut-in-updated-mac-mini-and-mac-studio/) · [PromptQuorum · Whisper en Apple Silicon](https://www.promptquorum.com/local-llms/apple-silicon-whisper-metal-benchmark)
 - La Princesa: [plantilla orgánica (abr‑2024)](https://comunidad.madrid/sites/default/files/doc/sanidad/rrhh/rrhh-plantillas_organicas-estatutarios-h._la_princesa.pdf) · [70 aniversario, más de 2.600 profesionales](https://www.comunidad.madrid/file/498221/download)
 - Lo que ya existe: [Infanta Elena · IA en las derivaciones de Digestivo (AEG 2021)](https://www.elsevier.es/es-revista-gastroenterologia-hepatologia-14-congresos-24-reunion-anual-asociacion-espanola-gastroenterologia-134-sesion-neurogastroenterologia-y-motilidad-6428-comunicacion-puede-la-inteligencia-artificial-mejorar-77422-pdf) · [Asturias · IA en dermatología con Legit.Health](https://elreferente.es/startups/asturias-incorpora-ia-en-atencion-primaria-con-legit-health/) · [Docman10X · lectura de cartas en Primaria (Reino Unido)](https://htworld.co.uk/?p=2297)
+- Precios de escribas: [Microsoft · Dragon Copilot baja de precio (mayo 2026)](https://www.schneider.im/lu/microsoft-dragon-copilot-price-decrease-licensing-changes/) · [Commure · Nabla, precio y funciones](https://www.commure.com/blog-scribe/nabla-ai-review) · [Dupple · herramientas de documentación clínica 2026](https://dupple.com/learn/best-ai-clinical-documentation-tools) · [Plaud · Ambience](https://www.plaud.ai/blogs/articles/ambience-healthcare-review) · [Healee · cuentas de los escribas](https://blog.healee.com/the-review-tax-honest-math-on-ambient-ai-scribes-in-a-virtual-practice/)

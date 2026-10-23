@@ -242,6 +242,11 @@ para la demo.
 - **«¿Quién paga y cuánto?»** El hospital, con una licencia anual pequeña. Por
   ejemplo, 50.000 € al año se pagarían con unas 700 revisiones evitadas, el 5 %
   del escenario.
+  - **Con el equipo incluido:** unos 55.000 € al año para todo el hospital,
+    unos **15 € por médico al mes**.
+  - **Un escriba comercial** cuesta entre **110 y 600 $ por médico al mes**,
+    según estimaciones de terceros en EE. UU. ⚠️.
+  - **Y Jano no solo escribe.**
 - **«¿Competencia?» / «¿Esto no existe ya?»** Cada pieza existe por separado:
   - escribas en la nube;
   - chat con la historia clínica;
