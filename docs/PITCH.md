@@ -66,7 +66,8 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 
 > Entra un paciente. Antes de mirarle a la cara, su médico tiene que averiguar
 > quién es: qué le pidió su médico de cabecera, qué pruebas tiene, si ya vino
-> antes, si faltó a alguna cita. Y eso está repartido en varias pantallas ⚠️.
+> antes, si faltó a alguna cita. Lo tiene todo en HORUS, pero tiene que abrir
+> los informes y leerlos uno a uno ⚠️.
 >
 > En un estudio con cien millones de consultas, el médico pasaba **cinco minutos
 > por paciente solo revisando la historia clínica**. Cinco minutos que no son

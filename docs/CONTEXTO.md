@@ -547,6 +547,43 @@ gestionado por Quirónsalud
 
 Si La Princesa ya lo tiene, hay que saberlo antes del pitch, no durante.
 
+## HORUS: el visor que junta la historia del paciente
+
+**Qué es:** el visor web de historia clínica del SERMAS, para profesionales.
+Sirve para ver la información de un paciente **de cualquier centro de la
+Comunidad**, sin importar dónde esté guardada.
+
+- **Qué enseña:**
+  - la historia de Primaria (AP‑Madrid);
+  - los informes de los distintos especialistas y hospitales;
+  - las citas pendientes y las solicitudes de interconsulta;
+  - según una fuente de 2013, también episodios, diagnósticos, medicación y
+    analíticas.
+- **Cómo funciona:** **no guarda una copia.** Se conecta en línea a los sistemas
+  donde está cada historia (AP‑Madrid, el HCIS de cada hospital…) y lo muestra
+  junto, sin duplicar datos. Identifica al paciente por su código regional.
+- **No es** Mi Carpeta de Salud, que es el portal del paciente.
+- Las fuentes son oficiales pero algunas son antiguas: hay que confirmar con los
+  mentores qué enseña hoy ⚠️.
+
+**Qué significa para Jano:**
+
+- **HORUS es justo lo que el médico tiene que leer.** Junta todos los informes,
+  pero **hay que abrirlos y leerlos uno a uno**. Son los minutos que Jano quiere
+  ahorrar.
+- **La frase:** *«HORUS te enseña todos los papeles del paciente; Jano te los
+  lee y te contesta.»*
+- **Sería la mejor fuente de datos para Jano**, porque ya junta Primaria y
+  hospitales. Pero es de la Consejería, no del hospital: conectarse a él
+  requiere el permiso de la Dirección General de Salud Digital, y eso es más
+  lento que hacerlo con Informática de La Princesa.
+- **Propuesta:** en el piloto, solo los datos del propio hospital (HCIS). HORUS,
+  en la hoja de ruta.
+- **Preguntas para los mentores ⚠️:**
+  - ¿Los especialistas abren HORUS antes de cada paciente?
+  - ¿Cuánto tardan?
+  - ¿Qué buscan?
+
 ## Cómo se conecta Jano al hospital: HCIS y HL7
 
 > **Propuesta, pendiente de Informática.** El chatbot necesita leer los datos del
@@ -1237,3 +1274,4 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - Precios de escribas: [Microsoft · Dragon Copilot baja de precio (mayo 2026)](https://www.schneider.im/lu/microsoft-dragon-copilot-price-decrease-licensing-changes/) · [Commure · Nabla, precio y funciones](https://www.commure.com/blog-scribe/nabla-ai-review) · [Dupple · herramientas de documentación clínica 2026](https://dupple.com/learn/best-ai-clinical-documentation-tools) · [Plaud · Ambience](https://www.plaud.ai/blogs/articles/ambience-healthcare-review) · [Healee · cuentas de los escribas](https://blog.healee.com/the-review-tax-honest-math-on-ambient-ai-scribes-in-a-virtual-practice/)
 - Resúmenes previos a la visita: [Commure · pre-visit summaries](https://www.commure.com/blog/pre-visit-summaries-what-are-they-why-they-matter-and-how-ai-is-changing-pre-charting) · [Navina](https://tooldirectory.ai/tools/navina) · [Epic · AI Charting](https://www.healthcareitnews.com/news/epics-ai-charting-tool-now-available-ehr-clients) · [AAFP · herramientas para revisar historias](https://www.aafp.org/practice-operations/administrative-simplification/chart-review/technologies-chart-review-burden)
 - Tiempo en la historia clínica: [Overhage y McCallie, Annals of Internal Medicine 2020 (resumen en Fierce Healthcare)](https://www.fiercehealthcare.com/practices/for-each-patient-visit-physicians-spend-about-16-minutes-ehrs-study-finds) · [Healio](https://www.healio.com/news/primary-care/20200113/physicians-spend-16-minutes-using-ehr-for-each-patient-encounter)
+- HORUS: [Comunidad de Madrid · Libre elección (qué ve el profesional)](https://www.comunidad.madrid/salud/libre-eleccion-sanitaria) · [Plataformas informáticas del SERMAS](https://www.vence.es/auxiliar-administrativo-sermas/temario/tema-26) · [iSanidad · premio a HORUS](https://isanidad.com/32259/premio-a-la-comunidad-de-madrid-por-la-plataforma-horus-que-auna-datos-clinicos-de-los-pacientes-y-se-pueden-consultar-en-cualquier-lugar/) · [El Médico Interactivo (2013)](https://elmedicointeractivo.com/principal-ventaja-horus-posibilidad-conocer-informacion-previa-pacientes-hayan-sido-atendidos-cualquier-centro-sermas-20130617132816023000/)
