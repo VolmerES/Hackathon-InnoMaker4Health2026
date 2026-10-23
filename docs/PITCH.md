@@ -224,16 +224,13 @@ para la demo.
 - **«Ya vamos a tener un escriba.»** Perfecto: Jano recibe su nota por HL7 y
   hace todo lo que viene antes y después. Y si el escriba manda el audio a la
   nube, Jano trae uno que no saca nada del hospital.
-- **«La Comunidad ya ha comprado un escriba.»** Sí: 1,74 M€ con IVA, solo para
-  **Primaria** y **en nube pública** (BOCM, 16‑mar‑2026). Nosotros cubrimos lo
-  que se queda fuera:
-  - **el hospital**;
-  - **dentro de casa**, sin nube;
-  - con un equipo que **se compra una vez**.
-
-  Además, sus derivaciones llegarán mejor escritas, y Jano las lee mejor. *No
-  compararlo como «lo mismo por menos»: ese contrato incluye integración y
-  formación para toda Primaria.*
+- **«La Comunidad ya ha comprado un escriba.»** Sí, a T‑Systems, por 1,13 M€
+  con IVA (BOCM, 7‑ago‑2026). Es **solo para Primaria** y va **en nube
+  pública**: solo la nube estaba presupuestada en 400.000 € para tres meses.
+  Ese escriba **escribe** la derivación en Primaria; **Jano la lee** en el
+  hospital y prepara la consulta. Somos el paso siguiente, dentro de casa y con
+  un equipo que se compra una vez. *No decir «lo mismo por menos»: casi 1 M€ de
+  ese contrato son servicios de integración y despliegue.*
 - **«¿Y la protección de datos?»** No sale nada del hospital. Además, un modelo
   del BSC anonimiza el texto antes de guardar ningún registro.
 

@@ -668,7 +668,7 @@ GPU. El software es el mismo.
 ### Dónde se ejecuta el escriba
 
 - **Los escribas comerciales** (Dragon Copilot, Abridge, Nabla…) mandan el audio
-  de la consulta **a la nube**. El que licita la Consejería **también va en la nube
+  de la consulta **a la nube**. El de la Consejería (T‑Systems) **también va en la nube
   pública** (ver más abajo). Del de Quirónsalud no sabemos dónde corre ⚠️.
 - **El escriba de Jano** corre en el mismo equipo de Jano:
   1. el micrófono de la consulta envía el audio por la red interna;
@@ -680,50 +680,104 @@ GPU. El software es el mismo.
 - **Si el hospital ya tiene un escriba en la nube**, Jano recibe su nota por HL7 y
   hace igualmente los trámites.
 
-### El escriba que compra la Comunidad de Madrid: en la nube y 1,74 M€
+### El escriba que compra la Comunidad de Madrid (T‑Systems, en la nube)
 
-Es el expediente **A/SER‑000964/2026** de la Consejería de Digitalización
-([BOCM 16‑mar‑2026](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF),
-[TED 154988‑2026](https://ted.europa.eu/es/notice/154988-2026/pdf)).
+Es el expediente **A/SER‑000964/2026** de la Consejería de Digitalización y la
+Dirección General de Salud Digital. Hemos leído el anuncio, la memoria
+económica, el pliego técnico y la formalización.
+
+**El contrato:**
 
 | | |
 |---|---|
-| Objeto | Transcripción de voz e informes estructurados en las consultas de los **centros de Atención Primaria**. Incluye la integración con APMadrid, automatizar trámites, indicadores, formación y soporte |
-| **Dónde corre** | **En la nube pública.** El contratista tiene que suministrar «la infraestructura y las soluciones de **nube pública** necesarias» |
-| **Valor estimado** | **1.441.600 €** sin IVA |
-| **Presupuesto de licitación** | **1.744.336 €** con IVA |
-| Duración | **3 meses**, del 1 de abril al 30 de junio de 2026, sin prórroga |
-| Financiación | Fondos europeos NextGenerationEU (PRTR C11.I03.P14.S13) |
-| Cómo se adjudica | **Precio, 70 puntos.** Solución técnica 14, planificación 8, transferencia 4, formación 4 |
-| A quién se adjudicó | No consta en lo que hemos leído ⚠️ |
-| Cuántos profesionales cubre | Está en el pliego técnico, que no hemos leído ⚠️ |
+| **Adjudicado a** | **T‑Systems ITC Iberia**, el 14‑jul‑2026, entre 7 ofertas |
+| **Importe adjudicado** | **933.557 € + IVA = 1.129.604 €**. El presupuesto de licitación era de 1.744.336 € |
+| Duración | 3 meses, sin prórroga. Se formalizó en julio, así que **seguramente está en marcha ahora** ⚠️ |
+| Antecedente | Escala a toda la Primaria un **piloto anterior**. Hubo una licitación en 2025 (12 meses, 1,81 M€) que se desistió en agosto de 2025 ⚠️ |
+| Financiación | Fondos europeos NextGenerationEU. El hito del plan de recuperación vence en el segundo trimestre de 2026 |
+| Tamaño | **Hasta 2.500 micrófonos** en las consultas de Primaria |
+| **Dónde corre** | **En la nube pública:** la herramienta LLM, el reconocimiento de voz, la base de datos y la infraestructura |
 
-**Por qué es un punto fuerte para Jano:**
+**Cómo se reparte el presupuesto de licitación** (memoria económica, sin IVA):
 
-1. **Es nube, y Jano es local.** La Comunidad ha elegido que el audio de las
-   consultas de Primaria vaya a la nube pública. Jano demuestra que se puede
-   hacer **sin que salga nada del hospital**, que es lo que prefiere el director
-   de La Princesa.
-2. **No cubre el hospital.** El contrato es solo para Primaria. Las **consultas
-   externas del hospital** se quedan fuera, y ese es el hueco de Jano.
-3. **Se suman, no compiten.** Ese escriba automatiza las derivaciones en
-   APMadrid, así que llegarán al hospital mejor redactadas. **Jano las lee
-   mejor.** Primaria escribe y el hospital prepara la consulta.
-4. **El coste de la nube no se acaba con el contrato.** Son 3 meses de
-   implantación. Lo que cueste mantener la nube después no aparece en el anuncio
-   ⚠️. Con Jano, el hardware se paga una sola vez.
+| Partida | Importe |
+|---|---|
+| **Nube durante 3 meses** | **400.000 €** |
+| · Reconocimiento de voz | 184.014 € |
+| · LLM | 85.200 € |
+| · Aplicaciones y base de datos | 66.000 € |
+| · Entornos de desarrollo y preproducción | 35.712 € |
+| · Infraestructura | 29.074 € |
+| Gastos generales y beneficio de la nube | 48.000 € |
+| **Servicios:** 40 personas y 18.000 horas, de ellas 24 analistas‑programadores | **993.600 €** |
+| **Total** | **1.441.600 €** (con IVA, 1.744.336 €) |
 
-**Cómo compararlo sin que nos lo tumben:**
+**Qué tiene que hacer su IA** (pliego técnico, apartados 4 y 5):
 
-- **No es comparable uno a uno.** Esos 1,74 M€ pagan integración, formación y
-  soporte para toda la Atención Primaria de Madrid. Los 4.700 € de un Spark o
-  los ~14.000 € de tres son **solo el equipo**.
-- **La comparación honesta:** *«La Comunidad ha invertido 1,7 millones en un
-  escriba en la nube para Primaria. Lo que falta es el hospital, y nosotros lo
-  proponemos dentro del hospital, con un equipo que se compra una vez.»*
-- **Nunca decir** «lo hacemos por el 1 % de lo que cuesta». Los servicios del
-  piloto (la integración HL7 con Informática y la formación) también cuestan, y
-  hay que estimarlos ⚠️.
+- **Transcribir en tiempo real** la consulta de Primaria.
+- **Sacar un informe estructurado** con la información clínica relevante, con
+  terminología médica, abreviaturas y nombres de fármacos.
+- **Supervisión humana:** el médico revisa y edita el informe antes de que
+  entre en la historia clínica.
+- **Tenerlo listo antes de que el paciente salga** de la consulta.
+- **Varios idiomas:** transcribir y traducir conversaciones, como mínimo en
+  castellano.
+- **Borrar** la grabación y la transcripción cuando el médico aprueba el
+  informe.
+- **Automatizar trámites en APMadrid:** recetas, bajas y **derivaciones**.
+- **Integración nativa dentro de APMadrid**, que hace T‑Systems por su cuenta.
+- **Que se pueda cambiar de LLM** sin parar el servicio.
+- **Indicadores:** operatividad, tiempo de consulta y satisfacción.
+- **Formación** de los profesionales y soporte.
+- **Un estudio de lo que costará mantenerlo funcionando:** cómputo,
+  mantenimiento, personal y consumo eléctrico. **Ese coste no está pagado** en
+  este contrato.
+- **Cumplir el Reglamento europeo de IA:** clasificarlo por riesgo y, si hace
+  falta, el marcado CE.
+
+**Qué hace Jano que su IA no hace:**
+
+| | Escriba de la Comunidad (T‑Systems) | Jano |
+|---|---|---|
+| Dónde trabaja | **Primaria**, dentro de APMadrid | **Hospital**: consultas externas, con HCIS y HL7 |
+| La derivación | **La crea** en Primaria | **La lee al llegar al hospital y prepara la consulta**: pruebas antes de la primera visita, revisión directa o devolución si falta algo |
+| Preguntar al historial | No está en el pliego | «Pregúntale a Jano», con la fuente de cada dato |
+| La vuelta a Primaria | No | Redacta qué hacer y qué pruebas no repetir |
+| El paciente | Traduce la conversación | Le da las instrucciones de su prueba en lectura fácil, en su idioma y en audio |
+| Dónde corren los datos | **Nube pública** | **Dentro del hospital** |
+| Coste | Nube presupuestada en **400.000 € por 3 meses**; lo que cueste después no está pagado | Equipo de compra única: **4.700 € el Spark** |
+| Dependencia | Integración a medida en APMadrid hecha por T‑Systems | HL7 estándar: vale para cualquier hospital y cualquier escriba |
+
+**Lo que su IA hace y Jano no** (decirlo si preguntan):
+
+- Escriba en tiempo real con 2.500 micrófonos ya desplegados.
+- Recetas y bajas.
+- Integración nativa en la historia de Primaria.
+
+**Jano no compite con ella: va justo después.** Su IA escribe la derivación en
+Primaria y Jano la lee en el hospital. Si sus derivaciones llegan mejor
+estructuradas, Jano acierta más.
+
+**Comparaciones que aguantan:**
+
+- ✅ *«Solo la nube del escriba de Primaria estaba presupuestada en 400.000 €
+  para tres meses, y lo que cueste mantenerla después no estaba pagado. Jano
+  corre en un equipo que se compra una vez.»*
+- ✅ *«El propio contrato pide un estudio de cuánto costará mantenerlo. A la
+  Consejería le preocupa el coste de seguir; con Jano ese coste se conoce desde
+  el primer día.»*
+- ❌ *«Pagan 1,1 millones por tres meses de uso.»* Es falso: casi 1 M€ son
+  servicios (40 personas para integrarlo y desplegarlo).
+- ❌ *«Lo mismo por el 1 %.»* No hace lo mismo y no cubre lo mismo.
+
+**Fuentes:**
+
+- [Formalización (BOCM 7‑ago‑2026)](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/08/07/BOCM-20260807-17.PDF)
+- [Memoria económica](http://contratos-publicos.comunidad.madrid/medias/02-meconomicatranscripciondevoz19022026fdaanonimizadopdf/download)
+- [Pliego técnico](http://contratos-publicos.comunidad.madrid/medias/03-ppttranscripciondevoz19022026fdoanonimizadopdf/download)
+- [Ficha del contrato en el portal](https://contratos-publicos.comunidad.madrid/contrato-publico/print/pdf/node/295221)
+- [Licitación (BOCM 16‑mar‑2026)](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF)
+- [TED 154988‑2026](https://ted.europa.eu/es/notice/154988-2026/pdf)
 
 ### Cuánto cuesta un escriba comercial frente a Jano
 
