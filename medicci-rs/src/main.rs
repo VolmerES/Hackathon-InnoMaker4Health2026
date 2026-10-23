@@ -7,11 +7,17 @@
 //!
 //!     medicci                       # abre con la base de al lado
 //!     medicci --db ruta.db --paciente 417
+//!     medicci --servidor http://localhost:8000 --paciente P0129798
+//!
+//! Con --servidor, la burbuja es la otra cara del servidor de Medici: la
+//! tarjeta «antes de que entre» y las respuestas de la IA local llegan de allí.
+//! Si el servidor no responde, sigue sola con su base.
 
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
 mod datos;
 mod lector;
+mod servidor;
 
 use datos::{CampoFicha, Datos, Hecho, Paciente};
 use eframe::egui;
@@ -19,6 +25,7 @@ use egui::emath::{easing, TSTransform};
 use egui::{pos2, vec2, Align, Color32, FontFamily, FontId, Layout, Pos2, Rect, RichText,
            Rounding, Sense, Shape, Stroke, UiBuilder, Vec2};
 use lector::{Lector, Respuesta};
+use servidor::{Llega, Servidor};
 use std::path::PathBuf;
 
 // medidas, en puntos
@@ -109,6 +116,30 @@ struct Medicci {
     resumen_t: f32,
     resumen_pos: Option<Pos2>,
     pendiente: Option<String>,      // un tema pulsado en el resumen
+    // conectada al servidor de Medici (con --servidor)
+    red: Option<Servidor>,
+    sesion: Option<String>,
+    filas: i64,
+    pedidos: Vec<Pedido>,           // se mandan en update(), que es donde hay contexto
+    esperando: bool,                // el último mensaje es «Buscando…»
+    tarjeta_vista: Option<Vec<String>>,
+    refresco: f64,
+}
+
+/// Lo que la burbuja le pide al servidor.
+enum Pedido {
+    Abrir(String),
+    Preguntar(String),
+    Tarjeta,
+}
+
+/// Quita las referencias del texto («[C3]»): ya van debajo, como fuentes.
+fn sin_referencias(t: &str) -> String {
+    regex::Regex::new(r"\s*\[[A-Z]\d+\]").map(|re| re.replace_all(t, "").to_string()).unwrap_or_else(|_| t.into())
+}
+
+fn recorta(t: &str, max: usize) -> String {
+    if t.chars().count() <= max { t.to_string() } else { t.chars().take(max).collect::<String>() + "…" }
 }
 
 fn trazo(ancho: f32, color: Color32) -> Stroke {
@@ -160,7 +191,7 @@ fn ventana(desplegada: bool) -> Vec2 {
 }
 
 impl Medicci {
-    fn nuevo(datos: Datos, inicial: Option<String>) -> Self {
+    fn nuevo(datos: Datos, inicial: Option<String>, red: Option<Servidor>) -> Self {
         let mut app = Self {
             usuario: std::env::var("USER").or_else(|_| std::env::var("USERNAME"))
                 .unwrap_or_else(|_| "desconocido".into()),
@@ -183,6 +214,13 @@ impl Medicci {
             resumen_t: 0.0,
             resumen_pos: None,
             pendiente: None,
+            red,
+            sesion: None,
+            filas: 0,
+            pedidos: Vec::new(),
+            esperando: false,
+            tarjeta_vista: None,
+            refresco: 0.0,
         };
         app.saludo();
         if let Some(id) = inicial {
@@ -193,14 +231,25 @@ impl Medicci {
 
     fn saludo(&mut self) {
         self.hilo.clear();
-        self.hilo.push(Mensaje::suyo(vec![Parte::Texto(
+        self.hilo.push(Mensaje::suyo(vec![Parte::Texto(if self.red.is_some() {
+            "Escriba arriba el NHC del paciente y le digo lo que hay que saber antes de que entre."
+        } else {
             "Escriba arriba el número o el ID del paciente y leo su historia antes de que entre."
-                .into())]));
+        }.into())]));
     }
 
     fn abre_paciente(&mut self, ident: &str) {
         let ident = ident.trim();
         if ident.is_empty() {
+            return;
+        }
+        if self.red.is_some() {
+            let nhc = servidor::nhc(ident);
+            self.hilo.clear();
+            self.hilo.push(Mensaje::suyo(vec![Parte::Rotulo(format!("Abriendo {}…", nhc))]));
+            self.pedidos.push(Pedido::Abrir(nhc));
+            self.ident.clear();
+            self.bajar = true;
             return;
         }
         match self.datos.paciente(ident) {
@@ -239,12 +288,25 @@ impl Medicci {
         self.paciente = None;
         self.lector = None;
         self.resumen = None;
+        self.sesion = None;
+        self.tarjeta_vista = None;
+        self.esperando = false;
         self.entrada.clear();
         self.saludo();
         self.foco_ident = true;
     }
 
     fn abre_resumen(&mut self) {
+        if self.red.is_some() {
+            // conectada, RESUMEN vuelve a enseñar la tarjeta «antes de que entre»
+            if self.sesion.is_some() {
+                self.hilo.push(Mensaje::mio("RESUMEN"));
+                self.tarjeta_vista = None;
+                self.pedidos.push(Pedido::Tarjeta);
+                self.bajar = true;
+            }
+            return;
+        }
         let (Some(p), Some(l)) = (self.paciente.clone(), self.lector.as_ref()) else { return };
         self.datos.registra(&self.usuario, &p.id, "generar_resumen", None);
         let documentos = l.docs.len();
@@ -289,6 +351,14 @@ impl Medicci {
         }
         self.hilo.push(Mensaje::mio(pregunta.clone()));
         self.bajar = true;
+        if self.red.is_some() {
+            if self.sesion.is_some() && !self.esperando {
+                self.hilo.push(Mensaje::suyo(vec![Parte::Rotulo("Buscando en sus datos…".into())]));
+                self.esperando = true;
+                self.pedidos.push(Pedido::Preguntar(pregunta));
+            }
+            return;
+        }
         let (Some(p), Some(l)) = (self.paciente.clone(), self.lector.as_ref()) else { return };
         let total = l.docs.len();
         let mut partes = Vec::new();
@@ -335,6 +405,109 @@ impl Medicci {
             }
         }
         self.hilo.push(Mensaje::suyo(partes));
+    }
+
+    /// Manda lo pedido al servidor y recoge lo que ha llegado. Cada 5 s
+    /// vuelve a pedir la tarjeta: si llega algo por HL7, la burbuja lo dice.
+    fn red(&mut self, ctx: &egui::Context) {
+        let pedidos = std::mem::take(&mut self.pedidos);
+        let llegadas: Vec<Llega> = {
+            let Some(red) = &self.red else { return };
+            for p in pedidos {
+                match (p, &self.sesion) {
+                    (Pedido::Abrir(nhc), _) => red.abrir(ctx, nhc),
+                    (Pedido::Preguntar(t), Some(s)) => red.preguntar(ctx, s.clone(), t),
+                    (Pedido::Tarjeta, Some(s)) => red.tarjeta(ctx, s.clone()),
+                    _ => {}
+                }
+            }
+            if let Some(s) = &self.sesion {
+                let ahora = ctx.input(|i| i.time);
+                if ahora - self.refresco > 5.0 {
+                    self.refresco = ahora;
+                    red.tarjeta(ctx, s.clone());
+                }
+                ctx.request_repaint_after(std::time::Duration::from_secs(5));
+            }
+            red.rx.try_iter().collect()
+        };
+        for llegada in llegadas {
+            self.recibe(llegada);
+        }
+    }
+
+    fn recibe(&mut self, llegada: Llega) {
+        match llegada {
+            Llega::Sesion { sesion, nhc, edad, filas } => {
+                self.sesion = Some(sesion);
+                self.filas = filas;
+                self.paciente = Some(Paciente { id: nhc, edad, ..Default::default() });
+                self.hilo.clear();
+                self.tarjeta_vista = None;
+                self.foco_chat = true;
+            }
+            Llega::Tarjeta { sesion, alertas, mas } => {
+                if self.sesion.as_deref() != Some(sesion.as_str()) {
+                    return;                                 // es de otro paciente
+                }
+                let textos: Vec<String> = alertas.iter().map(|a| a.texto.clone()).collect();
+                if self.tarjeta_vista.as_ref() == Some(&textos) {
+                    return;                                 // no ha cambiado nada
+                }
+                let novedad = self.tarjeta_vista.is_some();
+                self.tarjeta_vista = Some(textos);
+                let mut partes = vec![Parte::Rotulo(if novedad {
+                    "Ha llegado algo nuevo de HCIS:".into()
+                } else {
+                    "ANTES DE QUE ENTRE".into()
+                })];
+                if alertas.is_empty() {
+                    partes.push(Parte::Texto("Nada que destacar en sus datos.".into()));
+                }
+                for a in alertas {
+                    partes.push(if a.alta || a.texto.starts_with("Nuevo:") {
+                        Parte::Aviso(a.texto)
+                    } else {
+                        Parte::Texto(a.texto)
+                    });
+                    for f in a.fuentes {
+                        partes.push(Parte::Fuente(format!("¹ {} · {}", f.referencia, recorta(&f.texto, 110))));
+                    }
+                }
+                if mas > 0 {
+                    partes.push(Parte::Rotulo(format!("y {} más: pregunte.", mas)));
+                }
+                if !novedad {
+                    partes.push(Parte::Texto("Pregunte lo que necesite: contesta solo con sus datos \
+                                              y cita la fila de la que sale.".into()));
+                }
+                self.hilo.push(Mensaje::suyo(partes));
+                self.bajar = true;
+            }
+            Llega::Respuesta { texto, consta, fuentes, segundos } => {
+                if std::mem::take(&mut self.esperando) {
+                    self.hilo.pop();
+                }
+                let limpio = sin_referencias(&texto);
+                let mut partes = vec![if consta { Parte::Texto(limpio) } else { Parte::Aviso(limpio) }];
+                let n = fuentes.len();
+                for f in fuentes {
+                    partes.push(Parte::Fuente(format!("¹ {} · {}", f.referencia, recorta(&f.texto, 110))));
+                }
+                partes.push(Parte::Rotulo(format!("{} · {:.1} s · IA local",
+                    match n { 0 => "sin fuentes".into(), 1 => "1 fuente".into(), _ => format!("{} fuentes", n) },
+                    segundos)));
+                self.hilo.push(Mensaje::suyo(partes));
+                self.bajar = true;
+            }
+            Llega::Fallo(e) => {
+                if std::mem::take(&mut self.esperando) {
+                    self.hilo.pop();
+                }
+                self.hilo.push(Mensaje::suyo(vec![Parte::Aviso(e)]));
+                self.bajar = true;
+            }
+        }
     }
 }
 
@@ -593,7 +766,8 @@ impl Medicci {
         p.text(pos2(c.x + 28.0, caja.center().y - 9.0), egui::Align2::LEFT_CENTER, "Medicci",
                FontId::new(16.0, negrita()), BLANCO);
         p.text(pos2(c.x + 28.0, caja.center().y + 10.0), egui::Align2::LEFT_CENTER,
-               "Lee la historia y cita la fuente", FontId::proportional(11.5), VERDE_CLARO);
+               if self.red.is_some() { "IA local · conectada a Medici" } else { "Lee la historia y cita la fuente" },
+               FontId::proportional(11.5), VERDE_CLARO);
 
         let b = Rect::from_center_size(pos2(caja.right() - 28.0, caja.center().y), Vec2::splat(30.0));
         let r = ui.interact(b, egui::Id::new("plegar"), Sense::click())
@@ -621,8 +795,12 @@ impl Medicci {
                 ui.vertical(|ui| {
                     ui.spacing_mut().item_spacing.y = 0.0;
                     ui.label(texto(&pac.id, 13.5, TINTA, true));
-                    ui.label(texto(format!("{} años · {} · {} documentos", pac.edad, pac.sexo, docs),
-                                   11.0, GRIS, false));
+                    let detalle = if self.red.is_some() {
+                        format!("{} años · {} registros", pac.edad, self.filas)
+                    } else {
+                        format!("{} años · {} · {} documentos", pac.edad, pac.sexo, docs)
+                    };
+                    ui.label(texto(detalle, 11.0, GRIS, false));
                 });
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     cambiar = enlace(ui, "Cambiar");
@@ -636,8 +814,9 @@ impl Medicci {
                     .rounding(8.0)
                     .inner_margin(egui::Margin::symmetric(10.0, 6.0))
                     .show(ui, |ui| {
+                        let pista = if self.red.is_some() { "NHC, p. ej. P0129798" } else { "Número o ID, p. ej. 417" };
                         let campo = egui::TextEdit::singleline(&mut self.ident)
-                            .hint_text(texto("Número o ID, p. ej. 417", 13.0, GRIS, false))
+                            .hint_text(texto(pista, 13.0, GRIS, false))
                             .frame(false)
                             .text_color(TINTA)
                             .font(FontId::proportional(13.0))
@@ -1164,6 +1343,7 @@ impl eframe::App for Medicci {
             ctx.request_repaint();
         }
 
+        self.red(ctx);
         self.coloca(ctx);
         self.burbuja(ctx);
         if self.t > 0.0 {
@@ -1189,18 +1369,28 @@ fn main() -> eframe::Result<()> {
 
     let mut ruta: Option<PathBuf> = None;
     let mut paciente: Option<String> = None;
+    let mut url = std::env::var("MEDICI_SERVIDOR").ok();
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
             "--db" => ruta = args.next().map(PathBuf::from),
             "--paciente" => paciente = args.next(),
+            "--servidor" => url = args.next(),
             "--ayuda" | "-h" | "--help" => {
-                println!("medicci [--db ruta.db] [--paciente 417]");
+                println!("medicci [--db ruta.db] [--paciente 417] [--servidor http://localhost:8000]");
                 return Ok(());
             }
             _ => {}
         }
     }
+    // Conectada si el servidor responde; si no, sola con su base, como siempre.
+    let red = url.map(|u| Servidor::nuevo(&u)).filter(|s| {
+        let si = s.responde();
+        if !si {
+            eprintln!("El servidor de Medici no responde: la burbuja usa su base local.");
+        }
+        si
+    });
     let ruta = ruta.unwrap_or_else(|| {
         let exe = std::env::current_exe().unwrap_or_default();
         for base in [exe.parent().map(|p| p.to_path_buf()), std::env::current_dir().ok()]
@@ -1242,7 +1432,7 @@ fn main() -> eframe::Result<()> {
         Box::new(move |cc| {
             fuentes(&cc.egui_ctx);
             estilo(&cc.egui_ctx);
-            Ok(Box::new(Medicci::nuevo(datos, paciente)))
+            Ok(Box::new(Medicci::nuevo(datos, paciente, red)))
         }),
     )
 }

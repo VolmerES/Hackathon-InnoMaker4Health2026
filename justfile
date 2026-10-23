@@ -3,6 +3,7 @@
 #   just              revisa que todo está instalado, pasa las pruebas y abre la burbuja
 #   just abre 417     igual, con el paciente ya cargado
 #   just rapido       abre sin revisar (cuando ya se ha revisado)
+#   just conectada    abre conectada al servidor de Medici (mvp/servidor.py en marcha)
 #   just compila      deja el ejecutable listo y dice dónde está
 #
 # Para tener just: cargo install just
@@ -27,6 +28,10 @@ abre paciente="": revisa
 # Abre sin revisar
 rapido paciente="":
     cargo run --release --quiet -- {{ if paciente == "" { "" } else { "--paciente " + paciente } }}
+
+# Abre conectada al servidor de Medici: tarjeta e IA local (opcional: NHC, p. ej. 129798)
+conectada paciente="" servidor="http://localhost:8000":
+    cargo run --release --quiet -- --servidor {{ servidor }} {{ if paciente == "" { "" } else { "--paciente " + paciente } }}
 
 # Compila el ejecutable
 compila: revisa

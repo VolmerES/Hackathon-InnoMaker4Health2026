@@ -39,6 +39,36 @@ qué instalar. En Wayland una ventana
 no puede colocarse sola en la esquina, así que Medicci arranca sobre XWayland
 por su cuenta.
 
+## Conectada al servidor de Medici
+
+La burbuja es la otra cara del servidor de `mvp/`. La pestaña web va encima de
+HCIS cuando HCIS está en el navegador; la burbuja, cuando no lo está, porque se
+pone encima de cualquier ventana. Las dos hablan con la misma API.
+
+```
+docker compose -f mvp/docker-compose.yml up -d     # el servidor (o python mvp/servidor.py)
+just conectada                                      # la burbuja, conectada
+just conectada 129798                               # con María ya abierta
+```
+
+Conectada, al escribir el NHC (`129798` vale por `P0129798`):
+
+1. abre una sesión atada a ese paciente;
+2. enseña la tarjeta **«antes de que entre»**, cada dato con su fila de origen;
+3. las preguntas las contesta la IA local del servidor, citando las filas.
+
+Cada 5 segundos vuelve a pedir la tarjeta: si llega algo por HL7 (una cita
+anulada, un resultado), la burbuja lo dice. **RESUMEN** vuelve a enseñar la
+tarjeta. Si el servidor no responde al arrancar, la burbuja sigue sola con su
+base, como siempre.
+
+| Fichero | Qué hace |
+|---|---|
+| `src/servidor.rs` | El cliente de la API (`ureq`), en otro hilo para no congelar la burbuja |
+
+Prueba contra un servidor en marcha:
+`MEDICI_SERVIDOR=http://localhost:8000 cargo test --release -- --ignored`.
+
 ## Sin just
 
 ```

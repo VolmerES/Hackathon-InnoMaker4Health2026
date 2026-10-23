@@ -41,6 +41,9 @@ web/index.html    la réplica de HCIS: no sabe nada de Medici
 web/pestana.js    la pestaña: solo lee el NHC de la cinta (#c-nhc) y habla con la API
 ```
 
+**La misma API la usa la burbuja de escritorio** de `medicci-rs/` (`just
+conectada`), para cuando HCIS no va en el navegador.
+
 **María Alonso**, la primera de la agenda, es la del guion. Tiene movilidad
 reducida, una radiografía pendiente y una derivación preferente de Primaria.
 Cada pregunta queda registrada en `resultados/registro.jsonl`.
