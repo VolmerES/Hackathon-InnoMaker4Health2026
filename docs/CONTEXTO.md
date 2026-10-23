@@ -201,10 +201,10 @@ mínimo de las dos cosas:
   hora). Quien no puede pasa a una persona. **La automatización libera tiempo
   justo para atender a quien más lo necesita.**
 
-### La idea decidida: Jano, el copiloto del médico
+### La idea decidida: Medici, el copiloto del médico
 
-**Decidido por el equipo el 23‑oct por la noche:** *Jano es un chatbot copiloto.
-El médico le pregunta en el ordenador por el paciente y Jano le contesta.*
+**Decidido por el equipo el 23‑oct por la noche:** *Medici es un chatbot copiloto.
+El médico le pregunta en el ordenador por el paciente y Medici le contesta.*
 
 **También decidido:**
 
@@ -212,8 +212,15 @@ El médico le pregunta en el ordenador por el paciente y Jano le contesta.*
 - Se vende para **Mac mini M6** o **NVIDIA DGX Spark**.
 - Tiene que ser **muy fácil de instalar**.
 
-**Nombre provisional: Jano.** Alternativas: *Umbral*, *Prima*. Hay que decidirlo
-en equipo.
+**Nombre: Medici** (decidido el 23‑oct). Como los Medici de Florencia, que
+impulsaron el Renacimiento. Y en italiano *medici* significa «médicos»: es
+una herramienta para ellos.
+
+> ⚠️ Ya existe una app estadounidense llamada **Medici** (Austin, Texas):
+> mensajería entre pacientes y médicos, con unos 22–24 M$ de financiación
+> entre 2018 y 2020. Para el hackathon no importa. Si Wayra quiere seguir
+> adelante, hay que mirar la marca en la OEPM y la EUIPO antes de registrar
+> nada.
 
 **Qué hay de cada cosa** (para no vender lo que no existe):
 
@@ -239,7 +246,7 @@ paciente** en la historia clínica.
 - La Princesa tiene **473.257 consultas externas al año** (memoria de 2022).
 
 **¿Es innovador?** *Con honestidad: el chat con la historia clínica ya existe*
-(Epic, Dragon Copilot de Microsoft, Navina en EE. UU.). Jano solo se puede
+(Epic, Dragon Copilot de Microsoft, Navina en EE. UU.). Medici solo se puede
 diferenciar si lo demuestra:
 
 - **Local**, en un equipo de unos 4.700 €, sin nube y sin cuota por médico.
@@ -335,7 +342,7 @@ El reparto lo decide el equipo.
 
 ## Hoja de ruta (ideas, no decididas)
 
-Son ideas que salieron el 23‑oct y **no forman parte de Jano** mientras el
+Son ideas que salieron el 23‑oct y **no forman parte de Medici** mientras el
 equipo no lo decida. En el pitch, como mucho, van en una diapositiva de «lo
 siguiente».
 
@@ -384,7 +391,7 @@ clínicas en español. Para el pitch: *IA pública española, dentro del hospita
 | [`Qwen/Qwen3-4B`](https://huggingface.co/Qwen/Qwen3-4B) o [`Qwen3-8B`](https://huggingface.co/Qwen/Qwen3-8B) | Apache 2.0 | Los más descargados. Buenos dando JSON con formato fijo |
 
 Necesita una GPU de gama media o CPU de noche: 250 derivaciones caben de sobra.
-Si no hay presupuesto para GPU, **Jano funciona sin esta capa**.
+Si no hay presupuesto para GPU, **Medici funciona sin esta capa**.
 
 **Evitar:** `google/medgemma-*` (acceso restringido y licencia propia) y
 `mistralai/Ministral-8B-Instruct-2410` (licencia no comercial). Los dos chocan
@@ -404,7 +411,7 @@ una cifra de acierto, hay que decir que es sobre datos sintéticos.
 
 ### Más usos de la IA local (hoja de ruta)
 
-Ideas para sumar a Jano, ordenadas de más a menos recomendable para estas 24
+Ideas para sumar a Medici, ordenadas de más a menos recomendable para estas 24
 horas. Todas funcionan dentro del hospital y con licencias que permiten uso
 comercial (comprobadas en Hugging Face el 23‑oct).
 
@@ -470,24 +477,24 @@ que confirmarlo con los mentores.
    existe la **interconsulta no presencial** (e‑consulta): el médico de cabecera
    pregunta por escrito y el especialista responde sin ver al paciente.
 
-**Lo que significa para Jano:**
+**Lo que significa para Medici:**
 
 - **Entre la cita y la primera consulta pasan semanas.** Esa espera es el hueco
   para hacer las pruebas antes.
-- **Jano lee el parte de interconsulta cuando la cita llega al hospital.** Hay
+- **Medici lee el parte de interconsulta cuando la cita llega al hospital.** Hay
   que preguntar a Informática cómo llega: si electrónico, por HORUS o en papel ⚠️.
 - **Con la libre elección, cada hospital solo ve a quien lo ha elegido**, y las
-  pruebas se hacen allí mismo. Encaja: Jano funciona en el hospital que recibe.
+  pruebas se hacen allí mismo. Encaja: Medici funciona en el hospital que recibe.
 - **La vuelta directa tras perder una revisión depende solo del hospital**, que
   es quien gestiona las revisiones. No hay que cambiar nada en Primaria.
 
-## Lo que ya existe y qué aporta Jano
+## Lo que ya existe y qué aporta Medici
 
 > Escrito para la idea anterior (preparar la consulta y adelantar pruebas). Para
 > el chatbot, la competencia directa es Epic, Dragon Copilot y Navina (ver
-> [La idea decidida](#la-idea-decidida-jano-el-copiloto-del-médico)).
+> [La idea decidida](#la-idea-decidida-medici-el-copiloto-del-médico)).
 
-**Comprobado el 23‑oct.** Ninguna pieza de Jano es nueva por separado. Lo que no
+**Comprobado el 23‑oct.** Ninguna pieza de Medici es nueva por separado. Lo que no
 hemos encontrado es **todo junto**: en el hospital, local y para cualquier
 hospital. *No decir nunca «no existe nada parecido».*
 
@@ -501,7 +508,7 @@ gestionado por Quirónsalud
 - **Qué hacía:** desde julio de 2018, «un algoritmo de IA» leía los partes de
   derivación de Primaria, sacaba los motivos más frecuentes y les asignaba **un
   protocolo de pruebas antes de la primera consulta**. Es justo el núcleo de
-  Jano.
+  Medici.
 - **Resultados:** primer semestre de 2019 frente al primero de 2018.
 
   | Indicador | Con el algoritmo (2019) | 2018 | Vía normal (2019) |
@@ -521,9 +528,9 @@ gestionado por Quirónsalud
 
 1. **Es evidencia en Madrid y en Digestivo**, el mismo servicio de nuestro
    piloto. Las sucesivas por primera bajaron un 24 %.
-2. **Su problema fue el alcance**, y Jano lo resuelve: lee **el 100 %** de las
+2. **Su problema fue el alcance**, y Medici lo resuelve: lee **el 100 %** de las
    derivaciones al llegar al hospital, sin que nadie cambie su forma de derivar.
-3. **Era de 2018, de un servicio y de un hospital.** Jano usa IA de 2026, cubre
+3. **Era de 2018, de un servicio y de un hospital.** Medici usa IA de 2026, cubre
    todo el circuito (antes, durante y después), se conecta por HL7 y se instala
    en cualquier hospital.
 4. **El director de La Princesa puede conocerlo.** Mejor citarlo nosotros que
@@ -531,14 +538,14 @@ gestionado por Quirónsalud
 
 ### El resto del mercado
 
-| Pieza | ¿Existe? | Quién | Qué aporta Jano |
+| Pieza | ¿Existe? | Quién | Qué aporta Medici |
 |---|---|---|---|
 | Leer derivaciones y adelantar pruebas | Sí, en un servicio | Infanta Elena (2018); en Asturias, IA para priorizar dermatología en Primaria (Legit.Health) | El 100 % de las derivaciones, varios servicios, local e instalable |
 | Leer cartas y avisar solo de lo que requiere acción | Sí, en Primaria (Reino Unido) | Docman10X (Advanced + U. de Manchester) | Lo mismo, pero del lado del hospital |
 | Escriba en consulta | Sí, mucho | Dragon Copilot, Abridge, Nabla, Scribe de Quirón, el contrato de Madrid (nube) | Local, y conectado a lo que pasa antes y después |
 | Chat con la historia clínica | Sí | Epic, Dragon Copilot | Local, con la fuente de cada dato y limitado a los pacientes del médico |
 | Alta resolución, e‑consulta | Sí, hechas a mano | Muchos hospitales | Automatizarlo sin añadir personal |
-| **Todo junto, local, por HL7 y fácil de instalar** | **No lo hemos encontrado** | — | **Jano** |
+| **Todo junto, local, por HL7 y fácil de instalar** | **No lo hemos encontrado** | — | **Medici** |
 
 **Lo primero mañana con los mentores ⚠️:**
 
@@ -566,14 +573,14 @@ Comunidad**, sin importar dónde esté guardada.
 - Las fuentes son oficiales pero algunas son antiguas: hay que confirmar con los
   mentores qué enseña hoy ⚠️.
 
-**Qué significa para Jano:**
+**Qué significa para Medici:**
 
 - **HORUS es justo lo que el médico tiene que leer.** Junta todos los informes,
-  pero **hay que abrirlos y leerlos uno a uno**. Son los minutos que Jano quiere
+  pero **hay que abrirlos y leerlos uno a uno**. Son los minutos que Medici quiere
   ahorrar.
-- **La frase:** *«HORUS te enseña todos los papeles del paciente; Jano te los
+- **La frase:** *«HORUS te enseña todos los papeles del paciente; Medici te los
   lee y te contesta.»*
-- **Sería la mejor fuente de datos para Jano**, porque ya junta Primaria y
+- **Sería la mejor fuente de datos para Medici**, porque ya junta Primaria y
   hospitales. Pero es de la Consejería, no del hospital: conectarse a él
   requiere el permiso de la Dirección General de Salud Digital, y eso es más
   lento que hacerlo con Informática de La Princesa.
@@ -584,7 +591,7 @@ Comunidad**, sin importar dónde esté guardada.
   - ¿Cuánto tardan?
   - ¿Qué buscan?
 
-## Cómo se conecta Jano al hospital: HCIS y HL7
+## Cómo se conecta Medici al hospital: HCIS y HL7
 
 > **Propuesta, pendiente de Informática.** El chatbot necesita leer los datos del
 > paciente; esta es la forma que proponemos. No está construida.
@@ -592,10 +599,10 @@ Comunidad**, sin importar dónde esté guardada.
 **Dato del equipo (23‑oct):** la historia clínica de La Princesa es **HCIS**, y
 se comunica con los demás sistemas mediante **HL7**.
 
-**Jano no toca la base de datos de HCIS.** Se conecta como cualquier otro
+**Medici no toca la base de datos de HCIS.** Se conecta como cualquier otro
 sistema del hospital: recibe los mensajes HL7 que HCIS ya envía, por el motor de
 integración del hospital, y guarda su propia copia de solo lectura. Si un día
-cambia HCIS, Jano sigue funcionando.
+cambia HCIS, Medici sigue funcionando.
 
 | Tabla de los CSV | Mensaje HL7 v2 que la alimentaría |
 |---|---|
@@ -607,11 +614,11 @@ cambia HCIS, Jano sigue funcionando.
 | COMUNICACIONES | No suele ir por HL7: es la plataforma de SMS |
 
 **Para escribir en HCIS** (citar, pedir una prueba) hace falta que HCIS acepte
-peticiones (`SRM^S01`, `OMG^O19` o FHIR). En el piloto, Jano solo lee y
+peticiones (`SRM^S01`, `OMG^O19` o FHIR). En el piloto, Medici solo lee y
 propone, y la persona confirma en HCIS. Escribir directamente es la fase 2 ⚠️.
 
 **En la demo:** un script convierte los CSV en mensajes HL7 v2 y se los envía a
-Jano por MLLP, como haría el motor de integración. Así el jurado ve que se
+Medici por MLLP, como haría el motor de integración. Así el jurado ve que se
 conecta sin tocar HCIS. Librerías: `hl7apy` o `hl7` (MIT).
 
 **Preguntas para Informática ⚠️:**
@@ -621,25 +628,25 @@ conecta sin tocar HCIS. Librerías: `hl7apy` o `hl7` (MIT).
 - Si hay FHIR.
 - Cómo llega la derivación de Primaria.
 
-### La pieza innovadora: el escriba escribe, Jano actúa
+### La pieza innovadora: el escriba escribe, Medici actúa
 
 > **Hoja de ruta, no decidido.** El chatbot no incluye nada del escriba.
 
 La Consejería ya está comprando un escriba con IA para Primaria, y Quirónsalud
 tiene «Scribe» en el Infanta Elena ([fuentes](#fuentes)). **No competimos con
-ellos: nos conectamos a ellos.** Jano recibe la nota de cualquier escriba (HL7
+ellos: nos conectamos a ellos.** Medici recibe la nota de cualquier escriba (HL7
 `MDM^T02` o FHIR `DocumentReference`), o la que el especialista escribe a mano,
 y la convierte en acciones.
 
-| Momento | Qué hace Jano | De dónde lo saca |
+| Momento | Qué hace Medici | De dónde lo saca |
 |---|---|---|
 | **Antes** | Ficha de la derivación y pruebas adelantadas | Derivación (`REF`) |
-| **Durante** | **Pregúntale a Jano**: un agente con herramientas de solo lectura sobre el historial del paciente (derivaciones, citas, faltas, pruebas, avisos, accesibilidad). Siempre enseña las filas en las que se basa, y si un dato no está responde «no consta» | Copia HL7 |
-| **Durante** | **Aviso de prueba duplicada**: el médico dice «le pido una analítica» y Jano avisa de que ya tiene una de hace tres semanas | Nota del escriba + `ORU` |
+| **Durante** | **Pregúntale a Medici**: un agente con herramientas de solo lectura sobre el historial del paciente (derivaciones, citas, faltas, pruebas, avisos, accesibilidad). Siempre enseña las filas en las que se basa, y si un dato no está responde «no consta» | Copia HL7 |
+| **Durante** | **Aviso de prueba duplicada**: el médico dice «le pido una analítica» y Medici avisa de que ya tiene una de hace tres semanas | Nota del escriba + `ORU` |
 | **Al cerrar** | **Cero clics después de la consulta**: de la nota saca la lista de trámites (pruebas, próxima cita, vuelta a Primaria). El especialista la confirma con un clic | Nota del escriba (`MDM`) |
 | **Después** | La vuelta a Primaria redactada, y la versión del paciente en lectura fácil, en su idioma y en audio | Modelos locales |
 
-**La frase del pitch:** *«El escriba escribe la consulta. Jano hace todo lo que
+**La frase del pitch:** *«El escriba escribe la consulta. Medici hace todo lo que
 viene antes y después.»*
 
 **Por qué es innovador:**
@@ -661,19 +668,19 @@ puede usar un audio grabado de antemano y pasado por `whisper-large-v3-turbo`,
 - El aviso de prueba duplicada solo informa, pero hay que confirmarlo con los
   mentores.
 
-## Dónde corre Jano: Mac mini M6 o NVIDIA DGX Spark
+## Dónde corre Medici: Mac mini M6 o NVIDIA DGX Spark
 
 > **Para el chatbot vale la columna «solo chat»:** un Spark aguanta unos
 > 400–500 médicos conectados y un M6 unos 30–50 (estimado ⚠️). Las cifras «con
 > escriba» y las subsecciones sobre escribas son contexto y hoja de ruta.
 
-**Decidido el 23‑oct:** Jano se vende para **dos equipos**, el **Mac mini M6**
+**Decidido el 23‑oct:** Medici se vende para **dos equipos**, el **Mac mini M6**
 y el **NVIDIA DGX Spark**. Tiene que instalarlo **cualquiera, sin saber
 informática**.
 
 ### Las dos versiones
 
-| | **Jano Mini** · Mac mini M6 | **Jano Spark** · NVIDIA DGX Spark |
+| | **Medici Mini** · Mac mini M6 | **Medici Spark** · NVIDIA DGX Spark |
 |---|---|---|
 | Para quién | Un servicio pequeño, un centro de especialidades o un piloto | Un servicio grande o el hospital entero |
 | Precio del equipo | Desde 899 $ (16 GB). **Recomendado 32 GB**, precio en € por confirmar ⚠️ | ~4.600–4.800 € con IVA (subió a 4.699 $ en febrero de 2026) |
@@ -725,7 +732,7 @@ segundos (~6 % del tiempo).
   hora por la mañana. Equivale a **unos 60 médicos en consulta a la vez**, el
   10–15 % de la plantilla.
 
-| Montaje | Escriba + chat | Solo Jano (lector + chat + cierre con nota escrita a mano) |
+| Montaje | Escriba + chat | Solo Medici (lector + chat + cierre con nota escrita a mano) |
 |---|---|---|
 | **1 Mac mini M6** | ~8–10 médicos: piloto pequeño | Un servicio entero |
 | **1 Spark** (piloto en Digestivo) | ~30–50 médicos | **El hospital entero** |
@@ -744,14 +751,14 @@ GPU. El software es el mismo.
 - **Los escribas comerciales** (Dragon Copilot, Abridge, Nabla…) mandan el audio
   de la consulta **a la nube**. El de la Consejería (T‑Systems) **también va en la nube
   pública** (ver más abajo). Del de Quirónsalud no sabemos dónde corre ⚠️.
-- **El escriba de Jano** corre en el mismo equipo de Jano:
+- **El escriba de Medici** corre en el mismo equipo de Medici:
   1. el micrófono de la consulta envía el audio por la red interna;
   2. Whisper lo transcribe y Qwen3 redacta la nota;
   3. la nota se envía a HCIS como `MDM^T02`.
 
   **No sale nada del hospital.**
 - **No se ejecuta en el PC de la consulta**, porque no tiene GPU.
-- **Si el hospital ya tiene un escriba en la nube**, Jano recibe su nota por HL7 y
+- **Si el hospital ya tiene un escriba en la nube**, Medici recibe su nota por HL7 y
   hace igualmente los trámites.
 
 ### El escriba que compra la Comunidad de Madrid (T‑Systems, en la nube)
@@ -809,36 +816,36 @@ económica, el pliego técnico y la formalización.
 - **Cumplir el Reglamento europeo de IA:** clasificarlo por riesgo y, si hace
   falta, el marcado CE.
 
-**Qué hace Jano que su IA no hace:**
+**Qué hace Medici que su IA no hace:**
 
-| | Escriba de la Comunidad (T‑Systems) | Jano |
+| | Escriba de la Comunidad (T‑Systems) | Medici |
 |---|---|---|
 | Dónde trabaja | **Primaria**, dentro de APMadrid | **Hospital**: consultas externas, con HCIS y HL7 |
 | La derivación | **La crea** en Primaria | **La lee al llegar al hospital y prepara la consulta**: pruebas antes de la primera visita, revisión directa o devolución si falta algo |
-| Preguntar al historial | No está en el pliego | «Pregúntale a Jano», con la fuente de cada dato |
+| Preguntar al historial | No está en el pliego | «Pregúntale a Medici», con la fuente de cada dato |
 | La vuelta a Primaria | No | Redacta qué hacer y qué pruebas no repetir |
 | El paciente | Traduce la conversación | Le da las instrucciones de su prueba en lectura fácil, en su idioma y en audio |
 | Dónde corren los datos | **Nube pública** | **Dentro del hospital** |
 | Coste | Nube presupuestada en **400.000 € por 3 meses**; lo que cueste después no está pagado | Equipo de compra única: **4.700 € el Spark** |
 | Dependencia | Integración a medida en APMadrid hecha por T‑Systems | HL7 estándar: vale para cualquier hospital y cualquier escriba |
 
-**Lo que su IA hace y Jano no** (decirlo si preguntan):
+**Lo que su IA hace y Medici no** (decirlo si preguntan):
 
 - Escriba en tiempo real con 2.500 micrófonos ya desplegados.
 - Recetas y bajas.
 - Integración nativa en la historia de Primaria.
 
-**Jano no compite con ella: va justo después.** Su IA escribe la derivación en
-Primaria y Jano la lee en el hospital. Si sus derivaciones llegan mejor
-estructuradas, Jano acierta más.
+**Medici no compite con ella: va justo después.** Su IA escribe la derivación en
+Primaria y Medici la lee en el hospital. Si sus derivaciones llegan mejor
+estructuradas, Medici acierta más.
 
 **Comparaciones que aguantan:**
 
 - ✅ *«Solo la nube del escriba de Primaria estaba presupuestada en 400.000 €
-  para tres meses, y lo que cueste mantenerla después no estaba pagado. Jano
+  para tres meses, y lo que cueste mantenerla después no estaba pagado. Medici
   corre en un equipo que se compra una vez.»*
 - ✅ *«El propio contrato pide un estudio de cuánto costará mantenerlo. A la
-  Consejería le preocupa el coste de seguir; con Jano ese coste se conoce desde
+  Consejería le preocupa el coste de seguir; con Medici ese coste se conoce desde
   el primer día.»*
 - ❌ *«Pagan 1,1 millones por tres meses de uso.»* Es falso: casi 1 M€ son
   servicios (40 personas para integrarlo y desplegarlo).
@@ -853,7 +860,7 @@ estructuradas, Jano acierta más.
 - [Licitación (BOCM 16‑mar‑2026)](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF)
 - [TED 154988‑2026](https://ted.europa.eu/es/notice/154988-2026/pdf)
 
-### Cuánto cuesta un escriba comercial frente a Jano
+### Cuánto cuesta un escriba comercial frente a Medici
 
 **Los escribas comerciales se pagan por médico y por mes.** Casi ninguno publica
 precios. Las cifras son de comparadores de terceros y del mercado de EE. UU. ⚠️:
@@ -875,18 +882,18 @@ plantilla) ⚠️:
 | Escriba barato (110 $) | ~400.000 $ |
 | Escriba de empresa (208 $) | ~750.000 $ |
 | Escriba de gama alta (600 $) | ~2,2 M$ |
-| **Jano entero**: 3 Spark amortizados en 4 años (~3.500 €), luz (~1.000 €) y una licencia anual de hospital (~50.000 €, hipótesis nuestra ⚠️) | **~55.000 €** |
+| **Medici entero**: 3 Spark amortizados en 4 años (~3.500 €), luz (~1.000 €) y una licencia anual de hospital (~50.000 €, hipótesis nuestra ⚠️) | **~55.000 €** |
 
-- **Por médico:** unos **15 € al mes** con Jano, frente a **110–600 $** de un
+- **Por médico:** unos **15 € al mes** con Medici, frente a **110–600 $** de un
   escriba.
-- **Y Jano hace más que escribir:** lee las derivaciones, responde a preguntas
+- **Y Medici hace más que escribir:** lee las derivaciones, responde a preguntas
   sobre el historial y cierra la consulta.
 
 **Con cuidado:**
 
 - Los precios de los escribas son **estimaciones de terceros en EE. UU.**; en
   España se negocian por volumen.
-- **Los escribas comerciales llevan años de producto y Jano es un piloto.** Si
+- **Los escribas comerciales llevan años de producto y Medici es un piloto.** Si
   el jurado pregunta por la calidad, la respuesta es el mes en paralelo midiendo
   el acierto, no prometer que somos igual de buenos.
 - **La integración HL7 y la formación del piloto** cuestan aparte y hay que
@@ -915,7 +922,7 @@ plantilla) ⚠️:
 4. **Fase 2:** ajuste fino (LoRA) de Whisper con audio del hospital, con
    consentimiento y aprobación de protección de datos ⚠️.
 
-**La frase:** *«Lo que Jano aprende se queda en el hospital.»* Con las
+**La frase:** *«Lo que Medici aprende se queda en el hospital.»* Con las
 correcciones de vuestros médicos no se entrena el modelo de ninguna empresa.
 
 ### Sabe quién es cada médico
@@ -928,7 +935,7 @@ correcciones de vuestros médicos no se entrena el modelo de ninguna empresa.
   sala. En los CSV es `AGENDAS.profesional_ficticio`.
 - **Para qué sirve:**
   - su glosario y su estilo de nota;
-  - «Pregúntale a Jano» solo le enseña **sus pacientes del día**;
+  - «Pregúntale a Medici» solo le enseña **sus pacientes del día**;
   - cada pregunta queda registrada con su nombre.
 - **Separar las voces** (médico, paciente, acompañante) con
   `pyannote/speaker-diarization-3.1` (MIT) queda para la fase 2.
@@ -944,7 +951,7 @@ navegador y se siguen tres pasos. Nadie del hospital toca la línea de comandos.
 **Cómo llega:**
 
 - **Opción A (la buena): el equipo llega ya preparado.** Mac mini o Spark con
-  Jano y los modelos ya instalados.
+  Medici y los modelos ya instalados.
 - **Opción B: el hospital ya tiene el equipo.** Se le pasa un instalador:
   - en el Mac, un `.pkg` con doble clic;
   - en el Spark, que trae DGX OS, basado en Ubuntu, un `.deb` o un
@@ -961,7 +968,7 @@ navegador y se siguen tres pasos. Nadie del hospital toca la línea de comandos.
    para Digestivo, Cardiología…
 3. **Usuarios.** Se conecta al directorio del hospital o se crean a mano.
 
-Al terminar, Jano se prueba solo con una derivación de ejemplo y enseña el
+Al terminar, Medici se prueba solo con una derivación de ejemplo y enseña el
 resultado.
 
 **Qué hay debajo** (el instalador lo decide solo; nadie lo ve):
@@ -970,10 +977,10 @@ resultado.
 |---|---|---|
 | Modelo de texto | Ollama (Metal) | vLLM (contenedor de NVIDIA), que aguanta muchas peticiones a la vez |
 | Transcripción | `whisper.cpp` (Metal) | `whisper.cpp` (CUDA) |
-| Jano (API + web) | Servicio de `launchd`, arranca solo | Servicio de `systemd` o Docker, arranca solo |
+| Medici (API + web) | Servicio de `launchd`, arranca solo | Servicio de `systemd` o Docker, arranca solo |
 | Perfil de modelos | Lo elige solo según la memoria: 16 GB → Qwen3‑4B, 32 GB → Qwen3‑8B | 128 GB → Qwen3‑30B‑A3B |
 
-Jano habla con los dos motores por la misma API compatible con OpenAI, así que
+Medici habla con los dos motores por la misma API compatible con OpenAI, así que
 **el código es el mismo en los dos equipos**.
 
 **Para el día a día:**
@@ -989,7 +996,7 @@ Jano habla con los dos motores por la misma API compatible con OpenAI, así que
 
 ### Qué entra en las 24 h
 
-- **Que funcione igual en los dos equipos:** Jano usa la API compatible con
+- **Que funcione igual en los dos equipos:** Medici usa la API compatible con
   OpenAI y el motor de IA se elige en un `.env`.
 - **El asistente de los tres pasos** como pantallas diseñadas por UI/UX. Se puede
   enseñar en el pitch en 15 segundos.

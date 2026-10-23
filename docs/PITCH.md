@@ -1,6 +1,6 @@
 # Pitch · 5 minutos
 
-> **Rehecho el 23‑oct por la noche para la idea decidida: Jano, el chatbot
+> **Rehecho el 23‑oct por la noche para la idea decidida: Medici, el chatbot
 > copiloto del médico.** La versión anterior, la de preparar la consulta y
 > adelantar pruebas, está en git (commit `8146b89`).
 >
@@ -17,10 +17,17 @@ personas de Pfizer. Cada uno escucha una cosa distinta (ver
 | Wayra | Un equipo de unos 4.700 €, sin cuota por médico, que vale para cualquier hospital |
 | Pfizer | IA responsable: dice de dónde saca cada dato y no se inventa nada |
 
-**Nombre provisional: Jano.** Alternativas: *Umbral* o *Prima*. Hay que decidirlo
-en equipo.
+**Nombre: Medici** (decidido el 23‑oct). Como los Medici de Florencia, que
+impulsaron el Renacimiento. Y en italiano *medici* significa «médicos»: es
+una herramienta para ellos.
 
-**La frase:** *Jano es el copiloto del médico: le preguntas por el paciente y te
+> ⚠️ Ya existe una app estadounidense llamada **Medici** (Austin, Texas):
+> mensajería entre pacientes y médicos, con unos 22–24 M$ de financiación
+> entre 2018 y 2020. Para el hackathon no importa. Si Wayra quiere seguir
+> adelante, hay que mirar la marca en la OEPM y la EUIPO antes de registrar
+> nada.
+
+**La frase:** *Medici es el copiloto del médico: le preguntas por el paciente y te
 contesta, con la fuente, sin que nada salga del hospital.*
 
 > ⚠️ **Antes de presentar, confirmar con los mentores** lo que va marcado con ⚠️.
@@ -38,7 +45,7 @@ contesta, con la fuente, sin que nada salga del hospital.*
 | Tramo | Quién | Tiempo |
 |---|---|---|
 | 1. Buscar en vez de atender | Biomédica | 0:00 – 0:45 |
-| 2. Jano y la demo | UI/UX | 0:45 – 2:30 |
+| 2. Medici y la demo | UI/UX | 0:45 – 2:30 |
 | 3. Por qué es viable | Dev 1 | 2:30 – 3:40 |
 | 4. Impacto y piloto | Dev 1 | 3:40 – 4:30 |
 | 5. Cierre | Biomédica | 4:30 – 5:00 |
@@ -47,7 +54,7 @@ El Dev 2 lleva el portátil de la demo.
 
 ## Diapositivas
 
-1. **Portada:** Jano y la frase.
+1. **Portada:** Medici y la frase.
 2. **Buscar en vez de atender:** «5 minutos por paciente revisando la historia»
    y, debajo, varias ventanas abiertas.
 3. **Demo** en directo, con el vídeo de respaldo preparado.
@@ -75,13 +82,13 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 >
 > En La Princesa hay **casi medio millón de consultas externas al año**.
 
-### 2. Jano y la demo · UI/UX · 0:45
+### 2. Medici y la demo · UI/UX · 0:45
 
-> Esto es Jano. Es el copiloto del médico. En vez de buscar, pregunta.
+> Esto es Medici. Es el copiloto del médico. En vez de buscar, pregunta.
 >
 > *(Demo, agenda del día; se elige a María.)*
 >
-> «¿Ha estado antes en Digestivo?» Jano contesta y, debajo, enseña **de dónde
+> «¿Ha estado antes en Digestivo?» Medici contesta y, debajo, enseña **de dónde
 > lo saca**: la cita de marzo, en este registro.
 >
 > «¿Qué pruebas tiene pendientes?» La ecografía, solicitada y sin hacer.
@@ -89,10 +96,10 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 > «¿Necesita algún apoyo para la consulta?» Sí: intérprete. El médico lo sabe
 > antes de que María entre.
 >
-> Y ahora una pregunta trampa: «¿Tiene alergias?» Jano contesta: **«No consta
+> Y ahora una pregunta trampa: «¿Tiene alergias?» Medici contesta: **«No consta
 > en los datos disponibles.»** No se inventa nada. Si no lo sabe, lo dice.
 >
-> **Jano solo lee. No decide nada clínico.** Y solo ve al paciente que el médico
+> **Medici solo lee. No decide nada clínico.** Y solo ve al paciente que el médico
 > tiene delante.
 
 ### 3. Por qué es viable · Dev 1 · 2:30
@@ -115,7 +122,7 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 
 ### 4. Impacto y piloto · Dev 1 · 3:40
 
-> Si Jano le ahorra al médico **un solo minuto** de búsqueda por consulta, en La
+> Si Medici le ahorra al médico **un solo minuto** de búsqueda por consulta, en La
 > Princesa son **casi 8.000 horas al año**: como **cinco especialistas más**,
 > sin contratar a nadie. Con dos minutos, diez.
 >
@@ -127,7 +134,7 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 
 ### 5. Cierre · Biomédica · 4:30
 
-> Jano es **viable**, porque cabe encima de una mesa y no saca nada del
+> Medici es **viable**, porque cabe encima de una mesa y no saca nada del
 > hospital. Es **accesible**, porque el médico sabe antes de que entre el
 > paciente si necesita intérprete o ayuda. Y es **personalizado**, porque
 > contesta sobre ese paciente y no sobre un protocolo genérico.
@@ -145,7 +152,7 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 | 4.700 € el Spark | Precio de la Founders Edition en la UE, con IVA (oct‑2026) |
 | Cientos de médicos por Spark | **Estimado** a partir del benchmark de LMSYS (8B, 32 peticiones a la vez); falta una prueba de carga ⚠️ |
 
-Si os preguntan por los CSV: **son sintéticos.** Sirven para enseñar que Jano
+Si os preguntan por los CSV: **son sintéticos.** Sirven para enseñar que Medici
 funciona con la estructura de datos del hospital, no para medir el problema.
 
 ## Lo que la demo tiene que enseñar
@@ -180,7 +187,7 @@ demo.
 - **«¿Y la protección de datos?»** Nada sale del hospital. Cada médico solo ve a
   sus pacientes y cada pregunta queda registrada con su nombre.
 - **«La Comunidad ya ha comprado un escriba.»** Es otra cosa: el escriba de
-  T‑Systems escribe la nota en Primaria. Jano responde preguntas en el
+  T‑Systems escribe la nota en Primaria. Medici responde preguntas en el
   hospital. Se pueden complementar.
 
 ### Wayra
@@ -197,7 +204,7 @@ demo.
 - **«¿Quién paga y cuánto?»** El hospital: el equipo una vez, más una licencia
   anual por hospital. El precio está por definir; hay que pactarlo en el equipo
   antes de subir.
-- **«¿Y después?»** Lo siguiente sería que Jano prepare la consulta antes de
+- **«¿Y después?»** Lo siguiente sería que Medici prepare la consulta antes de
   que llegue el paciente. Hay evidencia de que cuando la prueba ya está hecha se
   resuelven más casos en una visita (49 % frente a 22 %). Es la hoja de ruta, no
   lo que enseñamos hoy.
