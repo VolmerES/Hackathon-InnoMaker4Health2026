@@ -1,0 +1,15 @@
+# Material de la organización: los CSV y el PDF no se publican
+data/*
+!data/README.md
+
+# Hoja de mentores: lleva nombres de personas reales
+docs/briefing/3-mentores.jpeg
+
+# Entorno
+.env
+.env.*
+__pycache__/
+.venv/
+node_modules/
+.DS_Store
+Thumbs.db
