@@ -457,6 +457,78 @@ que confirmarlo con los mentores.
 - **La vuelta directa tras perder una revisión depende solo del hospital**, que
   es quien gestiona las revisiones. No hay que cambiar nada en Primaria.
 
+## Cómo se conecta Jano al hospital: HCIS y HL7
+
+**Dato del equipo (23‑oct):** la historia clínica de La Princesa es **HCIS**, y
+se comunica con los demás sistemas mediante **HL7**.
+
+**Jano no toca la base de datos de HCIS.** Se conecta como cualquier otro
+sistema del hospital: recibe los mensajes HL7 que HCIS ya envía, por el motor de
+integración del hospital, y guarda su propia copia de solo lectura. Si un día
+cambia HCIS, Jano sigue funcionando.
+
+| Tabla de los CSV | Mensaje HL7 v2 que la alimentaría |
+|---|---|
+| PACIENTES | `ADT^A04` / `A08` (alta y cambios del paciente, segmento `PID`) |
+| DERIVACIONES_AP | `REF^I12` (derivación), o como la envíe Primaria ⚠️ |
+| CITAS y MOVIMIENTOS_CITAS | `SIU^S12` nueva, `S13` reprogramada, `S14` modificada, `S15` anulada, `S26` no acudió |
+| PRUEBAS | `OMG^O19` (petición) y `ORU^R01` (resultado) |
+| Nota de la consulta | `MDM^T02` (documento clínico) |
+| COMUNICACIONES | No suele ir por HL7: es la plataforma de SMS |
+
+**Para escribir en HCIS** (citar, pedir una prueba) hace falta que HCIS acepte
+peticiones (`SRM^S01`, `OMG^O19` o FHIR). En el piloto, Jano solo lee y
+propone, y la persona confirma en HCIS. Escribir directamente es la fase 2 ⚠️.
+
+**En la demo:** un script convierte los CSV en mensajes HL7 v2 y se los envía a
+Jano por MLLP, como haría el motor de integración. Así el jurado ve que se
+conecta sin tocar HCIS. Librerías: `hl7apy` o `hl7` (MIT).
+
+**Preguntas para Informática ⚠️:**
+
+- Qué versión de HL7 usan (2.3, 2.5) y qué motor de integración tienen.
+- Qué mensajes publica ya HCIS (citas, pruebas, documentos).
+- Si hay FHIR.
+- Cómo llega la derivación de Primaria.
+
+### La pieza innovadora: el escriba escribe, Jano actúa
+
+La Consejería ya está comprando un escriba con IA para Primaria, y Quirónsalud
+tiene «Scribe» en el Infanta Elena ([fuentes](#fuentes)). **No competimos con
+ellos: nos conectamos a ellos.** Jano recibe la nota de cualquier escriba (HL7
+`MDM^T02` o FHIR `DocumentReference`), o la que el especialista escribe a mano,
+y la convierte en acciones.
+
+| Momento | Qué hace Jano | De dónde lo saca |
+|---|---|---|
+| **Antes** | Ficha de la derivación y pruebas adelantadas | Derivación (`REF`) |
+| **Durante** | **Pregúntale a Jano**: un agente con herramientas de solo lectura sobre el historial del paciente (derivaciones, citas, faltas, pruebas, avisos, accesibilidad). Siempre enseña las filas en las que se basa, y si un dato no está responde «no consta» | Copia HL7 |
+| **Durante** | **Aviso de prueba duplicada**: el médico dice «le pido una analítica» y Jano avisa de que ya tiene una de hace tres semanas | Nota del escriba + `ORU` |
+| **Al cerrar** | **Cero clics después de la consulta**: de la nota saca la lista de trámites (pruebas, próxima cita, vuelta a Primaria). El especialista la confirma con un clic | Nota del escriba (`MDM`) |
+| **Después** | La vuelta a Primaria redactada, y la versión del paciente en lectura fácil, en su idioma y en audio | Modelos locales |
+
+**La frase del pitch:** *«El escriba escribe la consulta. Jano hace todo lo que
+viene antes y después.»*
+
+**Por qué es innovador:**
+
+- Es una capa de agentes **local y abierta** sobre los estándares que ya tiene
+  el hospital (HL7).
+- **Sirve con cualquier escriba**, también con el que compre la Consejería.
+- **Cierra el circuito** de Primaria al hospital y de vuelta a Primaria.
+
+**Qué no hacemos en 24 h:** el reconocimiento de voz. En la demo, la nota del
+escriba es un texto preparado y se envía como `MDM^T02`. Si sobra tiempo, se
+puede usar un audio grabado de antemano y pasado por `whisper-large-v3-turbo`,
+**nunca en directo**.
+
+**Regulación ⚠️:**
+
+- Buscar y mostrar datos sin recomendar nada clínico no suele ser producto
+  sanitario (guía MDCG 2019‑11).
+- El aviso de prueba duplicada solo informa, pero hay que confirmarlo con los
+  mentores.
+
 ## Cómo usar los datos
 
 Los datos sirven para identificar ineficiencias, analizar procesos, detectar
@@ -727,3 +799,4 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - Ediciones anteriores: [2025](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2025) · [2024](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2024) · [2023](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2023) · [2022](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2022) · [2021](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2021) · [2020](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2020) · [2019](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2019)
 - [Wayra · anuncio del reto](https://wayra.com/news/wayra-pfizer-and-the-pfizer-foundation-launch-a-challenge-to-optimise-efficiency-in-hospital-outpatient-clinics)
 - [La Ecuación Digital](https://www.laecuaciondigital.com/empresas/healthtech/wayra-pfizer-reto-consultas-externas-hospitalarias/)
+- Escribas con IA: [BOCM 16‑mar‑2026 · licitación del escriba de Primaria](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF) · [Quirónsalud · Scribe, premio BiC IA (Infanta Elena)](https://www.quironsalud.com/es/comunicacion/actualidad/hospital-universitario-infanta-elena-premio-ia-bic-humaniza) · [Xataka · escribas en el Clínic y La Paz](https://www.xataka.com/medicina-y-salud/puede-resumir-50-folios-estudios-cinco-minutos-hablamos-hospitales-espanoles-que-estan-utilizando-ia)
