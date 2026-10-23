@@ -233,20 +233,90 @@ function htmlResumen(){
     ${hs.map(h => filaHecho(h,false)).join("")}`;
 }
 function htmlFicha(){
-  const f = P().ficha;
-  const capas = f.capas.map(c => `<div class="capa"><b>${c.n} · ${esc(c.t)}</b>
-    ${c.secciones.map(sec => `<div class="sec"><i>${esc(sec.t)}</i>
-      ${sec.filas.map(([campo, valor, doc]) => `<div class="fila">
-        <span class="c">${esc(campo)}</span>
-        <span class="v${doc ? "" : " sin"}">${valor.startsWith("⚠") || campo.startsWith("⚠") ? "<b>"+esc(valor)+"</b>" : esc(valor)}
-          ${doc ? `<button class="src" data-doc="${doc}">[${doc} · ${porIdDe()[doc] ? porIdDe()[doc].fecha : ""}]</button>` : ""}
-        </span></div>`).join("")}
-    </div>`).join("")}</div>`).join("");
-  return `<p style="margin:0 0 4px;color:#5b6b76">${esc(f.cobertura)}. Lo que no está escrito en la historia aparece en gris como «no consta»: no se deduce.</p>
-    ${capas}
-    <div class="capa"><b>Lo que esto cambia en la consulta de hoy</b>
-      <ol style="margin:8px 0 0;padding-left:20px">${f.claves.map(k => `<li style="margin-bottom:3px">${esc(k)}</li>`).join("")}</ol></div>`;
+  const f = P().ficha, pid = porIdDe();
+  const fu = (txt, doc) => doc && pid[doc]
+    ? `<div class="fuente-m"><sup>1</sup> <button class="src" data-doc="${doc}">${esc(txt || (doc + " · " + pid[doc].fecha))}</button></div>`
+    : (txt ? `<div class="fuente-m"><sup>1</sup> ${esc(txt)}</div>` : "");
+  const sinDato = v => /^no consta|^sin registro/i.test(v) ? " sin" : "";
+
+  return `<div class="med">
+    <div class="med-eyebrow">${esc(f.eyebrow)}</div>
+    <div class="med-cab">
+      <h2>${esc(f.nombre)}</h2>
+      <div class="med-chips">${f.chips.map(c => `<span class="chip${c.destacado ? " dest" : ""}">${esc(c.t)}</span>`).join("")}</div>
+    </div>
+
+    <h3 class="med-h">Antes de empezar</h3>
+    <div class="med-grid4">${f.antes.map(t => `<div class="tarjeta${t.rojo ? " roja" : ""}">
+        <div class="rot${t.rojo ? " rojo" : ""}">${esc(t.t)}</div>
+        <div class="val${sinDato(t.v)}">${esc(t.v)}</div>
+        <p>${esc(t.d)}</p>${fu(t.f, t.doc)}</div>`).join("")}</div>
+
+    <h3 class="med-h">Por qué viene hoy</h3>
+    <div class="med-grid2">
+      <div class="tarjeta motivo">
+        <div class="rot">Motivo de derivación</div>
+        <div class="val">${esc(f.motivo.t)}</div>
+        <p><b>Lo que espera:</b> ${esc(f.motivo.espera)}</p>${fu(f.motivo.f, f.motivo.doc)}</div>
+      <div class="tarjeta">
+        <div class="rot">${esc(f.cambios.titulo)}</div>
+        ${f.cambios.filas.map(c => `<div class="cambio">
+            <span class="spark ${c.tend}"></span>
+            <span><b>${esc(c.t)} ${esc(c.v)}</b> <span class="gris">· ${esc(c.d)}</span></span>
+            ${c.doc ? `<button class="src" data-doc="${c.doc}">${c.doc}</button>` : ""}</div>`).join("")}
+        ${fu(f.cambios.f)}</div>
+    </div>
+
+    <div class="med-grid2">
+      <div class="tarjeta"><h4>Problemas activos</h4>
+        ${f.problemas.filas.map(x => `<div class="fila-m"><span>${esc(x.t)}</span>
+          <span class="gris">${esc(x.v)}</span>
+          ${x.doc ? `<button class="src" data-doc="${x.doc}">${x.doc}</button>` : ""}</div>`).join("")}
+        ${fu(f.problemas.f)}</div>
+      <div class="tarjeta"><h4>Medicación</h4>
+        ${f.medicacion.filas.map(m => `<div class="fila-m"><span><b>${esc(m.f)}</b> ${esc(m.dosis || "")}</span>
+          <span class="gris">${m.aviso ? `<span class="aviso-m">${esc(m.aviso)}</span>` : esc(m.pauta || "")}</span>
+          ${m.doc ? `<button class="src" data-doc="${m.doc}">${m.doc}</button>` : ""}</div>`).join("")}
+        <p class="adh">${esc(f.medicacion.adherencia)}</p>${fu(f.medicacion.f)}</div>
+    </div>
+
+    <h3 class="med-h">Constantes</h3>
+    <div class="med-grid5">${f.constantes.map(c => `<div class="tarjeta ctes">
+        <div class="rot">${esc(c.t)}</div>
+        <div class="val${sinDato(c.v)}">${esc(c.v)}</div>
+        <div class="pie-m">${esc(c.d)}${c.doc ? ` <button class="src" data-doc="${c.doc}">${c.doc}</button>` : ""}</div></div>`).join("")}</div>
+
+    <h3 class="med-h">Su vida, en una línea</h3>
+    <div class="med-grid3">${f.vida.map(v => `<div class="tarjeta${v.marco ? " marco" : ""}">
+        <div class="rot">${esc(v.t)}</div><p>${esc(v.d)}</p>
+        ${v.doc ? `<button class="src" data-doc="${v.doc}">${v.doc} · ${pid[v.doc] ? pid[v.doc].fecha : ""}</button>` : ""}</div>`).join("")}</div>
+
+    <div class="med-grid2">
+      <div class="tarjeta oscura">
+        <h4>Pregunta, no busques</h4>
+        <p>El resto del historial no se muestra: se pregunta. El lector responde con la fuente o dice «No consta».</p>
+        <div class="burbuja-q">${esc(f.ejemplo.q)}</div>
+        <div class="burbuja-a">${esc(f.ejemplo.a)}<span class="donde">${esc(f.ejemplo.donde)}</span></div>
+        <button class="btn-med" id="ficha-preguntar">Preguntar otra cosa</button>
+      </div>
+      <div>
+        <div class="tarjeta">
+          <div class="rot">Memoria profunda · a demanda</div>
+          <p>Toque un tema para preguntar por él.</p>
+          <div class="temas">${f.temas.map(t => `<button class="chip tema">${esc(t)}</button>`).join("")}</div>
+        </div>
+        <div class="tarjeta como">
+          <div class="rot">Cómo leer esta ficha</div>
+          <p><sup>1</sup> Cada dato lleva su fuente: púlsela y se abre el documento.</p>
+          <p><span class="nc">No consta</span> = no está en los datos. No se rellena.</p>
+          <p>El lector solo lee: no diagnostica ni recomienda.</p>
+        </div>
+      </div>
+    </div>
+    <div class="med-pie">Maqueta · paciente y datos sintéticos, inventados para la demo</div>
+  </div>`;
 }
+
 function pintaModal(){
   $("#modal-t").textContent = modoModal === "resumen" ? "Resumen de la historia" : "Ficha de contexto en 3 capas";
   $("#modal-sub").textContent = `${P().nombre} · ${P().nhc} · ${docsDe().length} documentos`;
@@ -255,6 +325,9 @@ function pintaModal(){
   c.innerHTML = modoModal === "resumen" ? htmlResumen() : htmlFicha();
   c.scrollTop = 0;
   enlaza(c);
+  c.querySelectorAll(".tema").forEach(b => b.onclick = () => { cierraModal(); abreChat(); pregunta(b.textContent.trim()); });
+  const pb = c.querySelector("#ficha-preguntar");
+  if (pb) pb.onclick = () => { cierraModal(); abreChat(); };
 }
 function abreModal(modo){
   modoModal = modo || modoModal;
