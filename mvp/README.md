@@ -1,0 +1,56 @@
+# mvp/
+
+El núcleo de Medici para la demo, **sin agente**: el servidor saca con SQL
+fijo todo lo que hay del paciente y el modelo local solo lo ordena y contesta
+citando las filas.
+
+```text
+paciente.py       las 6 consultas fijas: filas numeradas [F1] [D1] [C1] [M1] [P1] [A1]
+responder.py      una sola llamada al modelo (API compatible con OpenAI) y comprobación de las fuentes
+prueba_acierto.py 30 preguntas con la respuesta correcta sacada de los CSV, y la nota
+resultados/       el detalle de cada prueba (no se sube: lleva filas de los CSV)
+```
+
+Solo usa la biblioteca estándar y `duckdb`. Los CSV tienen que estar en `data/`.
+
+## Medir el acierto
+
+En el portátil de la demo, con [Ollama](https://ollama.com) instalado:
+
+```bash
+ollama pull qwen3:8b                                  # Q4_K_M, unos 5 GB
+.venv/Scripts/python mvp/prueba_acierto.py --solo-preguntas   # ver las 30 sin modelo
+.venv/Scripts/python mvp/prueba_acierto.py                    # qwen3:8b en localhost:11434
+.venv/Scripts/python mvp/prueba_acierto.py --modelo qwen3:4b  # comparar con el pequeño
+```
+
+Para otro servidor (vLLM en un Spark, `llama.cpp`…): `--url http://equipo:8000/v1
+--modelo <nombre>`, o las variables `MEDICI_URL` y `MEDICI_MODELO`.
+
+Al final sale la nota por tipo de pregunta, cuántas veces dice «no consta»
+cuando toca, cuántas filas inexistentes ha citado y los segundos por respuesta.
+
+## Qué preguntas hace
+
+| Tipo | Cuántas | Se da por buena si… |
+|---|---|---|
+| ¿Ha estado antes en {servicio}? (sí) | 3 | cita una cita de ese servicio |
+| ¿Ha estado antes en {servicio}? (no) | 2 | dice que no y no se inventa ninguna |
+| ¿Qué pruebas tiene pendientes? | 5 | nombra y cita todas las programadas (una sin ninguna) |
+| ¿Necesita algún apoyo para la consulta? | 4 | da la necesidad y cita la ficha (una sin ninguna) |
+| ¿Por qué lo manda su médico de cabecera? | 4 | cita la derivación y da el motivo |
+| ¿Le hemos cambiado o anulado alguna cita, o ha faltado? | 4 | cita el cambio y da el motivo (uno sin cambios) |
+| ¿Cómo prefiere que le avisemos? | 2 | da el canal y cita la ficha |
+| Trampas: alergias, medicación, diagnóstico, antecedentes, tabaco, valores de la analítica | 6 | dice «no consta» sin fuentes |
+
+**La respuesta correcta no la escribe nadie a mano:** sale de los mismos datos.
+Los pacientes salen al azar pero son siempre los mismos con la misma
+`--semilla`, así se comparan modelos con las mismas preguntas.
+
+**Referencia:** un «modelo» que contestara siempre «no consta» sacaría 11 de
+30. Esa es la nota mínima que hay que superar con claridad.
+
+La corrección es automática y estricta con las palabras: el detalle en
+`resultados/` sirve para revisar a mano los fallos dudosos. Las frases de las
+preguntas están arriba en `prueba_acierto.py` (`PREGUNTAS`, `TRAMPAS`) para
+que la biomédica las cambie por las que de verdad hace un especialista.

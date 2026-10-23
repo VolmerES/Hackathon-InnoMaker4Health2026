@@ -226,7 +226,8 @@ una herramienta para ellos.
 
 | Estado | Qué |
 |---|---|
-| **Construido** | Solo los scripts de análisis de los CSV (`analisis/`). `analisis/lector_ia.py` es de la idea anterior y nunca se ha ejecutado |
+| **Construido** | Los scripts de análisis de los CSV (`analisis/`; `lector_ia.py` es de la idea anterior y nunca se ha ejecutado). La demo de Daniel en `demo/`: réplicas de HCIS y SELENE con historias sintéticas y respuestas precalculadas. El núcleo sin agente y la prueba de acierto en `mvp/`, sin probar todavía con un modelo |
+| **Propuesto por el equipo (24‑oct)** | MVP **sin agente**: SQL fijo y el modelo solo ordena. Medici como **pestaña dentro de HCIS** |
 | **Decidido por el equipo** | Chatbot copiloto, IA local, Mac mini M6 o DGX Spark, instalación fácil |
 | **Propuesto por Claude para construirlo** (falta que el equipo lo apruebe) | Todo lo de «Cómo construirlo», más abajo |
 | **Hoja de ruta** (ideas, no decididas) | Lo de la sección [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
@@ -256,34 +257,56 @@ diferenciar si lo demuestra:
   externas.
 - **Se instala solo**, sin un proyecto de integración a medida.
 
-### Cómo construirlo (propuesta de Claude, pendiente del equipo)
+### Cómo construirlo (propuesta, pendiente del equipo)
 
-**Un agente con herramientas de solo lectura.** El modelo no se inventa la
-respuesta: consulta los datos del paciente y contesta con lo que encuentra.
+**Sin agente en el MVP** (propuesto por el equipo el 24‑oct). El servidor saca
+con SQL fijo todo lo que hay del paciente y el modelo solo lo ordena y
+contesta. Funciona porque cada paciente tiene pocas filas en los CSV: **de
+mediana 7 y como mucho 37** entre todas las tablas.
 
 ```
-El médico escribe: «¿Ha estado antes en Digestivo? ¿Qué pruebas tiene pendientes?»
+El médico escribe: «¿Ha estado antes en Digestivo?»
       ↓
-Modelo local (Qwen3‑8B, Apache‑2.0, sabe llamar a funciones)
-      ↓  elige qué consultar
-Herramientas de solo lectura, siempre sobre UN paciente:
-  · derivaciones(paciente)     → motivo, observaciones del médico de cabecera, fecha
-  · citas(paciente)            → servicio, tipo de visita, estado, prioridad
-  · cambios_y_faltas(paciente) → reprogramaciones, anulaciones y motivos
-  · pruebas(paciente)          → solicitadas, hechas y con resultado disponible
-  · avisos(paciente)           → mensajes enviados y si respondió
-  · accesibilidad(paciente)    → necesidades de accesibilidad y canal de contacto
-      ↓  devuelven filas
+Servidor: 6 consultas SQL fijas, siempre del paciente abierto
+  · ficha        [F1]  edad, sexo, contacto preferido, accesibilidad
+  · derivaciones [D1…] motivo, observaciones del médico de cabecera, fecha
+  · citas        [C1…] servicio, fecha, tipo de visita, estado, prioridad
+  · cambios      [M1…] reprogramaciones, anulaciones, faltas y motivos
+  · pruebas      [P1…] solicitadas, programadas, hechas, con resultado disponible
+  · avisos       [A1…] mensajes enviados y si respondió
+      ↓  filas numeradas + la pregunta, en UNA llamada
+Modelo local (Qwen3‑8B; Qwen3‑4B si el equipo va justo)
+      ↓  JSON: {consta, respuesta, fuentes: ["C3", …]}
+Servidor: comprueba que cada fuente existe; sin fuentes válidas → «no consta»
+      ↓
 Respuesta en español + las filas en las que se basa, debajo
 ```
 
-- **Herramientas cerradas, no SQL libre.** Un modelo pequeño se equivoca
-  escribiendo SQL, y con SQL libre podría leer datos de otros pacientes.
-- **Si no está en los datos, responde «no consta».**
-- **Cada pregunta queda registrada** con el médico que la hizo.
-- **El modelo funciona sin internet** (`HF_HUB_OFFLINE=1`) y habla por una API
-  compatible con OpenAI. El mismo código sirve para el M6 (Ollama) y para el
-  Spark (vLLM).
+- **El modelo no consulta nada.** Solo recibe filas de un paciente que ya ha
+  filtrado el servidor, así que no puede pedir datos de otro.
+- **Menos cálculo y más fiable que un agente:** una llamada por pregunta, y un
+  modelo pequeño no tiene que acertar qué consultar.
+- **Lo que haya que contar o calcular** (cuántas faltas, hace cuánto) se
+  calcula en SQL. El modelo solo lo redacta.
+- **Botones para las preguntas habituales**, respondidos con SQL directo y sin
+  IA. La IA queda para el resumen y las preguntas escritas a mano.
+- **Cada pregunta queda registrada** con el médico, el paciente y las filas
+  citadas.
+- **El modelo funciona sin internet** y habla por una API compatible con
+  OpenAI: el mismo código sirve para Ollama (M6) y vLLM (Spark).
+- **El límite:** con historias reales de años de notas no cabría todo en una
+  llamada. Habría que volver a elegir qué filas mandar (por fecha, por servicio
+  o con búsqueda), o un agente. Es hoja de ruta.
+
+**Construido el 24‑oct, sin probar todavía con un modelo:** [`mvp/`](../mvp/)
+
+- `paciente.py`: las 6 consultas fijas.
+- `responder.py`: la llamada al modelo y la comprobación de las fuentes.
+- `prueba_acierto.py`: 30 preguntas con la respuesta correcta sacada de los
+  CSV, también las trampas de «no consta». Con respuestas perfectas simuladas
+  el corrector da 30/30. Contestando siempre «no consta» se sacaría 11/30: es
+  el suelo que hay que superar con claridad. Cómo se ejecuta, en
+  [`mvp/README.md`](../mvp/README.md).
 
 **Qué se puede preguntar con los CSV:**
 
@@ -295,23 +318,26 @@ Respuesta en español + las filas en las que se basa, debajo
 | «¿Ha faltado o le hemos cambiado la cita? ¿Por qué?» | ✅ MOVIMIENTOS_CITAS |
 | «¿Le llegaron los avisos?» | ✅ COMUNICACIONES |
 | «¿Necesita intérprete o apoyo de accesibilidad?» | ✅ PACIENTES. Sirve para el pilar de **accesibilidad** |
-| «¿Tiene alergias? ¿Qué diagnóstico tiene?» | ❌ No está en los CSV: tiene que responder **«no consta»**. Es la pregunta de la demo que demuestra que no se inventa nada |
+| «¿Tiene alergias? ¿Qué diagnóstico tiene?» | ❌ No está en los CSV: tiene que responder **«no consta»**. Es la pregunta de la demo que enseña que, si no lo sabe, lo dice |
 
 **El MVP en 24 h:**
 
-1. Las 6 herramientas sobre los CSV, con DuckDB (`analisis/datos.py` ya carga
-   las tablas).
-2. El modelo local con llamadas a funciones, detrás de una API compatible con
-   OpenAI.
-3. La pantalla:
-   - a la izquierda, la agenda del día;
-   - en el centro, el chat;
-   - debajo de cada respuesta, las filas en las que se basa.
-4. **Una prueba de acierto** con unas 30 preguntas cuya respuesta se conoce por
-   los CSV. Se mide qué porcentaje acierta y cuántas veces dice «no consta»
-   cuando debe.
+1. Las 6 consultas fijas sobre los CSV con DuckDB. ✅ `mvp/paciente.py`.
+2. La prueba de acierto con Ollama (`qwen3:8b`, y `qwen3:4b` para comparar) en
+   el portátil de la demo. **La nota real es la que va al pitch.**
+3. Un FastAPI con 3 llamadas: abrir sesión con un paciente, resumen y pregunta.
+4. La pantalla: la **pestaña Medici sobre la réplica de HCIS** de Daniel
+   (`demo/web/hcis.html`), con el resumen arriba, el chat y las filas de origen
+   debajo de cada respuesta. Ver
+   [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo).
 5. **Por si falla en directo:** las respuestas de la demo, precalculadas, y un
    vídeo.
+
+> ⚠️ **Decidir en equipo:** ¿Medici lee las tablas de los CSV (lo de arriba) o
+> el texto libre de las historias de Daniel (`demo/`)? Con texto libre (18
+> documentos con abreviaturas y contradicciones) un modelo pequeño acierta
+> bastante menos. Además, las respuestas de `demo/web/datos.js` están
+> precalculadas: no se pueden presentar como si las diera el modelo en directo.
 
 **Fuera del MVP:**
 
@@ -791,8 +817,8 @@ Todo es software libre con licencias que permiten venderlo.
 | Capa | Producción | MVP de 24 h | Licencia |
 |---|---|---|---|
 | **Pantalla** | React + Vite + TypeScript. Chat con respuesta en streaming (SSE) | La misma, o lo que mejor domine el Dev 2 | MIT |
-| **API y agente** | Python 3.12 + FastAPI + Pydantic. Bucle de agente escrito a mano con el cliente `openai` (llamadas a funciones). Sin frameworks pesados | Igual | MIT |
-| **Herramientas** | 6 funciones en SQL de solo lectura, con el paciente siempre fijado por el servidor | Las mismas sobre DuckDB | — |
+| **API** | Python 3.12 + FastAPI + Pydantic. Sin agente: consultas fijas y una llamada al modelo por la API compatible con OpenAI. Sin frameworks pesados | Igual (`mvp/`) | MIT |
+| **Consultas** | 6 consultas SQL fijas de solo lectura, con el paciente siempre fijado por el servidor | Las mismas sobre DuckDB (`mvp/paciente.py`) | — |
 | **Datos** | PostgreSQL: copia con lo justo y registro de preguntas | **DuckDB sobre los CSV** (ya está `analisis/datos.py`) | PostgreSQL / MIT |
 | **Entrada de datos** | Receptor HL7 por MLLP con `hl7apy`, desde el motor de integración. O una exportación nocturna | No hace falta: se usan los CSV | MIT |
 | **Modelo** | Spark: **Qwen3‑30B‑A3B** en FP8. M6: **Qwen3‑8B** en Q4 | Qwen3‑8B o 4B, según el equipo de la demo | Apache‑2.0 |
@@ -806,8 +832,8 @@ Todo es software libre con licencias que permiten venderlo.
 
 **Por qué no meter más cosas:**
 
-- **Sin LangChain ni frameworks de agentes.** Con 6 herramientas, un bucle de 50
-  líneas se entiende, se audita y falla menos.
+- **Sin LangChain ni agentes.** Con pocas filas por paciente basta con
+  mandarlas todas en una llamada: se entiende, se audita y falla menos.
 - **Sin base de datos vectorial ni RAG.** Los datos son tablas (citas, pruebas,
   derivaciones), así que se consultan con SQL. Buscar por parecido solo haría
   falta para informes en texto libre, que es la hoja de ruta.
@@ -835,25 +861,25 @@ Todo es software libre con licencias que permiten venderlo.
 
 1. Abre `https://medici` en el navegador de su consulta y entra con su usuario
    de siempre.
-2. Ve **su agenda del día** y elige al paciente. O, si HCIS lo permite, pulsa
-   «Medici» con el paciente ya abierto ⚠️.
+2. Ve **su agenda del día** y elige al paciente. O lo abre en HCIS como
+   siempre y la pestaña Medici aparece con él (ver «Dentro de HCIS») ⚠️.
 3. **Pregunta:** «¿Ha estado antes en Digestivo?»
 
 **4. Lo que pasa por dentro (en 2–5 segundos):**
 
 ```
 pregunta ─► API: comprueba que el paciente es de este médico
-          ─► modelo: «necesito citas(paciente)»
-          ─► API: ejecuta la consulta SQL de solo lectura para ESE paciente
-          ─► modelo: redacta la respuesta solo con esas filas
+          ─► API: 6 consultas SQL fijas de ESE paciente, filas numeradas
+          ─► modelo: una llamada; ordena y redacta citando [C3], [P1]…
+          ─► API: comprueba que cada fila citada existe
           ─► pantalla: respuesta + filas de origen debajo
-          ─► registro: médico, paciente, pregunta, herramientas usadas, hora
+          ─► registro: médico, paciente, pregunta, filas citadas, hora
 ```
 
-- Si las herramientas no devuelven nada, la respuesta es **«no consta en los
-  datos disponibles»**.
-- **El paciente lo fija el servidor, no el modelo.** Aunque el modelo se
-  equivoque, no puede pedir datos de otro paciente.
+- Si no hay ninguna fila citada que exista, la respuesta es **«no consta en
+  los datos disponibles»**.
+- **El paciente lo fija el servidor y el modelo no consulta nada.** Aunque se
+  equivoque, no puede ver datos de otro paciente.
 
 **5. Mantenerlo:**
 
@@ -863,12 +889,63 @@ pregunta ─► API: comprueba que el paciente es de este médico
 - Las 30 preguntas de prueba se repiten antes de cada actualización. Si baja el
   acierto, no se instala.
 
-### Abrir Medici desde HCIS (si se puede)
+### Dentro de HCIS: la pestaña Medici (propuesta, pendiente del equipo)
 
-**Lo ideal:** el médico tiene abierto al paciente en HCIS y pulsa «Medici». Se
-abre el chat ya con ese paciente, sin buscarlo. Depende de que HCIS pueda
-lanzar una dirección web con el código del paciente ⚠️. Si no se puede, el
-médico lo elige en la agenda del día dentro de Medici.
+**La idea** (del equipo, 24‑oct): el médico no abre otra aplicación. Busca al
+paciente en HCIS como siempre y en el borde de la ventana aparece una pestaña
+«Medici» con ese paciente: el resumen arriba y el chat debajo. Los esquemas
+están en el lienzo [Arquitectura Medici](https://claude.ai/artifact/TW3bnQYWKApTGZmtk9sB6d),
+que es privado: hay que compartirlo desde la página.
+
+**Dos caminos separados:**
+
+- **Los datos** llegan por detrás: HCIS → motor de integración (HL7) o
+  exportación nocturna → copia de Medici. No pasan por la pantalla, así que da
+  igual cómo sea HCIS.
+- **Qué paciente está abierto:** es lo único que se saca de la pantalla, y solo
+  el NHC.
+
+**Cómo es HCIS:** hoy es de **Dedalus**, que compró en 2021 la parte de
+software sanitario de DXC. Su folleto dice que es *«un sistema multicapa basado
+en web»* sobre J2EE. Lo que no sabemos es **cómo lo abren los médicos de La
+Princesa**: en una pestaña normal del navegador, en modo Internet Explorer, en
+Java o por Citrix ⚠️. No hay demo ni manual público.
+
+**Cuatro formas de saber qué paciente está abierto:**
+
+| Forma | Cuándo sirve | Cómo lee el NHC | Instalación | Riesgo |
+|---|---|---|---|---|
+| 1. Extensión de Chrome o Edge | HCIS en una pestaña normal | Lee la cinta del paciente en la página | Informática la reparte con una directiva (`ExtensionInstallForcelist`) | Si cambia la pantalla, se ajusta el selector |
+| 2. Programa pequeño de Windows | Java, modo IE o programa nativo | API de accesibilidad de Windows (UI Automation); en Java, Java Access Bridge | Instalador con la herramienta de Informática | Si la ventana no expone el texto, no se puede ⚠️ |
+| 3. Botón dentro de HCIS | Si HCIS admite enlaces externos | HCIS abre `https://medici/abrir?nhc=…` y Medici lo comprueba | Configuración en HCIS | Depende de Informática o de Dedalus ⚠️ |
+| 4. Elegirlo en la agenda de Medici | Siempre | No lo lee: el médico pulsa al paciente en su agenda del día | Ninguna | Un clic más; el nombre va grande arriba |
+
+- **Si HCIS va por Citrix**, la 2 tendría que publicarse dentro de Citrix. Si
+  no se puede, la 3 o la 4.
+- **Propuesta:** la 4 siempre, como plan B, más la mejor de las tres primeras
+  según cómo sea HCIS.
+
+**Las llamadas**, iguales en las cuatro formas:
+
+1. `POST /api/sesion {nhc}`, con el usuario del médico. El servidor comprueba
+   que puede ver a ese paciente y ata la sesión a él: el NHC ya no se vuelve a
+   mandar.
+2. `GET /api/sesion/{id}/resumen`. Si el paciente está en la agenda del día, se
+   precalcula a primera hora.
+3. `POST /api/sesion/{id}/pregunta {texto}`: SQL fijo y una llamada al modelo.
+   Vuelve en streaming, con las fuentes.
+
+Si el médico cambia de paciente en HCIS, la pestaña borra el chat y vuelve al
+paso 1, para que nunca se mezclen dos pacientes.
+
+**Para la demo:** la réplica `demo/web/hcis.html` hace de HCIS. Un script lee
+el NHC de su cinta, como haría la extensión, y el panel de `agente.js` pasa a
+ser una pestaña lateral. Frase para el pitch: *«El médico no abre nada nuevo.
+Busca al paciente en HCIS como siempre, y Medici ya está ahí.»*
+
+**Para preguntar a un mentor de La Princesa ⚠️:** ¿HCIS se abre en Chrome o
+Edge con barra de direcciones? ¿Sale el icono de Internet Explorer o una
+ventana de Java? ¿Se entra por Citrix?
 
 ### Mantenimiento
 
@@ -1493,3 +1570,6 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - Tiempo en la historia clínica: [Overhage y McCallie, Annals of Internal Medicine 2020 (resumen en Fierce Healthcare)](https://www.fiercehealthcare.com/practices/for-each-patient-visit-physicians-spend-about-16-minutes-ehrs-study-finds) · [Healio](https://www.healio.com/news/primary-care/20200113/physicians-spend-16-minutes-using-ehr-for-each-patient-encounter)
 - HORUS: [Comunidad de Madrid · Libre elección (qué ve el profesional)](https://www.comunidad.madrid/salud/libre-eleccion-sanitaria) · [Plataformas informáticas del SERMAS](https://www.vence.es/auxiliar-administrativo-sermas/temario/tema-26) · [iSanidad · premio a HORUS](https://isanidad.com/32259/premio-a-la-comunidad-de-madrid-por-la-plataforma-horus-que-auna-datos-clinicos-de-los-pacientes-y-se-pueden-consultar-en-cualquier-lugar/) · [El Médico Interactivo (2013)](https://elmedicointeractivo.com/principal-ventaja-horus-posibilidad-conocer-informacion-previa-pacientes-hayan-sido-atendidos-cualquier-centro-sermas-20130617132816023000/)
 - Infraestructura: [LiteLLM (MIT)](https://github.com/BerriAI/litellm) · [vLLM](https://github.com/vllm-project/vllm) · [Ollama](https://github.com/ollama/ollama) · [Caddy](https://caddyserver.com/)
+
+- Dedalus Iberia, folleto de HCIS (J2EE, «multicapa basado en web»): https://www.dedalus.com/spain/wp-content/uploads/sites/27/2021/04/HCIS_brochure_DedalusIBERIA.pdf
+- BOCM 10‑ene‑2025, mantenimiento de HIS1 y HCIS (A/SER‑017556/2024): https://bocm.es/boletin/CM_Orden_BOCM/2025/01/10/BOCM-20250110-28.PDF

@@ -40,6 +40,8 @@ docs/
   briefing/       Fotos del material impreso que entregó la organización
   HALLAZGOS.md    Lo que dicen los datos, con cifras
 analisis/         Scripts de exploración (Python + DuckDB)
+mvp/              Núcleo de Medici sin agente y prueba de acierto de 30 preguntas
+demo/             Réplicas de HCIS y SELENE con historias sintéticas (Daniel)
 data/             Los 11 CSV (no se suben: son material de la organización)
 ```
 
@@ -61,7 +63,7 @@ python -m venv .venv
 - [x] **Idea decidida: Medici, el chatbot copiloto del médico.** El médico le pregunta en el ordenador por el paciente y Medici le contesta, con la fuente de cada dato y con IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-decidida-medici-el-copiloto-del-médico)
 - [x] Hardware decidido: **Mac mini M6** o **NVIDIA DGX Spark**, con una instalación muy sencilla. [Propuesta de infraestructura para todo el hospital](docs/CONTEXTO.md#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo). Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-medici-mac-mini-m6-o-nvidia-dgx-spark)
 - [x] Ideas que no entran (preparar la consulta, escriba, HL7…): en la [hoja de ruta](docs/CONTEXTO.md#hoja-de-ruta-ideas-no-decididas)
-- [ ] MVP: agente con herramientas de solo lectura sobre los CSV, modelo local, pantalla con agenda, chat y fuentes, y prueba de acierto
+- [ ] MVP sin agente: las consultas fijas y la [prueba de acierto](mvp/README.md) están hechas; falta medir con el modelo local, el servidor y la [pestaña dentro de HCIS](docs/CONTEXTO.md#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo)
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado
 - [ ] Confirmar con los mentores lo marcado con ⚠️ en el guion
