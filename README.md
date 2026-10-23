@@ -38,7 +38,17 @@ El contexto completo, con el modelo de datos transcrito, está en
 docs/
   CONTEXTO.md     El reto, los datos, el modelo entidad-relación y a quién preguntar
   briefing/       Fotos del material impreso que entregó la organización
+  HALLAZGOS.md    Lo que dicen los datos, con cifras
+analisis/         Scripts de exploración (Python + DuckDB)
 data/             Los 11 CSV (no se suben: son material de la organización)
+```
+
+Para repetir el análisis, con los CSV en `data/`:
+
+```bash
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt   # en Linux/macOS: .venv/bin/python
+.venv/Scripts/python analisis/hallazgos.py
 ```
 
 ## Estado
@@ -46,9 +56,9 @@ data/             Los 11 CSV (no se suben: son material de la organización)
 - [x] Contexto del reto y modelo de datos
 - [x] Ganadores de ediciones anteriores y [dos ideas candidatas](docs/CONTEXTO.md#ideas-candidatas)
 - [x] Qué le interesa a cada organizador y [plan del MVP en 24 h](docs/CONTEXTO.md#el-mvp-en-24-horas)
-- [ ] Cargar y explorar los 11 CSV
-- [ ] Elegir **una** necesidad concreta
-- [ ] MVP: bandeja de trabajo (revisiones sin resultado y huecos liberados)
+- [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
+- [x] Necesidad concreta: **los huecos vacíos**. El 28 % de las citas no se realiza (15.254 h de consulta en 6 meses) y los huecos liberados no se reocupan nunca
+- [ ] MVP: bandeja de trabajo (citas en riesgo y huecos que se reaprovechan)
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [ ] Pitch
 

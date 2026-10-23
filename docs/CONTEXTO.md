@@ -190,34 +190,42 @@ Una **bandeja de trabajo diaria** para el personal administrativo de consultas
 externas. Cada mañana enseña qué va a fallar en los próximos días y propone qué
 hacer. La persona revisa y confirma con un clic.
 
-**Módulo 1: revisiones sin resultado** (el núcleo, porque son solo reglas).
+> **Rehecho tras ver los datos** ([`HALLAZGOS.md`](HALLAZGOS.md)). El mayor robo
+> de tiempo clínico son los huecos vacíos: el 28 % de las citas no se realiza y
+> los huecos liberados no se reocupan nunca. «Revisiones sin resultado» se cae:
+> solo el 1,5 % de las pruebas está enlazado a su revisión.
 
-- Avisa de las citas de revisión de los próximos días cuya prueba no tendrá
-  resultado a tiempo: `PRUEBAS.fecha_programada` o `estado_prueba` frente a la
-  fecha del hueco de `CITAS.id_cita_revision`.
-- Propone moverla al primer hueco libre después del resultado previsto, en la
-  agenda que toca.
-- Prepara el aviso al paciente por su canal preferido
-  (`PACIENTES.preferencias_contacto`).
+**Módulo 1: citas en riesgo** (el núcleo, con una regla y sin modelo).
 
-**Módulo 2: huecos liberados** (también solo reglas, sin predicción).
+- El recordatorio sale 2 días antes. **El día antes**, la bandeja lista las
+  citas cuyo recordatorio no tuvo respuesta. Faltan el 45,8 % de ellas, y ahí
+  está el 71 % de todas las faltas.
+- Propone un **segundo contacto por otro canal** que el paciente pueda usar
+  (accesibilidad: llamada si tiene necesidad visual, aviso de intérprete…).
+- Si sigue sin confirmar, propone qué hacer con el hueco (ver módulo 2). **Nunca
+  le quita la cita al paciente**: la decisión es del personal.
 
-- Cuando se anula una cita (`MOVIMIENTOS_CITAS`), propone a quién ofrecer el
-  hueco. Mira las derivaciones que esperan para esa especialidad, por prioridad
-  y antigüedad, y solo a pacientes cuyas necesidades de accesibilidad encajen.
-- Prepara la oferta por el canal adecuado.
+**Módulo 2: huecos que se reaprovechan** (también solo reglas).
+
+- Junta los huecos liberados por anulación o reprogramación (24.928 en 6 meses,
+  0 reocupados) y los huecos en riesgo del módulo 1.
+- Propone a quién ofrecerlos: derivaciones que esperan para esa especialidad,
+  **por prioridad clínica** y después por antigüedad, y solo a pacientes cuyas
+  necesidades de accesibilidad encajen.
+- Prepara la oferta por el canal del paciente.
 
 **Pantalla de impacto**, calculada con los datos:
 
-- revisiones que se hicieron sin resultado;
-- huecos que se perdieron;
-- minutos de tareas administrativas asociadas (`TAREAS_ADMINISTRATIVAS`);
-- lo que se habría recuperado con la bandeja.
+- citas no realizadas y horas de consulta perdidas;
+- huecos liberados sin reocupar;
+- horas de gestión de no realizadas y de recontacto;
+- escenarios de lo que se recuperaría (25 % y 50 %).
 
 **Fuera del MVP:**
 
-- La **predicción de ausencias**: hace falta validar el modelo y vigilar los
-  sesgos. Va como fase 2 en el pitch.
+- Un **modelo de IA de ausencias**: la regla ya separa el 13 % del 46 %, y con
+  estos datos sintéticos el resto de variables no aporta. Va como fase 2 en el
+  pitch, con datos reales y vigilando los sesgos.
 - Integración real con el HIS, envío real de mensajes y login.
 
 ### Por qué es viable
