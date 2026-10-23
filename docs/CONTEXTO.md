@@ -184,11 +184,25 @@ Hay **24 horas** para hacer el MVP. Como lo que más se valora es la viabilidad,
 el MVP tiene que **demostrar que se puede implantar**, no solo que la idea es
 buena.
 
-### Qué construir
+### La restricción que manda: personas y dinero
 
-Una **bandeja de trabajo diaria** para el personal administrativo de consultas
-externas. Cada mañana enseña qué va a fallar en los próximos días y propone qué
-hacer. La persona revisa y confirma con un clic.
+Lo que más falta en un hospital es **personal y presupuesto** (dicho por el
+equipo, 23‑oct). Por eso la solución tiene que resolver lo máximo posible con el
+mínimo de las dos cosas:
+
+- **No puede añadir trabajo.** Una bandeja en la que alguien revisa cada cita
+  sustituye llamadas por clics, pero sigue gastando personas. **Lo rutinario
+  tiene que ir solo**, y el personal solo ve lo que de verdad necesita a una
+  persona.
+- **No puede costar casi nada.** Sin hardware, sin licencias de terceros, sobre
+  un servidor que el hospital ya tiene y con el canal de SMS que ya usa para los
+  recordatorios ⚠️.
+- **El paciente se gestiona solo cuando puede**: confirmar, cancelar o aceptar
+  un hueco con un enlace o una respuesta. Quien no puede (sin móvil, necesita
+  intérprete, no ve la pantalla) pasa a una persona. **La automatización libera
+  tiempo precisamente para atender a quien más lo necesita.**
+
+### Qué construir
 
 > **Rehecho tras ver los datos** ([`HALLAZGOS.md`](HALLAZGOS.md)). El problema son
 > los huecos vacíos. **Los CSV son falsos**, así que el tamaño del problema sale
@@ -199,56 +213,66 @@ hacer. La persona revisa y confirma con un clic.
 > «Revisiones sin resultado» se cae: solo el 1,5 % de las pruebas está enlazado
 > a su revisión.
 
-**Módulo 1: citas en riesgo** (el núcleo, con una regla y sin modelo).
+Un **circuito automático** que cada noche repasa las citas de los próximos días
+y resuelve solo lo rutinario. Por encima hay **una bandeja de excepciones**
+para el personal y una pantalla de impacto.
 
-- El recordatorio sale 2 días antes. **El día antes**, la bandeja lista las
-  citas cuyo recordatorio no tuvo respuesta. Faltan el 45,8 % de ellas, y ahí
-  está el 71 % de todas las faltas.
-- Propone un **segundo contacto por otro canal** que el paciente pueda usar
-  (accesibilidad: llamada si tiene necesidad visual, aviso de intérprete…).
-- Si sigue sin confirmar, propone qué hacer con el hueco (ver módulo 2). **Nunca
-  le quita la cita al paciente**: la decisión es del personal.
+| Paso | Qué hace | Quién |
+|---|---|---|
+| 1. **Recordatorio con respuesta** | El recordatorio lleva un enlace (o respuesta por SMS) para *confirmar*, *cancelar* o *cambiar*. Cancelar libera el hueco al momento | Automático |
+| 2. **Citas dobles** | Cada noche busca pacientes con dos citas vivas en la misma especialidad. Pregunta al paciente cuál mantiene; si no contesta, conserva la primera según la regla del servicio | Automático |
+| 3. **Segundo contacto** | Si no hay respuesta en 24 h, repite por otro canal: llamada automática, email o SMS a la persona de contacto | Automático |
+| 4. **Reofrecer el hueco** | El hueco liberado se ofrece en cascada a quien espera en esa especialidad, **por prioridad clínica** y después por antigüedad, solo a pacientes cuyas necesidades encajen. El primero que acepta se lo queda; a los demás se les avisa de que ya está cubierto | Automático |
+| 5. **Excepciones** | Pacientes sin móvil, que necesitan intérprete o una llamada de una persona, prioridades urgentes, conflictos. **Solo esto llega a la bandeja** | Personal |
 
-**Módulo 2: huecos que se reaprovechan** (también solo reglas).
+**Las reglas las aprueba cada servicio**: horas límite, cuántos candidatos por
+oferta, qué hacer con una cita doble. El personal supervisa y atiende las
+excepciones, pero no revisa cita a cita.
 
-- Junta los huecos liberados por anulación o reprogramación (24.928 en 6 meses,
-  0 reocupados) y los huecos en riesgo del módulo 1.
-- Propone a quién ofrecerlos: derivaciones que esperan para esa especialidad,
-  **por prioridad clínica** y después por antigüedad, y solo a pacientes cuyas
-  necesidades de accesibilidad encajen.
-- Prepara la oferta por el canal del paciente.
+**En el piloto el sistema no escribe en el HIS.** Prepara cada cambio (anular,
+citar) y el personal los aplica en bloque, en segundos, sin llamadas. Escribir
+directamente en la agenda (con mensajes HL7 de citación) es la fase siguiente,
+cuando Informática lo apruebe.
 
-**Pantalla de impacto**, calculada con los datos:
+**Pantalla de impacto**, con los datos de la demo:
 
-- citas no realizadas y horas de consulta perdidas;
-- huecos liberados sin reocupar;
-- horas de gestión de no realizadas y de recontacto;
-- escenarios de lo que se recuperaría (25 % y 50 %).
+- confirmaciones, cancelaciones y citas dobles resueltas sin intervención;
+- huecos reofrecidos y ocupados;
+- llamadas y minutos de administración evitados;
+- casos que han ido a una persona y por qué;
+- escenario en euros y en horas de consulta con las cifras reales.
 
 **Fuera del MVP:**
 
-- Un **modelo de IA de ausencias**: la regla ya separa el 13 % del 46 %, y con
-  estos datos sintéticos el resto de variables no aporta. Va como fase 2 en el
-  pitch, con datos reales y vigilando los sesgos.
-- Integración real con el HIS, envío real de mensajes y login.
+- Un **modelo de IA de ausencias**. Va como fase 2 en el pitch, con datos
+  reales y vigilando los sesgos.
+- Integración real con el HIS, envío real de mensajes y login. En la demo, los
+  mensajes y las respuestas de los pacientes se simulan.
 
 ### Por qué es viable
 
 Esto es lo que hay que contar en el pitch.
 
-- **No toca los sistemas del hospital.** Solo lee: empieza con una exportación
-  diaria en CSV y después pasa a una lectura con HL7/FHIR. Hay que preguntar a
+- **No añade personal: lo libera.** Lo rutinario va solo y el personal atiende
+  únicamente excepciones.
+- **Cuesta casi nada.** Software libre (Python, DuckDB o PostgreSQL), sin
+  hardware, sobre una máquina virtual del hospital, y con el canal de SMS que ya
+  existe ⚠️. El coste nuevo son céntimos por mensaje y, si se usan, las llamadas
+  automáticas.
+- **No toca los sistemas del hospital** en el piloto. Solo lee una exportación
+  diaria y prepara los cambios. Después, HL7/FHIR. Hay que preguntar a
   Informática qué HIS usan y qué pueden exportar.
-- **Solo reglas en la primera versión.** Se pueden explicar y auditar, y no hace
-  falta validar ningún modelo clínico para pilotar.
-- **El personal decide.** La bandeja propone y nunca cambia una cita sola.
+- **Solo reglas**, que se pueden explicar y auditar. No hace falta validar
+  ningún modelo clínico para pilotar.
+- **Las reglas las decide el servicio** y nunca se quita una cita a un paciente
+  que no ha contestado: solo se reofrecen huecos liberados de verdad.
 - **Privacidad:** funciona dentro de la red del hospital y los datos no salen.
 - **Lo mantiene su propio equipo**, la Unidad de Análisis de Datos del IIS‑Princesa.
 - **Plan de piloto:** un servicio, tres meses, con indicadores medidos antes y
   después:
-  - revisiones sin resultado;
-  - huecos perdidos;
-  - minutos administrativos;
+  - faltas;
+  - huecos reofrecidos y ocupados;
+  - minutos de administración;
   - días de espera.
 
 ### El equipo
@@ -257,7 +281,7 @@ Esto es lo que hay que contar en el pitch.
 |---|---|---|
 | Dev 1 | Software y robótica | **Datos y reglas**: la API sobre DuckDB, las reglas de los dos módulos y las cifras de impacto. Cuenta la viabilidad técnica en el pitch |
 | Dev 2 | Software | **Frontend**: la bandeja y la pantalla de impacto, siguiendo el diseño de UI/UX |
-| UI/UX | Diseño | **La bandeja**: flujo y pantallas para el personal administrativo, con accesibilidad (WCAG) y los mensajes al paciente en lectura fácil. Hace las diapositivas y **presenta la demo** |
+| UI/UX | Diseño | **Las dos caras**: la bandeja de excepciones para el personal y lo que ve el paciente (el mensaje y la página del enlace para confirmar, cancelar o aceptar un hueco), con accesibilidad (WCAG) y lectura fácil. Hace las diapositivas y **presenta la demo** |
 | Biomédica | Ingeniería biomédica | **El puente clínico**: valida las reglas con los mentores (Consultas Externas, Unidad de Datos), define la prioridad clínica y argumenta lo regulatorio y la privacidad. **Abre el pitch con el problema** |
 
 Esto lo propone Claude; el reparto lo decide el equipo.

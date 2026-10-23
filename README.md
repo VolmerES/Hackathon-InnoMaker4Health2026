@@ -58,7 +58,7 @@ python -m venv .venv
 - [x] Qué le interesa a cada organizador y [plan del MVP en 24 h](docs/CONTEXTO.md#el-mvp-en-24-horas)
 - [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
 - [x] Necesidad concreta: **los huecos vacíos**. En España falta a consulta el 10‑15 % de los pacientes, y casi la mitad de las faltas tiene causa administrativa. Los CSV son sintéticos: sirven para la demo, no para dimensionar el problema
-- [ ] MVP: bandeja de trabajo (citas en riesgo y huecos que se reaprovechan)
+- [ ] MVP: circuito automático (recordatorio con respuesta, citas dobles, segundo aviso, reofrecer el hueco) y bandeja **solo de excepciones**. El hospital no tiene personas ni presupuesto que añadir
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado
 - [ ] Confirmar con los mentores lo marcado con ⚠️ en el guion

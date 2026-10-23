@@ -49,6 +49,7 @@ especialidades (CAR, DER, DIG, NRL, OFT, TRA) y 140 agendas.
 | Faltas a consultas externas en España | **10‑15 %**: 14,6 % en Albacete; 14,2 % en el Hospital Costa del Sol; 12,5 % en Medicina Preventiva de Zaragoza | Pereira‑Victorio et al., *Med Gen Fam* 2016; Costa del Sol y Zaragoza en *Rev Calid Asist* / *J Healthc Qual Res* |
 | **Casi la mitad de las faltas tiene causa administrativa** | En Albacete: no sabía que tenía cita (16,1 %), tenía doble cita (15,6 %), había cancelado pero la cita seguía en el sistema (15,1 %). En total, **47 %**. Los autores atribuyen a la administración cerca del 60 % | [Pereira‑Victorio et al. 2016](https://www.elsevier.es/es-revista-medicina-general-familia-edicion-digital--231-articulo-absentismo-pacientes-consulta-externa-especializada-S1889543316000372) |
 | Coste | Más de **3 M€ al año** en la Agencia Sanitaria Costa del Sol (13,8 % de faltas). Unos 3,6 M€ al año proyectados en Albacete | [iSanidad](https://isanidad.com/93355/no-acudir-a-las-citas-medicas-genera-perdidas-millonarias-para-la-sanidad/), Pereira‑Victorio et al. 2016 |
+| Precio de una consulta en Madrid | **115 €** la primera y **71 €** la sucesiva (precios públicos de la Comunidad de Madrid, Orden 727/2017; la Orden 1975/2023 los actualizó y hay que confirmar la cifra vigente ⚠️). Con el reparto de La Princesa (38 % primeras), **unos 88 € de media** | [iSanidad](https://isanidad.com/92440/madrid-exige-un-pago-de-115-euros-por-la-primera-consulta-de-un-especialista-y-45-por-una-de-atencion-primaria/), [BOE‑A‑2023‑14713](https://www.boe.es/diario_boe/txt.php?id=BOE-A-2023-14713) |
 | Efecto de un recordatorio simple | Pequeño: **la asistencia mejora un 10‑14 %** (RR 1,10‑1,14) | [Revisión Cochrane](https://cochranelibrary.com/es/cdsr/doi/10.1002/14651858.CD007458.pub2/full) |
 
 **Por qué esto refuerza la propuesta:**
@@ -72,11 +73,22 @@ especialidades (CAR, DER, DIG, NRL, OFT, TRA) y 140 agendas.
 | Citas perdidas al año | 56.800 | 71.000 |
 | Horas de consulta perdidas (con 20 min de media) | 18.900 | 23.700 |
 | De ellas, con causa administrativa (47 %) | 26.700 citas | 33.400 citas |
-| **Si la bandeja recupera una cuarta parte de las faltas** | **14.200 citas · 4.700 h** | **17.700 citas · 5.900 h** |
+| Valor de las citas perdidas, a precio público (88 €) | 5,0 M€ | 6,2 M€ |
+| **Si se recupera una cuarta parte de las faltas** | **14.200 citas · 4.700 h · 1,2 M€** | **17.700 citas · 5.900 h · 1,6 M€** |
+| Gestión de no realizadas que se evita (4,2 min cada una) | 990 h | 1.240 h |
 
-Los 20 minutos por cita son una suposición: hay que preguntar la duración real
-de las primeras y las sucesivas. La tasa real de La Princesa la puede dar la
-Unidad de Datos.
+- Los 20 minutos por cita son una suposición: hay que preguntar la duración
+  real de las primeras y las sucesivas. La tasa real de La Princesa la puede
+  dar la Unidad de Datos.
+- **Los euros no son dinero que se ahorra**, sino el valor a precio público de
+  la actividad que se recupera con los mismos médicos. Es actividad que hoy se
+  pierde o que hay que conseguir aparte para bajar las listas de espera.
+- Los 4,2 minutos de gestión por falta salen de los datos de la organización
+  (son una estimación suya, no una medida). A eso se suman las llamadas de
+  confirmación, recontacto y oferta que pasan a ser automáticas.
+- **Referencia para el precio:** una licencia de 50.000 € al año se pagaría con
+  unas 570 citas recuperadas, el 4 % del escenario bajo. Es un ejemplo, no un
+  precio.
 
 ## Resumen de los CSV
 
