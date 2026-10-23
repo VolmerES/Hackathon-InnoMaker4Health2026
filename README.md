@@ -59,6 +59,8 @@ python -m venv .venv
 - [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
 - [x] ~~Los huecos vacíos~~: aparcado, porque media sala va a por las faltas. Sus cifras reales siguen en [HALLAZGOS](docs/HALLAZGOS.md)
 - [x] **Idea elegida: Jano, la puerta de entrada.** IA local lee las derivaciones de Primaria y prepara cada caso (pruebas antes de la primera consulta, revisiones perdidas directas, devolución si faltan datos) para que la primera visita lo resuelva. Al director del hospital le gusta la IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-elegida-la-puerta-de-entrada-jano)
+- [x] Conexión con HCIS por HL7, Jano como capa de acción sobre el escriba, «Pregúntale a Jano» y el vocabulario de cada servicio. Ver [CONTEXTO](docs/CONTEXTO.md#cómo-se-conecta-jano-al-hospital-hcis-y-hl7)
+- [x] Hardware: **Mac mini M6** o **NVIDIA DGX Spark**, con cuántos médicos aguanta cada uno y una instalación pensada para cualquiera. Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-jano-mac-mini-m6-o-nvidia-dgx-spark)
 - [ ] MVP: lector con modelos de Hugging Face, reglas por servicio, bandeja de validación del especialista e impacto
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado

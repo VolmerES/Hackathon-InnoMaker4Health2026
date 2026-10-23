@@ -151,8 +151,8 @@ pasa de 4:45, recortar del tramo 3, nunca del 4.
 > cuesta venir. Y es **personalizado**, porque prepara cada caso según su
 > historia, sin repetir lo que ya se hizo.
 >
-> Solo os pedimos una cosa: **un servicio, tres meses, y el servidor que ya
-> tenéis**. Gracias.
+> Solo os pedimos una cosa: **un servicio, tres meses y un equipo del tamaño de
+> un libro encima de una mesa**. Gracias.
 
 ## De dónde sale cada cifra
 
@@ -195,16 +195,30 @@ para la demo.
   derivación va a una persona. Y el especialista valida todo en bloque antes de
   que se pida ninguna prueba. Además, el primer mes funciona en paralelo, sin
   decidir nada.
-- **«¿Qué servidor hace falta?»** Los modelos que leen las derivaciones son
-  pequeños y funcionan sin GPU. El resumen opcional sí agradece una GPU de gama
-  media, o se hace de noche en CPU.
+- **«¿Qué servidor hace falta?»** Uno de dos equipos:
+  - un **Mac mini M6**, para un servicio o un piloto pequeño (8–10 médicos con
+    escriba);
+  - un **NVIDIA DGX Spark, de unos 4.700 €**, para 30–50 médicos con escriba, o
+    para todo el hospital si solo se usa Jano.
+
+  Con **tres Spark, unos 14.000 € en total**, se cubren todas las consultas
+  externas: unos 60 médicos a la vez, de los ~558 de plantilla. **Sin cuota por
+  médico.** Son cifras estimadas, que se confirman con una prueba de carga antes
+  del piloto ⚠️.
+- **«¿Es difícil de instalarlo?»** Se instala como un router: se enchufa, se abre
+  `jano.local` y se siguen tres pasos (conectar con HCIS, elegir el servicio y
+  crear los usuarios). No necesita internet, y las actualizaciones van en un USB.
 - **«¿No vamos a pedir pruebas de más?»** El protocolo solo incluye las pruebas
   que ese servicio pide casi siempre en ese motivo. Y Jano quita las que ya hizo
   Primaria, así que en total se piden menos. Las pruebas que no se usen se miden
   en el piloto.
-- **«¿Cómo se integra con nuestro sistema?»** Lee las derivaciones de una
-  exportación diaria y deja preparadas las peticiones para que el especialista
-  las firme. La integración directa se hace con Informática.
+- **«¿Cómo se integra con nuestro sistema?»** Por **HL7**, como cualquier otro
+  sistema del hospital. Recibe los mensajes que HCIS ya envía (citas, pruebas,
+  derivaciones, notas) y **no toca la base de datos de HCIS**. En el piloto solo
+  lee y propone; escribir en HCIS es la fase 2 ⚠️.
+- **«Ya vamos a tener un escriba.»** Perfecto: Jano recibe su nota por HL7 y
+  hace todo lo que viene antes y después. Y si el escriba manda el audio a la
+  nube, Jano trae uno que no saca nada del hospital.
 - **«¿Y la protección de datos?»** No sale nada del hospital. Además, un modelo
   del BSC anonimiza el texto antes de guardar ningún registro.
 

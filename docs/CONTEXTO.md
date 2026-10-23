@@ -529,6 +529,193 @@ puede usar un audio grabado de antemano y pasado por `whisper-large-v3-turbo`,
 - El aviso de prueba duplicada solo informa, pero hay que confirmarlo con los
   mentores.
 
+## Dónde corre Jano: Mac mini M6 o NVIDIA DGX Spark
+
+**Decidido el 23‑oct:** Jano se vende para **dos equipos**, el **Mac mini M6**
+y el **NVIDIA DGX Spark**. Tiene que instalarlo **cualquiera, sin saber
+informática**.
+
+### Las dos versiones
+
+| | **Jano Mini** · Mac mini M6 | **Jano Spark** · NVIDIA DGX Spark |
+|---|---|---|
+| Para quién | Un servicio pequeño, un centro de especialidades o un piloto | Un servicio grande o el hospital entero |
+| Precio del equipo | Desde 899 $ (16 GB). **Recomendado 32 GB**, precio en € por confirmar ⚠️ | ~4.600–4.800 € con IVA (subió a 4.699 $ en febrero de 2026) |
+| Memoria | 32 GB, 170 GB/s | 128 GB, 273 GB/s |
+| Modelo de texto | Qwen3‑8B en Q4 (o Qwen3‑4B) | **Qwen3‑30B‑A3B** en FP8 (o Qwen3‑8B) |
+| Transcripción | Whisper large‑v3‑turbo | Whisper large‑v3‑turbo |
+| Lector de derivaciones | Modelos del BSC, en CPU y de noche | Igual |
+| **Médicos a la vez con escriba + chat** | **~8–10** | **~30–50** |
+| **Médicos a la vez solo con chat** | ~30–50 | ~400–500 |
+
+Todos los modelos son de licencia libre (Apache‑2.0, MIT, CC‑BY‑4.0). **No se
+paga cuota por médico ni por uso**, solo el equipo y la luz.
+
+**Por qué el Qwen3‑30B‑A3B en el Spark:** es un modelo de mezcla de expertos. Tiene
+30.000 millones de parámetros, pero en cada token solo trabajan 3.000 millones, así
+que responde con la calidad de uno grande y a la velocidad de uno pequeño.
+
+### Cuántos médicos pueden usarlo a la vez
+
+**Peticiones a la vez no es lo mismo que médicos usándolo a la vez.** En una
+consulta de 12 minutos, un médico hace unas 3 preguntas y ocupa la IA unos 45
+segundos (~6 % del tiempo).
+
+**Cada consulta pide a la IA:**
+
+- Whisper: unos 10 minutos de audio. **Es el cuello de botella**.
+- LLM: unos 2.500 tokens de entrada y 800 de salida, para la nota, los
+  trámites, la vuelta a Primaria y la versión del paciente.
+
+**Estimaciones a partir de benchmarks publicados:**
+
+- **Spark:**
+  - Con un 8B y 32 peticiones a la vez, unos 368 tok/s en total, es decir, unos
+    11,5 tok/s cada una. Es más rápido de lo que se lee (LMSYS).
+  - Whisper turbo: unos 20–30 s por cada 10 minutos de audio (estimado).
+  - En total, **150–300 consultas por hora**.
+- **M6:** unos 20 tok/s con una sola petición, y unos 40–60 s de Whisper por
+  cada 10 minutos de audio. En total, **unas 40 consultas por hora**.
+- **La nota está lista** unos 30 s después de la consulta en el Spark si se
+  transcribe por trozos durante la consulta. Si no, alrededor de 1 minuto.
+
+**La Princesa:**
+
+- **Unos 558 médicos de plantilla**: 32 jefes de servicio, 49 jefes de sección
+  y 477 facultativos especialistas, según la plantilla orgánica de abril de
+  2024. Son plazas aprobadas; no incluye residentes ⚠️.
+- **Más de 2.600 profesionales en total.**
+- **Consultas:** 473.257 al año ÷ unos 250 días ≈ **1.900 al día**, unas 270 por
+  hora por la mañana. Equivale a **unos 60 médicos en consulta a la vez**, el
+  10–15 % de la plantilla.
+
+| Montaje | Escriba + chat | Solo Jano (lector + chat + cierre con nota escrita a mano) |
+|---|---|---|
+| **1 Mac mini M6** | ~8–10 médicos: piloto pequeño | Un servicio entero |
+| **1 Spark** (piloto en Digestivo) | ~30–50 médicos | **El hospital entero** |
+| **3 Spark (~14.000 €)** | ~90–150 médicos: **todas las consultas externas** | Cualquiera de los ~558 |
+
+⚠️ **Son estimaciones.** Antes del piloto hay que hacer una prueba de carga con el
+modelo elegido, con el benchmark de vLLM o llama.cpp. Esa cifra es la que vale
+para Informática.
+
+⚠️ **El Spark es un equipo de escritorio:** no va en rack y no tiene fuente
+redundante. Para producción, Informática quizá prefiera un servidor de rack con
+GPU. El software es el mismo.
+
+### Dónde se ejecuta el escriba
+
+- **Los escribas comerciales** (Dragon Copilot, Abridge, Nabla…) mandan el audio
+  de la consulta **a la nube**. Del escriba de Quirónsalud y del que licita la
+  Consejería no sabemos dónde corren ⚠️.
+- **El escriba de Jano** corre en el mismo equipo de Jano:
+  1. el micrófono de la consulta envía el audio por la red interna;
+  2. Whisper lo transcribe y Qwen3 redacta la nota;
+  3. la nota se envía a HCIS como `MDM^T02`.
+
+  **No sale nada del hospital.**
+- **No se ejecuta en el PC de la consulta**, porque no tiene GPU.
+- **Si el hospital ya tiene un escriba en la nube**, Jano recibe su nota por HL7 y
+  hace igualmente los trámites.
+
+### Aprende el vocabulario de los médicos
+
+1. **Glosario por servicio (MVP).** Un fichero con siglas, fármacos y
+   expresiones, por ejemplo *FEVI, HbA1c, EPOC*. Se usa en dos sitios:
+   - en Whisper, con `hotwords` e `initial_prompt` de `faster-whisper`, o el
+     prompt de `whisper.cpp`;
+   - en las instrucciones del LLM.
+
+   No hay que entrenar nada.
+2. **Aprende de las correcciones.**
+   - Cada corrección del médico se guarda («oyó X, era Y»).
+   - Si se repite, entra en el glosario del servicio.
+   - Un responsable del servicio la revisa.
+   - **Aprende sin reentrenar ningún modelo**, y se puede auditar y deshacer.
+3. **El estilo de cada médico.** El LLM recibe dos o tres notas anteriores suyas
+   como ejemplo.
+4. **Fase 2:** ajuste fino (LoRA) de Whisper con audio del hospital, con
+   consentimiento y aprobación de protección de datos ⚠️.
+
+**La frase:** *«Lo que Jano aprende se queda en el hospital.»* Con las
+correcciones de vuestros médicos no se entrena el modelo de ninguna empresa.
+
+### Sabe quién es cada médico
+
+- **Por el login y la agenda, no por la voz.** El médico entra con su usuario o
+  con el directorio del hospital, y la agenda dice quién pasa consulta en cada
+  sala. En los CSV es `AGENDAS.profesional_ficticio`.
+- **Para qué sirve:**
+  - su glosario y su estilo de nota;
+  - «Pregúntale a Jano» solo le enseña **sus pacientes del día**;
+  - cada pregunta queda registrada con su nombre.
+- **Separar las voces** (médico, paciente, acompañante) con
+  `pyannote/speaker-diarization-3.1` (MIT) queda para la fase 2.
+- **Reconocer al médico por la voz: no.** La huella de voz es un dato
+  biométrico, especialmente protegido por el RGPD (art. 9), y el login ya
+  resuelve lo mismo. **Con los pacientes, nunca.**
+
+### Instalación para cualquiera
+
+**El objetivo:** que se instale como un router. Se enchufa, se abre el
+navegador y se siguen tres pasos. Nadie del hospital toca la línea de comandos.
+
+**Cómo llega:**
+
+- **Opción A (la buena): el equipo llega ya preparado.** Mac mini o Spark con
+  Jano y los modelos ya instalados.
+- **Opción B: el hospital ya tiene el equipo.** Se le pasa un instalador:
+  - en el Mac, un `.pkg` con doble clic;
+  - en el Spark, que trae DGX OS, basado en Ubuntu, un `.deb` o un
+    `instalar.sh`.
+
+  Los modelos van dentro del instalador, porque **no hace falta internet**
+  (`HF_HUB_OFFLINE=1`) y llevan sumas de comprobación.
+
+**El primer arranque, en `http://jano.local`:**
+
+1. **Conectar con HCIS.** Informática escribe la IP y el puerto del motor de
+   integración HL7. Hay un botón «Probar conexión» que se pone en verde.
+2. **Elegir el servicio.** Se carga su protocolo y su glosario, con plantillas
+   para Digestivo, Cardiología…
+3. **Usuarios.** Se conecta al directorio del hospital o se crean a mano.
+
+Al terminar, Jano se prueba solo con una derivación de ejemplo y enseña el
+resultado.
+
+**Qué hay debajo** (el instalador lo decide solo; nadie lo ve):
+
+| | Mac mini M6 | DGX Spark |
+|---|---|---|
+| Modelo de texto | Ollama (Metal) | vLLM (contenedor de NVIDIA), que aguanta muchas peticiones a la vez |
+| Transcripción | `whisper.cpp` (Metal) | `whisper.cpp` (CUDA) |
+| Jano (API + web) | Servicio de `launchd`, arranca solo | Servicio de `systemd` o Docker, arranca solo |
+| Perfil de modelos | Lo elige solo según la memoria: 16 GB → Qwen3‑4B, 32 GB → Qwen3‑8B | 128 GB → Qwen3‑30B‑A3B |
+
+Jano habla con los dos motores por la misma API compatible con OpenAI, así que
+**el código es el mismo en los dos equipos**.
+
+**Para el día a día:**
+
+- **Página de estado con semáforo:** verde, ámbar o rojo para la conexión con
+  HCIS, los modelos, el disco y la última copia.
+- **Actualizaciones** desde un fichero en un USB o desde un servidor interno, sin
+  internet, con un botón para volver a la versión anterior.
+- **Copia de seguridad con un botón**, del glosario, las correcciones y la
+  configuración.
+- **Si algo falla**, el mensaje dice qué hacer en lenguaje normal, no un error
+  técnico.
+
+### Qué entra en las 24 h
+
+- **Que funcione igual en los dos equipos:** Jano usa la API compatible con
+  OpenAI y el motor de IA se elige en un `.env`.
+- **El asistente de los tres pasos** como pantallas diseñadas por UI/UX. Se puede
+  enseñar en el pitch en 15 segundos.
+- **Un `instalar.sh` que funcione** en el equipo de la demo.
+- **Fuera:** el `.pkg` firmado, el `.deb`, las actualizaciones y la página de
+  estado completa. Van a la hoja de ruta.
+
 ## Cómo usar los datos
 
 Los datos sirven para identificar ineficiencias, analizar procesos, detectar
@@ -800,3 +987,5 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - [Wayra · anuncio del reto](https://wayra.com/news/wayra-pfizer-and-the-pfizer-foundation-launch-a-challenge-to-optimise-efficiency-in-hospital-outpatient-clinics)
 - [La Ecuación Digital](https://www.laecuaciondigital.com/empresas/healthtech/wayra-pfizer-reto-consultas-externas-hospitalarias/)
 - Escribas con IA: [BOCM 16‑mar‑2026 · licitación del escriba de Primaria](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF) · [Quirónsalud · Scribe, premio BiC IA (Infanta Elena)](https://www.quironsalud.com/es/comunicacion/actualidad/hospital-universitario-infanta-elena-premio-ia-bic-humaniza) · [Xataka · escribas en el Clínic y La Paz](https://www.xataka.com/medicina-y-salud/puede-resumir-50-folios-estudios-cinco-minutos-hablamos-hospitales-espanoles-que-estan-utilizando-ia)
+- Hardware: [LMSYS · review del DGX Spark](https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark) · [Foro NVIDIA · subida de precio del Spark](https://forums.developer.nvidia.com/t/dgx-spark-price-increase/361640) · [Kipmion · Spark Founders Edition EU](https://kipmion.com/producto/dgx-spark-founders-edition-eu) · [TidBITS · Mac mini M6](https://tidbits.com/2026/08/25/m6-and-m5-ultra-debut-in-updated-mac-mini-and-mac-studio/) · [PromptQuorum · Whisper en Apple Silicon](https://www.promptquorum.com/local-llms/apple-silicon-whisper-metal-benchmark)
+- La Princesa: [plantilla orgánica (abr‑2024)](https://comunidad.madrid/sites/default/files/doc/sanidad/rrhh/rrhh-plantillas_organicas-estatutarios-h._la_princesa.pdf) · [70 aniversario, más de 2.600 profesionales](https://www.comunidad.madrid/file/498221/download)
