@@ -247,27 +247,59 @@ Esto es lo que hay que contar en el pitch.
   - minutos administrativos;
   - días de espera.
 
+### El equipo
+
+| Quién | Perfil | Papel en el hackathon |
+|---|---|---|
+| Dev 1 | Software y robótica | **Datos y reglas**: la API sobre DuckDB, las reglas de los dos módulos y las cifras de impacto. Cuenta la viabilidad técnica en el pitch |
+| Dev 2 | Software | **Frontend**: la bandeja y la pantalla de impacto, siguiendo el diseño de UI/UX |
+| UI/UX | Diseño | **La bandeja**: flujo y pantallas para el personal administrativo, con accesibilidad (WCAG) y los mensajes al paciente en lectura fácil. Hace las diapositivas y **presenta la demo** |
+| Biomédica | Ingeniería biomédica | **El puente clínico**: valida las reglas con los mentores (Consultas Externas, Unidad de Datos), define la prioridad clínica y argumenta lo regulatorio y la privacidad. **Abre el pitch con el problema** |
+
+Esto lo propone Claude; el reparto lo decide el equipo.
+
+**El argumento regulatorio es de la biomédica.** La bandeja solo organiza
+citas, usa la prioridad que ya ha puesto el médico y no hace diagnóstico ni
+recomienda tratamientos. Así que **probablemente no es producto sanitario**
+según el Reglamento (UE) 2017/745 (MDR), y no necesita marcado CE para
+pilotarse. Es una baza de viabilidad muy fuerte, pero hay que confirmarla con
+los mentores antes de decirla en el pitch.
+
+**La robótica no hace falta aquí.** Ganadores anteriores llevaban dispositivo,
+pero este reto premia la viabilidad, y meter hardware la resta.
+
 ### Herramientas (propuesta)
 
-Lo más rápido para una aplicación de datos que corra en local:
+Con un perfil de UI/UX en el equipo, merece la pena una interfaz web de verdad en
+vez de Streamlit, que no deja diseñar:
 
-- **Python + DuckDB** para consultar los CSV directamente con SQL.
-- **Streamlit** para la bandeja y la pantalla de impacto.
+- **Backend:** Python + **FastAPI** + **DuckDB**, que lee los CSV directamente
+  con SQL (ya está en [`analisis/datos.py`](../analisis/datos.py)). Las reglas son
+  consultas SQL.
+- **Frontend:** una web sencilla con el framework que mejor domine el Dev 2
+  (por ejemplo React + Vite). Solo dos pantallas: la bandeja y el impacto.
+- **Diseño:** Figma en las primeras horas, para que el frontend no espere.
 
-Así no hay base de datos que montar y el mismo código sirve en un ordenador del
-hospital. Se puede cambiar según lo que domine el equipo.
+No hay base de datos que montar: el mismo código correría en un ordenador del
+hospital.
+
+**Si se va de tiempo:** la pantalla de impacto puede salir directamente del
+backend como gráficos estáticos, y la bandeja es lo único que tiene que estar
+diseñado.
 
 ### Reparto del tiempo (orientativo)
 
-| Horas | Qué |
-|---|---|
-| 0‑2 | Cargar los CSV y comprobar con números que los dos problemas existen y cuánto pesan |
-| 2‑3 | Decidir, ponerle nombre y la frase de «X que hace Y». Hablar con los mentores de Consultas Externas e Informática |
-| 3‑13 | Construir: capa de datos, reglas de los dos módulos y bandeja |
-| 13‑16 | Pantalla de impacto |
-| 16‑20 | Pitch: problema, cifra, demo, por qué es viable, piloto, modelo de negocio |
-| 20‑22 | Grabar un vídeo de la demo por si falla en directo |
-| 22‑24 | Ensayar y margen |
+La exploración de los datos ya está hecha ([`HALLAZGOS.md`](HALLAZGOS.md)).
+
+| Horas | Devs | UI/UX | Biomédica |
+|---|---|---|---|
+| 0‑2 | Acordar el contrato de la API (qué devuelve la bandeja). Esqueleto de backend y frontend | Flujo de la bandeja y primeros bocetos | Mentores: ¿pasa esto en La Princesa? ¿Qué HIS usan? ¿Es producto sanitario? |
+| 2‑3 | **Todos:** nombre del producto, frase de «X que hace Y» y validar el flujo | | |
+| 3‑12 | Reglas y API (Dev 1). Bandeja con datos reales (Dev 2) | Diseño final en Figma y textos de los mensajes al paciente | Reglas de prioridad y de segundo contacto. Plan de piloto y argumento regulatorio |
+| 12‑16 | Pantalla de impacto y pulir la bandeja | Revisar la accesibilidad de la interfaz. Empezar las diapositivas | Cifras para el pitch con Dev 1 |
+| 16‑20 | Congelar el código. Preparar los datos de la demo | Diapositivas | Guion del pitch |
+| 20‑22 | Grabar un vídeo de la demo por si falla en directo | | |
+| 22‑24 | **Todos:** ensayar y margen | | |
 
 ## Cómo usar los datos
 
