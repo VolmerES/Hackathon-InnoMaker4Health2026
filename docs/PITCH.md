@@ -79,9 +79,14 @@ pasa de 4:45, recortar del tramo 3, nunca del 4.
 > caso en una sola visita **en el 49 % de los pacientes**. Sin ella, en el 22 %.
 > Más del doble.
 >
-> ¿Por qué no se hace? Porque alguien tendría que leer cada derivación antes de
-> la cita y decidir qué prueba adelantar. Son 250 al día, en texto libre. Y lo
-> que más falta en un hospital son personas.
+> Y aquí al lado ya se probó. En 2018, el Digestivo del **Infanta Elena** usó un
+> algoritmo para leer las derivaciones y adelantar las pruebas. Las revisiones
+> por cada primera bajaron **de 2,25 a 1,72**. Pero solo llegó a **un 31 % de los
+> pacientes**.
+>
+> ¿Por qué no se hace en todas partes? Porque alguien tendría que leer cada
+> derivación antes de la cita y decidir qué prueba adelantar. Son 250 al día, en
+> texto libre. Y lo que más falta en un hospital son personas.
 
 ### 3. Jano y la demo · UI/UX · 1:20
 
@@ -237,10 +242,18 @@ para la demo.
 - **«¿Quién paga y cuánto?»** El hospital, con una licencia anual pequeña. Por
   ejemplo, 50.000 € al año se pagarían con unas 700 revisiones evitadas, el 5 %
   del escenario.
-- **«¿Competencia?»** Hay herramientas de IA clínica en la nube y existen
-  consultas de alta resolución hechas a mano. Lo nuestro es local, en la puerta
-  de entrada y con el protocolo de cada servicio. *No decir que no existe nada
-  parecido sin haberlo comprobado.*
+- **«¿Competencia?» / «¿Esto no existe ya?»** Cada pieza existe por separado:
+  - escribas en la nube;
+  - chat con la historia clínica;
+  - consultas de alta resolución hechas a mano;
+  - el algoritmo del Infanta Elena de 2018.
+
+  **Lo que no hemos encontrado es todo junto:** que lea el 100 % de las
+  derivaciones, prepare la consulta y cierre la vuelta a Primaria, dentro del
+  hospital, por HL7 y en un equipo que se instala solo. El Infanta Elena
+  demostró que funciona (de 2,25 a 1,72 revisiones por primera), pero llegó a un
+  31 % de los pacientes. *No decir nunca «no existe nada parecido»; decir «no lo
+  hemos encontrado junto».*
 - **«¿Cómo escala?»** Cada servicio carga su protocolo, y los modelos se
   reajustan con las derivaciones que el propio hospital ya etiqueta.
 - **«¿Vais a seguir con esto?»** La respuesta tiene que ser sincera y estar

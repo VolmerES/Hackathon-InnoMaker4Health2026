@@ -457,6 +457,68 @@ que confirmarlo con los mentores.
 - **La vuelta directa tras perder una revisión depende solo del hospital**, que
   es quien gestiona las revisiones. No hay que cambiar nada en Primaria.
 
+## Lo que ya existe y qué aporta Jano
+
+**Comprobado el 23‑oct.** Ninguna pieza de Jano es nueva por separado. Lo que no
+hemos encontrado es **todo junto**: en el hospital, local y para cualquier
+hospital. *No decir nunca «no existe nada parecido».*
+
+### El precedente más cercano: Infanta Elena (Valdemoro), 2018
+
+Póster de la AEG, *Gastroenterol Hepatol* 2021;44(Espec Congr):183. Lo firma
+Aparato Digestivo del H. Infanta Elena, un hospital de la red pública madrileña
+gestionado por Quirónsalud
+([PDF](https://www.elsevier.es/es-revista-gastroenterologia-hepatologia-14-congresos-24-reunion-anual-asociacion-espanola-gastroenterologia-134-sesion-neurogastroenterologia-y-motilidad-6428-comunicacion-puede-la-inteligencia-artificial-mejorar-77422-pdf)).
+
+- **Qué hacía:** desde julio de 2018, «un algoritmo de IA» leía los partes de
+  derivación de Primaria, sacaba los motivos más frecuentes y les asignaba **un
+  protocolo de pruebas antes de la primera consulta**. Es justo el núcleo de
+  Jano.
+- **Resultados:** primer semestre de 2019 frente al primero de 2018.
+
+  | Indicador | Con el algoritmo (2019) | 2018 | Vía normal (2019) |
+  |---|---|---|---|
+  | Sucesivas por primera | **1,72** | 2,25 | 1,93 (p = 0,07) |
+  | Analíticas en la primera visita | 49,4 % | 62,1 % | — |
+  | TAC en la primera visita | 4,1 % | 8,2 % | — |
+  | Endoscopias | 46,7 % | 54,5 % | 52,5 % |
+  | Altas en la primera consulta | 11,4 % | 8,2 % | 10,8 % |
+
+- **Su límite:** **solo llegó al 31,4 % de los pacientes** del área. Los mismos
+  autores dicen que el uso fue bajo. El póster habla de pacientes «derivados
+  usando el algoritmo» frente a «por vía normal», así que parece que dependía
+  de que se eligiera esa vía ⚠️.
+
+**Por qué nos ayuda en vez de quitarnos la idea:**
+
+1. **Es evidencia en Madrid y en Digestivo**, el mismo servicio de nuestro
+   piloto. Las sucesivas por primera bajaron un 24 %.
+2. **Su problema fue el alcance**, y Jano lo resuelve: lee **el 100 %** de las
+   derivaciones al llegar al hospital, sin que nadie cambie su forma de derivar.
+3. **Era de 2018, de un servicio y de un hospital.** Jano usa IA de 2026, cubre
+   todo el circuito (antes, durante y después), se conecta por HL7 y se instala
+   en cualquier hospital.
+4. **El director de La Princesa puede conocerlo.** Mejor citarlo nosotros que
+   que nos lo saquen.
+
+### El resto del mercado
+
+| Pieza | ¿Existe? | Quién | Qué aporta Jano |
+|---|---|---|---|
+| Leer derivaciones y adelantar pruebas | Sí, en un servicio | Infanta Elena (2018); en Asturias, IA para priorizar dermatología en Primaria (Legit.Health) | El 100 % de las derivaciones, varios servicios, local e instalable |
+| Leer cartas y avisar solo de lo que requiere acción | Sí, en Primaria (Reino Unido) | Docman10X (Advanced + U. de Manchester) | Lo mismo, pero del lado del hospital |
+| Escriba en consulta | Sí, mucho | Dragon Copilot, Abridge, Nabla, Scribe de Quirón, el contrato de Madrid (nube) | Local, y conectado a lo que pasa antes y después |
+| Chat con la historia clínica | Sí | Epic, Dragon Copilot | Local, con la fuente de cada dato y limitado a los pacientes del médico |
+| Alta resolución, e‑consulta | Sí, hechas a mano | Muchos hospitales | Automatizarlo sin añadir personal |
+| **Todo junto, local, por HL7 y fácil de instalar** | **No lo hemos encontrado** | — | **Jano** |
+
+**Lo primero mañana con los mentores ⚠️:**
+
+- ¿La Princesa tiene ya algo que lea o prepare las derivaciones?
+- ¿Conocen lo del Infanta Elena? ¿Sigue funcionando?
+
+Si La Princesa ya lo tiene, hay que saberlo antes del pitch, no durante.
+
 ## Cómo se conecta Jano al hospital: HCIS y HL7
 
 **Dato del equipo (23‑oct):** la historia clínica de La Princesa es **HCIS**, y
@@ -1034,3 +1096,4 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - Escribas con IA: [BOCM 16‑mar‑2026 · licitación del escriba de Primaria](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF) · [Quirónsalud · Scribe, premio BiC IA (Infanta Elena)](https://www.quironsalud.com/es/comunicacion/actualidad/hospital-universitario-infanta-elena-premio-ia-bic-humaniza) · [Xataka · escribas en el Clínic y La Paz](https://www.xataka.com/medicina-y-salud/puede-resumir-50-folios-estudios-cinco-minutos-hablamos-hospitales-espanoles-que-estan-utilizando-ia)
 - Hardware: [LMSYS · review del DGX Spark](https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark) · [Foro NVIDIA · subida de precio del Spark](https://forums.developer.nvidia.com/t/dgx-spark-price-increase/361640) · [Kipmion · Spark Founders Edition EU](https://kipmion.com/producto/dgx-spark-founders-edition-eu) · [TidBITS · Mac mini M6](https://tidbits.com/2026/08/25/m6-and-m5-ultra-debut-in-updated-mac-mini-and-mac-studio/) · [PromptQuorum · Whisper en Apple Silicon](https://www.promptquorum.com/local-llms/apple-silicon-whisper-metal-benchmark)
 - La Princesa: [plantilla orgánica (abr‑2024)](https://comunidad.madrid/sites/default/files/doc/sanidad/rrhh/rrhh-plantillas_organicas-estatutarios-h._la_princesa.pdf) · [70 aniversario, más de 2.600 profesionales](https://www.comunidad.madrid/file/498221/download)
+- Lo que ya existe: [Infanta Elena · IA en las derivaciones de Digestivo (AEG 2021)](https://www.elsevier.es/es-revista-gastroenterologia-hepatologia-14-congresos-24-reunion-anual-asociacion-espanola-gastroenterologia-134-sesion-neurogastroenterologia-y-motilidad-6428-comunicacion-puede-la-inteligencia-artificial-mejorar-77422-pdf) · [Asturias · IA en dermatología con Legit.Health](https://elreferente.es/startups/asturias-incorpora-ia-en-atencion-primaria-con-legit-health/) · [Docman10X · lectura de cartas en Primaria (Reino Unido)](https://htworld.co.uk/?p=2297)
