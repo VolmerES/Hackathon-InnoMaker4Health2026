@@ -1,0 +1,18 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04878
+id_paciente .......... PAC-00559        edad 41      sexo Mujer
+fecha_solicitud ...... 12/10/2026 16:12
+origen ............... C.S. Las Cortes · Dr. F. Arjona Vidal
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Normal
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: dispepsia persistente, H pylori ya erradicado
+
+41a, epigastralgia de 7 meses. Ag Hp en heces + el 14/07. hizo cuadruple con bismuto 10
+dias en julio con buena adherencia. control a las 6 semanas (05/09) NEGATIVO, erradicado.
+sigue igual de molesta a pesar de eso y de 8 semanas de IBP a dosis plena. no perdida de
+peso, no disfagia, no anemia, no vomitos.
+analitica 05/09 normal. eco abd 20/09 sin hallazgos.
+no se me ocurre nada mas desde aqui, ruego valoracion.

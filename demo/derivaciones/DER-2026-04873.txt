@@ -1,0 +1,13 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04873
+id_paciente .......... PAC-00862        edad 34      sexo Mujer
+fecha_solicitud ...... 12/10/2026 11:37
+origen ............... C.S. Daroca · Dra. P. Oliván Cerdá
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Normal
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: diarrea
+
+acude por diarrea. molestias abdominales. derivo a digestivo para estudio.

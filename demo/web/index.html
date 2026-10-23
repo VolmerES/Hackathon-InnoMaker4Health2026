@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jano · Validación de derivaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papel:#e8ecef;
+  --panel:#fff;
+  --panel-2:#f6f8f9;
+  --linea:#c2ccd3;
+  --linea-fina:#dde4e8;
+  --tinta:#17262f;
+  --tinta-2:#5b6b76;
+  --chrome:#0d3744;
+  --chrome-2:#0a2b35;
+  --foco:#1d6a8c;
+  --prueba:#1d6a8c;
+  --revision:#2f6b4f;
+  --devolver:#8a5b14;
+  --persona:#a02a30;
+  --marca:#fdf0c8;
+  --marca-borde:#c9a21a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--papel);
+  color:var(--tinta);
+  font:15px/1.45 "IBM Plex Sans",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+
+/* ---------- estructura ---------- */
+.app{display:grid;grid-template-rows:auto auto 1fr auto;height:100vh}
+.cuerpo{display:grid;grid-template-columns:330px minmax(0,1fr) 400px;min-height:0;background:var(--linea);gap:1px}
+.col{background:var(--panel);min-height:0;display:flex;flex-direction:column}
+
+/* ---------- barra del hospital ---------- */
+.chrome{background:var(--chrome);color:#dfeaee;display:flex;align-items:stretch;gap:0}
+.chrome .marca{display:flex;align-items:center;gap:10px;padding:10px 18px;background:var(--chrome-2)}
+.chrome .marca b{font-size:19px;letter-spacing:.14em;font-weight:600;color:#fff}
+.chrome .marca span{font-size:11.5px;color:#9fb9c2;max-width:13ch;line-height:1.25}
+.chrome .sitio{display:flex;align-items:center;gap:22px;padding:0 18px;font-size:13px;color:#b7cdd4}
+.chrome .sitio strong{color:#fff;font-weight:500}
+.chrome .sesion{margin-left:auto;display:flex;align-items:center;gap:18px;padding:0 18px;font-size:12.5px;color:#9fb9c2;text-align:right}
+.chrome .sesion b{display:block;color:#fff;font-weight:500;font-size:13px}
+
+/* ---------- filtros ---------- */
+.filtros{background:var(--panel-2);border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:4px;padding:7px 12px;overflow-x:auto}
+.filtros .lote{font-size:12.5px;color:var(--tinta-2);margin-right:10px;white-space:nowrap}
+.filtros .lote b{color:var(--tinta);font-weight:500}
+.f{border:1px solid var(--linea);background:var(--panel);border-radius:2px;padding:4px 10px;font-size:13px;cursor:pointer;white-space:nowrap;display:flex;gap:7px;align-items:baseline}
+.f:hover{border-color:var(--foco)}
+.f[aria-pressed="true"]{background:var(--chrome);border-color:var(--chrome);color:#fff}
+.f .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--tinta-2)}
+.f[aria-pressed="true"] .n{color:#aecad3}
+
+/* ---------- lista de trabajo ---------- */
+.cab{padding:9px 14px;border-bottom:1px solid var(--linea);font-size:12.5px;color:var(--tinta-2);display:flex;justify-content:space-between;align-items:center;background:var(--panel)}
+.cab h2{margin:0;font-size:13px;font-weight:600;color:var(--tinta);letter-spacing:.01em}
+.lista{overflow-y:auto;flex:1;min-height:0}
+.item{display:grid;grid-template-columns:4px 1fr;width:100%;border:0;border-bottom:1px solid var(--linea-fina);background:var(--panel);text-align:left;padding:0;cursor:pointer}
+.item .barra{background:var(--linea)}
+.item.r-prueba .barra{background:var(--prueba)}
+.item.r-revision .barra{background:var(--revision)}
+.item.r-devolver .barra{background:var(--devolver)}
+.item.r-persona .barra{background:var(--persona)}
+.item .txt{padding:9px 12px 10px}
+.item:hover{background:#f2f6f8}
+.item[aria-current="true"]{background:#e6eef2}
+.item[aria-current="true"] .txt{box-shadow:inset 0 0 0 1px #b8ccd6}
+.item .l1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.item .nom{font-weight:500}
+.item .id{font-size:11px;color:var(--tinta-2);font-family:"IBM Plex Mono",monospace}
+.item .l2{font-size:12.5px;color:var(--tinta-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .l3{margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pill{font-size:11.5px;padding:1px 6px;border:1px solid var(--linea);border-radius:2px;color:var(--tinta-2)}
+.pill.pref{color:var(--persona);border-color:#dfb7b9;background:#fdf4f4}
+.pill.conf{font-family:"IBM Plex Mono",monospace}
+.pill.conf.baja{color:var(--persona);border-color:#dfb7b9}
+.visto{font-size:11.5px;color:var(--revision);font-weight:500}
+.item.hecho .txt{opacity:.55}
+
+/* ---------- cintillo del paciente ---------- */
+.cintillo{border-bottom:1px solid var(--linea);background:var(--panel-2);padding:10px 16px;display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+.cintillo .quien h1{margin:0;font-size:18px;font-weight:600}
+.cintillo .quien .sub{font-size:12.5px;color:var(--tinta-2);margin-top:2px}
+.dato{font-size:12.5px;color:var(--tinta-2);max-width:26ch}
+.dato b{display:block;color:var(--tinta);font-weight:500;font-size:13px}
+.aviso{margin-left:auto;font-size:12.5px;border:1px solid #c9a21a;background:#fdf6df;color:#6a5207;padding:5px 9px;border-radius:2px;max-width:30ch}
+
+/* ---------- documento ---------- */
+.doc-cab{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-bottom:1px solid var(--linea-fina);font-size:12.5px;color:var(--tinta-2)}
+.doc{overflow-y:auto;flex:1;min-height:0;padding:16px 16px 28px}
+.doc pre{margin:0 auto;max-width:78ch;white-space:pre-wrap;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.62;color:#1c2b34;background:var(--panel);
+  border:1px solid var(--linea-fina);border-left:3px solid var(--linea);padding:18px 20px}
+.doc mark{background:var(--marca);box-shadow:0 1px 0 var(--marca-borde);color:inherit;padding:0 1px}
+.doc mark.on{background:#ffe9a3;box-shadow:0 0 0 1px var(--marca-borde)}
+
+/* ---------- ficha ---------- */
+.ficha{overflow-y:auto;flex:1;min-height:0}
+.bloque{border-bottom:1px solid var(--linea-fina);padding:12px 16px}
+.bloque h3{margin:0 0 8px;font-size:12.5px;font-weight:600;color:var(--tinta-2)}
+.campo{display:grid;grid-template-columns:11ch 1fr;gap:10px;padding:4px 6px;margin:0 -6px;border-radius:2px;font-size:13.5px}
+.campo:hover,.campo.on{background:#fdf6df}
+.campo-libre{padding:2px 6px;margin:0 -6px;border-radius:2px;cursor:default}
+.campo-libre:hover,.campo-libre.on{background:#fdf6df}
+.campo dt{color:var(--tinta-2);font-size:12.5px;padding-top:1px}
+.campo dd{margin:0}
+.campo ul{margin:0;padding:0;list-style:none}
+.campo li{position:relative;padding-left:12px;margin-bottom:2px}
+.campo li::before{content:"";position:absolute;left:0;top:.55em;width:5px;height:1px;background:var(--tinta-2)}
+dl{margin:0}
+.tipo{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.tipo i{width:9px;height:9px;border-radius:50%;background:var(--linea);font-style:normal}
+.r-prueba .tipo i{background:var(--prueba)} .r-revision .tipo i{background:var(--revision)}
+.r-devolver .tipo i{background:var(--devolver)} .r-persona .tipo i{background:var(--persona)}
+.alarma{color:var(--persona)}
+.falta{color:var(--devolver)}
+.conf{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tinta-2);margin-top:10px}
+.conf .pista{flex:1;height:5px;background:#e3e9ec;position:relative;max-width:120px}
+.conf .pista span{position:absolute;inset:0 auto 0 0;background:var(--revision)}
+.conf.baja .pista span{background:var(--persona)}
+
+/* ---------- propuesta ---------- */
+.prop{background:var(--panel-2);border-top:1px solid var(--linea);padding:13px 16px}
+.prop h3{margin:0 0 6px;font-size:12.5px;font-weight:600;color:var(--tinta-2)}
+.prop .que{font-size:15.5px;font-weight:600;line-height:1.3}
+.prop .lin{border-left:3px solid var(--linea);padding-left:11px;margin-top:10px}
+.r-prueba .prop .lin{border-color:var(--prueba)} .r-revision .prop .lin{border-color:var(--revision)}
+.r-devolver .prop .lin{border-color:var(--devolver)} .r-persona .prop .lin{border-color:var(--persona)}
+.prop ul{margin:4px 0 0;padding:0;list-style:none;font-size:13.5px}
+.prop li{padding-left:16px;position:relative;margin-bottom:3px}
+.prop li.si::before{content:"+";position:absolute;left:0;color:var(--prueba);font-weight:600}
+.prop li.no::before{content:"−";position:absolute;left:0;color:var(--tinta-2);font-weight:600}
+.prop .no span{color:var(--tinta-2)}
+.prop .nota{font-size:13px;color:var(--tinta-2);margin-top:9px}
+.prop .fuente{font-size:12px;color:var(--tinta-2);margin-top:9px;padding-top:8px;border-top:1px solid var(--linea-fina)}
+.acciones{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--linea);background:var(--panel);flex-wrap:wrap}
+.btn{border:1px solid var(--linea);background:var(--panel);padding:7px 13px;border-radius:2px;cursor:pointer;font-size:13.5px}
+.btn:hover{border-color:var(--foco)}
+.btn.pri{background:var(--chrome);border-color:var(--chrome);color:#fff;font-weight:500}
+.btn.pri:hover{background:#0f4454}
+.btn[disabled]{opacity:.45;cursor:default}
+.hechoaviso{padding:10px 16px;font-size:13px;color:var(--revision);background:#f1f7f3;border-top:1px solid var(--linea)}
+.correccion{padding:0 16px 12px;font-size:13.5px}
+.correccion[hidden]{display:none}
+.correccion p{margin:0 0 6px;color:var(--tinta-2);font-size:12.5px}
+
+/* ---------- pie ---------- */
+.pie{background:var(--chrome-2);color:#cfe0e5;display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.pie .c{padding:9px 16px;font-size:12.5px;border-right:1px solid #164b5b;white-space:nowrap}
+.pie .c b{font-family:"IBM Plex Mono",monospace;font-size:16px;color:#fff;font-weight:500;margin-right:7px}
+.pie .todo{margin-left:auto;padding:8px 14px}
+.pie .todo .btn{background:transparent;border-color:#2c6778;color:#e7f1f4}
+.pie .todo .btn:hover{background:#13495a}
+
+@media (max-width:1180px){
+  .cuerpo{grid-template-columns:260px minmax(0,1fr) 340px}
+}
+@media (max-width:900px){
+  .app{height:auto;grid-template-rows:none}
+  .cuerpo{grid-template-columns:1fr}
+  .col{max-height:none}
+  .lista{max-height:40vh}
+  .chrome{flex-wrap:wrap}
+  .chrome .sesion{margin-left:0}
+}
+@media (prefers-reduced-motion:no-preference){
+  .item,.btn{transition:background-color .12s ease,border-color .12s ease}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="chrome">
+    <div class="marca">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="23" height="23" fill="none" stroke="#5f93a1"/>
+        <path d="M13 3.5v19" stroke="#5f93a1"/>
+        <path d="M6.5 9.5c2.6 0 3.6 1.4 3.6 3.5s-1 3.5-3.6 3.5" fill="none" stroke="#fff" stroke-width="1.6"/>
+        <path d="M19.5 9.5c-2.6 0-3.6 1.4-3.6 3.5s1 3.5 3.6 3.5" fill="none" stroke="#fff" stroke-width="1.6"/>
+      </svg>
+      <b>JANO</b>
+      <span>Puerta de entrada de derivaciones</span>
+    </div>
+    <div class="sitio">
+      <span><strong>H. U. de La Princesa</strong> · Consultas externas</span>
+      <span>Servicio: <strong>Aparato Digestivo</strong></span>
+      <span>Protocolo <strong>v3</strong>, aprobado por el Servicio el 28/09/2026</span>
+    </div>
+    <div class="sesion">
+      <span><b>Dra. Sanz Oria</b>Facultativa especialista · Digestivo</span>
+      <span><b>Lectura del 13/10/2026, 03:10</b>IA local · servidor del hospital</span>
+    </div>
+  </header>
+
+  <nav class="filtros" aria-label="Filtrar la lista por lo que propone Jano">
+    <span class="lote">Lote de la noche: <b>248 derivaciones leídas</b> · pendientes de validar en Digestivo:</span>
+    <button class="f" data-filtro="todas" aria-pressed="true">Todas <span class="n" data-cuenta="todas"></span></button>
+    <button class="f" data-filtro="prueba" aria-pressed="false">Prueba antes de la consulta <span class="n" data-cuenta="prueba"></span></button>
+    <button class="f" data-filtro="revision" aria-pressed="false">Revisión directa <span class="n" data-cuenta="revision"></span></button>
+    <button class="f" data-filtro="devolver" aria-pressed="false">Devolver a Primaria <span class="n" data-cuenta="devolver"></span></button>
+    <button class="f" data-filtro="persona" aria-pressed="false">A una persona <span class="n" data-cuenta="persona"></span></button>
+  </nav>
+
+  <div class="cuerpo">
+
+    <section class="col" aria-label="Derivaciones del lote">
+      <div class="cab">
+        <h2>Lista de validación</h2>
+        <span><span class="mono" id="restantes">0</span> sin validar</span>
+      </div>
+      <div class="lista" id="lista" role="listbox" aria-label="Derivaciones"></div>
+    </section>
+
+    <section class="col" aria-label="Derivación tal como la escribió Primaria">
+      <div class="cintillo" id="cintillo"></div>
+      <div class="doc-cab">
+        <span>Hoja de derivación recibida · <span class="mono" id="doc-id"></span></span>
+        <span>Lo resaltado es de donde Jano ha sacado cada dato</span>
+      </div>
+      <div class="doc"><pre id="doc"></pre></div>
+    </section>
+
+    <section class="col" id="panel" aria-label="Ficha y propuesta">
+      <div class="ficha" id="ficha"></div>
+      <div id="zona-acciones"></div>
+    </section>
+
+  </div>
+
+  <footer class="pie" aria-live="polite">
+    <div class="c"><b id="k-leidas">248</b>derivaciones leídas esta noche</div>
+    <div class="c"><b id="k-validadas">0</b>validadas por usted</div>
+    <div class="c"><b id="k-pruebas">0</b>pruebas adelantadas</div>
+    <div class="c"><b id="k-dup">0</b>pruebas duplicadas evitadas</div>
+    <div class="c"><b id="k-rev">0</b>primeras consultas que no hacen falta</div>
+    <div class="c"><b id="k-dev">0</b>devueltas a Primaria</div>
+    <div class="c"><b id="k-per">0</b>a una persona</div>
+    <div class="todo"><button class="btn" id="aprobar-resto">Aprobar las que quedan sin banderas</button></div>
+  </footer>
+
+</div>
+
+<script src="datos.js"></script>
+<script>
+const RUTAS = {
+  prueba:{nombre:"Prueba antes de la consulta"},
+  revision:{nombre:"Revisión directa"},
+  devolver:{nombre:"Devolver a Primaria"},
+  persona:{nombre:"A una persona"}
+};
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const casos = window.CASOS.map(c => ({...c, estado:"pendiente"}));
+let sel = 0, filtro = "todas";
+
+const $ = s => document.querySelector(s);
+const visibles = () => casos.filter(c => filtro === "todas" || c.propuesta.ruta === filtro);
+
+/* ---------- lista ---------- */
+function pintaLista(){
+  const l = $("#lista");
+  l.innerHTML = "";
+  visibles().forEach(c => {
+    const i = casos.indexOf(c);
+    const b = document.createElement("button");
+    b.className = `item r-${c.propuesta.ruta}` + (c.estado !== "pendiente" ? " hecho" : "");
+    b.setAttribute("role","option");
+    b.setAttribute("aria-current", i === sel ? "true" : "false");
+    const baja = c.ficha.confianza < 0.75;
+    b.innerHTML = `<span class="barra"></span><span class="txt">
+      <span class="l1"><span class="nom">${esc(c.paciente.nombre)}</span><span class="id">${c.id.slice(-5)}</span></span>
+      <span class="l2">${c.paciente.edad} años · ${esc(c.ficha.motivo)}</span>
+      <span class="l3">
+        <span class="pill">${RUTAS[c.propuesta.ruta].nombre}</span>
+        ${c.prioridad_ap === "Preferente" ? '<span class="pill pref">Preferente</span>' : ""}
+        <span class="pill conf${baja ? " baja" : ""}">${c.ficha.confianza.toFixed(2).replace(".",",")}</span>
+        ${c.estado === "validado" ? '<span class="visto">Validada</span>' : ""}
+        ${c.estado === "corregido" ? '<span class="visto">Corregida</span>' : ""}
+      </span></span>`;
+    b.onclick = () => { sel = i; pinta(); };
+    l.appendChild(b);
+  });
+  $("#restantes").textContent = casos.filter(c => c.estado === "pendiente").length;
+  document.querySelectorAll("[data-cuenta]").forEach(el => {
+    const f = el.dataset.cuenta;
+    el.textContent = f === "todas" ? casos.length : casos.filter(c => c.propuesta.ruta === f).length;
+  });
+}
+
+/* ---------- documento con la procedencia resaltada ---------- */
+function pintaDoc(c){
+  let html = esc(c.texto);
+  Object.entries(c.evidencia).forEach(([campo, frag]) => {
+    const e = esc(frag);
+    const p = html.indexOf(e);
+    if (p < 0) return;
+    html = html.slice(0,p) + `<mark data-campo="${campo}">` + e + "</mark>" + html.slice(p + e.length);
+  });
+  $("#doc").innerHTML = html;
+  $("#doc-id").textContent = c.id;
+}
+
+/* ---------- cintillo ---------- */
+function pintaCintillo(c){
+  const p = c.paciente;
+  $("#cintillo").innerHTML = `
+    <div class="quien">
+      <h1>${esc(p.nombre)}</h1>
+      <div class="sub"><span class="mono">${p.nhc}</span> · ${p.edad} años · ${p.sexo}</div>
+    </div>
+    <div class="dato"><b>${esc(c.centro)}</b>${esc(c.medico)} · ${c.fecha}</div>
+    <div class="dato"><b>${c.prioridad_ap}</b>Preferencia que marca Primaria</div>
+    <div class="dato"><b>${esc(p.contacto)}</b>Canal con el que responde</div>
+    ${p.acc && p.acc !== "—" ? `<div class="aviso">Al citar: ${esc(p.acc)}</div>` : ""}`;
+}
+
+/* ---------- ficha ---------- */
+function lista(items, clase){
+  return `<ul>${items.map(x => `<li class="${clase||""}">${esc(x)}</li>`).join("")}</ul>`;
+}
+function pintaFicha(c){
+  const f = c.ficha, baja = f.confianza < 0.75;
+  const campos = [
+    ["evolucion","Evolución", esc(f.evolucion)],
+    ["motivo","Motivo", esc(f.motivo)],
+    ["antecedentes","Antecedentes", f.antecedentes.length ? lista(f.antecedentes) : "<span style='color:var(--tinta-2)'>No constan</span>"],
+    ["pruebas_ap","Ya hecho en Primaria", f.pruebas_ap.length ? lista(f.pruebas_ap) : "<span style='color:var(--tinta-2)'>Nada</span>"],
+  ];
+  if (f.banderas.length) campos.push(["banderas","Datos de alarma", `<span class="alarma">${lista(f.banderas)}</span>`]);
+  if (f.faltan.length) campos.push(["faltan","Falta en la hoja", `<span class="falta">${lista(f.faltan)}</span>`]);
+
+  $("#panel").className = `col r-${c.propuesta.ruta}`;
+  $("#ficha").innerHTML = `
+    <div class="bloque">
+      <h3>Lo que Jano ha leído</h3>
+      <div class="tipo campo-libre" data-campo="tipo"><i></i>${esc(f.tipo)}</div>
+      <div class="conf${baja ? " baja" : ""}">
+        <span>Seguridad de la lectura</span>
+        <span class="pista"><span style="width:${Math.round(f.confianza*100)}%"></span></span>
+        <span class="mono">${f.confianza.toFixed(2).replace(".",",")}</span>
+        ${baja ? "<span>por debajo del umbral del Servicio (0,75)</span>" : ""}
+      </div>
+    </div>
+    <div class="bloque">
+      <h3>Ficha extraída del texto</h3>
+      <dl>${campos.map(([k,t,v]) => `<div class="campo" data-campo="${k}"><dt>${t}</dt><dd>${v}</dd></div>`).join("")}</dl>
+    </div>
+    <div class="prop">
+      <h3>Lo que propone el protocolo del Servicio</h3>
+      <div class="que">${esc(c.propuesta.etiqueta)}</div>
+      <div class="lin">
+        ${c.propuesta.pruebas.length ? `<ul>${c.propuesta.pruebas.map(x => `<li class="si">${esc(x)}</li>`).join("")}</ul>` : ""}
+        ${c.propuesta.evita.length ? `<ul>${c.propuesta.evita.map(x => `<li class="no"><span>${esc(x)}</span></li>`).join("")}</ul>` : ""}
+        <div class="nota">${esc(c.propuesta.nota)}</div>
+      </div>
+      <div class="fuente">${esc(c.propuesta.protocolo)}</div>
+    </div>`;
+
+  // la ficha y el texto se señalan entre sí
+  document.querySelectorAll(".campo, .campo-libre").forEach(el => {
+    const m = () => document.querySelector(`#doc mark[data-campo="${el.dataset.campo}"]`);
+    const on = v => { el.classList.toggle("on", v); const x = m(); if (x){ x.classList.toggle("on", v); if (v) x.scrollIntoView({block:"nearest"}); } };
+    el.addEventListener("mouseenter", () => on(true));
+    el.addEventListener("mouseleave", () => on(false));
+    el.tabIndex = 0;
+    el.addEventListener("focus", () => on(true));
+    el.addEventListener("blur", () => on(false));
+  });
+}
+
+/* ---------- acciones ---------- */
+function pintaAcciones(c){
+  const z = $("#zona-acciones");
+  if (c.estado !== "pendiente"){
+    z.innerHTML = `<div class="hechoaviso">${c.estado === "validado" ? "Validada" : "Corregida"} por la Dra. Sanz Oria. La petición queda firmada y admisión ya puede citar.</div>`;
+    return;
+  }
+  const otras = Object.keys(RUTAS).filter(r => r !== c.propuesta.ruta);
+  z.innerHTML = `
+    <div class="acciones">
+      <button class="btn pri" id="ok">Aprobar la propuesta</button>
+      <button class="btn" id="corr">Corregir el destino</button>
+    </div>
+    <div class="correccion" id="caja-corr" hidden>
+      <p>Lo que elija aquí entra en el informe del piloto como corrección del lector.</p>
+      ${otras.map(r => `<button class="btn" data-ruta="${r}">${RUTAS[r].nombre}</button>`).join(" ")}
+    </div>`;
+  $("#ok").onclick = () => { c.estado = "validado"; avanzar(); };
+  $("#corr").onclick = () => { const k = $("#caja-corr"); k.hidden = !k.hidden; };
+  z.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => {
+    c.propuesta.ruta = b.dataset.ruta;
+    c.propuesta.etiqueta = RUTAS[b.dataset.ruta].nombre + " (corregido por la facultativa)";
+    c.estado = "corregido";
+    avanzar();
+  });
+}
+
+function avanzar(){
+  const v = visibles();
+  const sig = v.find(c => c.estado === "pendiente" && casos.indexOf(c) !== sel);
+  if (sig) sel = casos.indexOf(sig);
+  pinta();
+}
+
+/* ---------- contadores ---------- */
+function pintaContadores(){
+  const hechos = casos.filter(c => c.estado !== "pendiente");
+  const n = r => hechos.filter(c => c.propuesta.ruta === r).length;
+  $("#k-validadas").textContent = hechos.length;
+  $("#k-pruebas").textContent = hechos.reduce((a,c) => a + (c.propuesta.ruta === "prueba" ? c.propuesta.pruebas.length : 0), 0);
+  $("#k-dup").textContent = hechos.reduce((a,c) => a + c.propuesta.evita.filter(e => /hech|negativ|2021/i.test(e)).length, 0);
+  $("#k-rev").textContent = n("revision");
+  $("#k-dev").textContent = n("devolver");
+  $("#k-per").textContent = n("persona");
+}
+
+function pinta(){
+  const c = casos[sel];
+  pintaLista(); pintaCintillo(c); pintaDoc(c); pintaFicha(c); pintaAcciones(c); pintaContadores();
+}
+
+/* filtros */
+document.querySelectorAll(".f").forEach(b => b.onclick = () => {
+  filtro = b.dataset.filtro;
+  document.querySelectorAll(".f").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  const v = visibles();
+  if (v.length && !v.includes(casos[sel])) sel = casos.indexOf(v[0]);
+  pinta();
+});
+
+/* aprobar en bloque lo que no tiene banderas ni poca confianza */
+$("#aprobar-resto").onclick = () => {
+  visibles().forEach(c => {
+    if (c.estado === "pendiente" && !c.ficha.banderas.length && c.ficha.confianza >= 0.75) c.estado = "validado";
+  });
+  pinta();
+};
+
+/* teclado: j/k para moverse, a para aprobar */
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input,textarea")) return;
+  const v = visibles(), i = v.indexOf(casos[sel]);
+  if (e.key === "j" && i < v.length - 1){ sel = casos.indexOf(v[i+1]); pinta(); }
+  if (e.key === "k" && i > 0){ sel = casos.indexOf(v[i-1]); pinta(); }
+  if (e.key === "a" && casos[sel].estado === "pendiente"){ casos[sel].estado = "validado"; avanzar(); }
+});
+
+pinta();
+</script>
+</body>
+</html>

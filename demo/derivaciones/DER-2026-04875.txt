@@ -1,0 +1,19 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04875
+id_paciente .......... PAC-00733        edad 29      sexo Hombre
+fecha_solicitud ...... 12/10/2026 13:21
+origen ............... C.S. Jaime Vera · Dra. M. Lobato Esteve
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Preferente
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: crohn conocido, empeoramiento. adelantar revision
+
+varon 29a, EC ileal dx 2022, seguimiento en digestivo de la princesa (dr cuevas, ultima rev
+05/05/26), con azatioprina 150mg/24h.
+desde hace 3 semanas 5-6 deps/dia, dolor en FID, astenia. no fiebre, no sangre. no ha
+tomado corticoides.
+analitica 10/10: PCR 38, Hb 12.1. calprotectina fecal 740.
+impresion: brote. no necesita una primera consulta, necesita que le vean antes de lo que
+le toca. trabaja a turnos, si puede ser por la mañana.

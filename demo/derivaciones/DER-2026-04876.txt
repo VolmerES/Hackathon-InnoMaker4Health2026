@@ -1,0 +1,19 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04876
+id_paciente .......... PAC-01104        edad 46      sexo Mujer
+fecha_solicitud ...... 12/10/2026 14:48
+origen ............... C.S. Pacífico · Dr. R. Caamaño Prieto
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Normal
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: hipertransaminasemia + esteatosis en eco
+
+46a, obesidad grado I (IMC 32), hipertrigliceridemia. asintomatica.
+GPT 78 (05/08) y 71 (02/10), GOT 54, GGT 96, plaquetas 243000, albumina 4.3.
+serologias VHB y VHC negativas (05/08). no alcohol (AUDIT-C 0). no farmacos hepatotoxicos.
+ECO ABD 28/09 (hecha en el centro de especialidades): higado de tamaño normal con aumento
+difuso de la ecogenicidad compatible con esteatosis. via biliar normal, bazo normal.
+sospecho EHmet, derivo para valoracion y para estadificar fibrosis.
+OJO: la paciente es sorda, necesita interprete de lengua de signos en la cita.

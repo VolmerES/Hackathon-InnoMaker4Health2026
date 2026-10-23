@@ -1,0 +1,21 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04877
+id_paciente .......... PAC-02771        edad 69      sexo Hombre
+fecha_solicitud ...... 12/10/2026 15:30
+origen ............... C.S. Montesa · Dra. E. Nogueira Sáez
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Preferente
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: DISFAGIA PROGRESIVA + PERDIDA DE PESO - PREFERENTE
+
+Varon 69a, fumador de 20 cig/dia desde los 18, bebedor de 2-3 cervezas al dia.
+Desde agosto disfagia, primero con solidos y en las ultimas 2 semanas tb con triturados.
+Sensacion de atascamiento retroesternal. Ha perdido 6 kg (de 78 a 72) sin hacer dieta.
+Astenia importante.
+EF: delgadez llamativa, no adenopatias cervicales palpables, abdomen sin masas.
+Analitica 11/10: Hb 11.2 VCM 82, albumina 3.4, resto normal.
+Disfagia organica progresiva con sindrome constitucional y factores de riesgo.
+ALTA SOSPECHA DE NEOPLASIA ESOFAGICA. Derivo preferente y llamo yo al servicio.
+Vive solo y no tiene internet, avisar por telefono.

@@ -1,0 +1,16 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04879
+id_paciente .......... PAC-03012        edad 52      sexo Hombre
+fecha_solicitud ...... 12/10/2026 17:03
+origen ............... C.S. Embajadores · Dr. S. Quintanar Ruano
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Normal
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: vto estudio dig
+
+pcte c/ molestias abd inespecificas ds "hace tiempo". ya comentado en IC no presencial (ver
+IC 09/26). pdte completar estudio s/ indicacion previa. resto s/p. no AP relevantes
+conocidos. tto actual: ver hoja de medicacion. analitica ant (no se adjunta). Rx abd en urg
+08/26, informe en HCE. dolor abd a estudio, rgo valoracion.

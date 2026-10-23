@@ -1,0 +1,19 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04880
+id_paciente .......... PAC-01577        edad 77      sexo Mujer
+fecha_solicitud ...... 12/10/2026 18:22
+origen ............... C.S. Ibiza · Dra. B. Trillo Vázquez
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Normal
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: estreñimiento cronico mal controlado, revision digestivo
+
+77a, en seguimiento por digestivo desde 2021 por estreñimiento cronico funcional, ultima
+consulta 18/02/26. colono 2021 sin hallazgos. toma macrogol pero de forma irregular.
+estos 2 meses hace deposicion cada 4-5 dias y con esfuerzo, sin sangre, sin dolor y sin
+perdida de peso. no vomitos. sin datos de alarma.
+analitica 01/10 normal, TSH 2.4. SOH negativa 01/10.
+pido revision con su servicio para ajustar tto. va en silla de ruedas y viene con la hija,
+a ver si puede ser todo en el mismo viaje.
