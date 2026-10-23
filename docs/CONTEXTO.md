@@ -89,6 +89,88 @@ peor accesibilidad. La predicción solo sirve para **dar más apoyo**, como otro
 recordatorio, otro canal u ofrecer transporte. Nunca para quitar la cita o
 bajar la prioridad.
 
+## Qué le interesa a cada organizador
+
+Hay tres organizadores y cada uno quiere algo distinto del ganador. Lo que
+sigue sale de su información pública (ver [Fuentes](#fuentes)). Lo que es
+deducción nuestra va marcado como tal.
+
+### Hospital Universitario de La Princesa: quien lo pilotaría
+
+- **Ha definido el reto** y podría pilotar la propuesta ganadora en un entorno
+  asistencial real.
+- **Ya trabaja con IA, y de forma premiada.** En los premios Best in Class en IA
+  2026 ganó dos premios y tuvo cinco finalistas.
+- **El precedente más cercano es Nostradamus.** Uno de esos finalistas, en la
+  categoría «Gestión Hospitalaria Inteligente», es un modelo que predice qué
+  pacientes de Urgencias van a ingresar. Lo presentan como pasar *«de un modelo
+  reactivo a un modelo predictivo»*. Es justo el enfoque de nuestras ideas,
+  aplicado a consultas externas.
+- **Usa la etiqueta «Medicina Personalizada» como categoría propia** en esos
+  premios: Pandora (cáncer de páncreas) y Predicrisis (migraña con pulsera). Nos
+  dice qué entienden ellos por medicina personalizada.
+- **Tiene equipo de datos propio**: la Unidad de Análisis de Datos del IIS‑Princesa
+  hace IA para retos clínicos *y organizativos*. Es el equipo que mantendría
+  nuestra solución, y entre los mentores está su data scientist.
+- **Su Unidad de Apoyo a la Innovación** capta ideas externas, las evalúa con una
+  Comisión de Innovación y gestiona la propiedad intelectual y la transferencia.
+  Pide que los proyectos sean *«potencialmente transferibles»*.
+- **Humanización.** Tiene un chatbot para dudas quirúrgicas (Doctora Abril) que
+  *«no busca sustituir al profesional sanitario»*. Su IA de diagnóstico funciona
+  *«siempre bajo supervisión del médico especialista»* y tiene un comité de ética
+  clínica. La IA ayuda y el profesional decide.
+
+### Pfizer: el socio de la industria
+
+- **Quiere estar en la transformación digital de los hospitales.** En julio de
+  2026 montó con Deloitte **InnovaSalud Spain**, una red de responsables de
+  innovación de 14 hospitales para adoptar IA en el diagnóstico, el tratamiento,
+  la **gestión hospitalaria** y la prevención. La Princesa no está en esa lista.
+- **Preocupaciones declaradas de esa red:** protección de datos, sesgos de los
+  algoritmos, ética e integración *«responsable»*.
+- **Sus mentores** son de acceso al mercado, innovación hospitalaria y
+  **rediseño de procesos**, estrategia digital y áreas terapéuticas
+  (cardiovascular, vacunas, oncología, urgencias).
+- *Deducción:* a Pfizer le conviene que el médico tenga más tiempo para
+  diagnosticar y seguir el tratamiento, y que los pacientes no se pierdan entre
+  la prueba y la revisión. «Revisiones sin resultado» encaja con eso. El reto de
+  2025 (biomarcadores) apunta a su interés por la medicina de precisión.
+
+### Fundación Pfizer: el lado social
+
+- **Misión:** impulsar la ciencia, la tecnología y la innovación en salud *y
+  acercarlas a la sociedad*.
+- **Su tercera área es la innovación social**: la que mejora las condiciones de
+  vida de la población.
+- **Empezó centrada en el envejecimiento saludable.** *Deducción:* una propuesta
+  que funcione también para pacientes mayores y con dificultades de acceso
+  encaja con su historia.
+
+### Wayra (Telefónica): quien acelera e invierte
+
+- **Acelera al ganador** seis meses en InnomakersLAB, con acceso a las unidades
+  de negocio de Telefónica y posible inversión (ticket medio de hasta unos
+  250.000 €).
+- **En la inversión busca** tracción validada, un producto que resuelva un
+  problema real y potencial de escalar. En 2024 Wayra España invirtió sobre todo
+  en digitalizar sectores tradicionales, salud incluida.
+- **En 2025 la categoría Startups quedó desierta.** El listón de «esto puede ser
+  una empresa» es alto.
+- *Deducción:* le interesa que la solución sirva a **cualquier hospital con
+  consultas externas**, no solo a La Princesa. Son todos los hospitales del
+  país, así que hay que contar el modelo de negocio aunque sea en una
+  diapositiva. Las comunicaciones con el paciente (SMS, voz, mensajería) son
+  negocio de Telefónica.
+
+### Qué hay que contar en el pitch para cada uno
+
+| Organizador | Lo que quiere oír | Pilar |
+|---|---|---|
+| La Princesa | Funciona con sus datos y sistemas, el profesional decide y su equipo de datos puede mantenerlo. Es «el Nostradamus de consultas externas» | Viabilidad |
+| Pfizer | Más tiempo clínico y menos pacientes perdidos entre la prueba y la revisión. IA responsable: sin sesgos y con privacidad | Medicina personalizada |
+| Fundación Pfizer | Llega también a mayores y a quien tiene más difícil acceder | Accesibilidad |
+| Wayra | Sirve a todos los hospitales, con modelo de negocio y una cifra de impacto que se pueda vender | Viabilidad |
+
 ## Cómo usar los datos
 
 Los datos sirven para identificar ineficiencias, analizar procesos, detectar
@@ -346,6 +428,14 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 ## Fuentes
 
 - [Fundación Pfizer · Innomakers4Health](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health)
+- [La Princesa · premios Best in Class en IA 2026](https://www.comunidad.madrid/hospital/laprincesa/noticia/hospital-publico-princesa-obtiene-dos-premios-primera-edicion-best-in-class-inteligencia-artificial)
+- [IIS‑Princesa · Unidad de Apoyo a la Innovación](https://www.iis-princesa.org/innovacion/unidad-innovacion/)
+- [Roche · humanización en La Princesa](https://www.roche.es/historias/humanizacion-hospitales/hospital-universitario-princesa-madrid)
+- [Portal ERP · Pfizer y Deloitte crean InnovaSalud Spain](https://portalerp.com/es/noticia/pfizer-y-deloitte-crean-una-red-con-14-hospitales-para-acelerar-la-ia-sanitaria)
+- [Corresponsables · entrevista a la Fundación Pfizer](https://www.corresponsables.com/entrevistas/ponemos-foco-innovacion-salud-base-nuestra-actividad-pfizer/)
+- [Fundación Pfizer · Memoria 2023](https://www.fundacionpfizer.org/sites/default/files/Memoria2023.pdf)
+- [El Referente · Wayra invirtió 9,3 M€ en 37 startups en 2024](https://elreferente.es/?p=174557)
+- [Emprendedores · Innomakers4Health 2025](https://emprendedores.es/startups/innomakers4health-wayra/)
 - Ediciones anteriores: [2025](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2025) · [2024](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2024) · [2023](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2023) · [2022](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2022) · [2021](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2021) · [2020](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2020) · [2019](https://www.fundacionpfizer.org/tecnolog%C3%ADa/innomakers4health/innomakers4health-2019)
 - [Wayra · anuncio del reto](https://wayra.com/news/wayra-pfizer-and-the-pfizer-foundation-launch-a-challenge-to-optimise-efficiency-in-hospital-outpatient-clinics)
 - [La Ecuación Digital](https://www.laecuaciondigital.com/empresas/healthtech/wayra-pfizer-reto-consultas-externas-hospitalarias/)
