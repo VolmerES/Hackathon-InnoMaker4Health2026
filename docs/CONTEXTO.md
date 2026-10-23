@@ -148,6 +148,9 @@ deducción nuestra va marcado como tal.
 
 ### Wayra (Telefónica): quien acelera e invierte
 
+- **Lo que más valora es que sea muy viable** (dicho en el evento, 23‑oct).
+  Quiere apoyar el proyecto ganador y **llevarlo a la práctica de verdad**, no
+  quedarse en una idea bonita.
 - **Acelera al ganador** seis meses en InnomakersLAB, con acceso a las unidades
   de negocio de Telefónica y posible inversión (ticket medio de hasta unos
   250.000 €).
@@ -169,7 +172,94 @@ deducción nuestra va marcado como tal.
 | La Princesa | Funciona con sus datos y sistemas, el profesional decide y su equipo de datos puede mantenerlo. Es «el Nostradamus de consultas externas» | Viabilidad |
 | Pfizer | Más tiempo clínico y menos pacientes perdidos entre la prueba y la revisión. IA responsable: sin sesgos y con privacidad | Medicina personalizada |
 | Fundación Pfizer | Llega también a mayores y a quien tiene más difícil acceder | Accesibilidad |
-| Wayra | Sirve a todos los hospitales, con modelo de negocio y una cifra de impacto que se pueda vender | Viabilidad |
+| Wayra | **Que se puede implantar de verdad y pronto**: cómo entra en el hospital, qué hace falta y cuánto cuesta. Sirve a todos los hospitales, con modelo de negocio y una cifra de impacto que se pueda vender | Viabilidad |
+
+**Conclusión:** la viabilidad pesa más que nada. Entre una idea brillante difícil
+de implantar y una sencilla que se pueda pilotar el mes que viene, gana la
+segunda.
+
+## El MVP en 24 horas
+
+Hay **24 horas** para hacer el MVP. Como lo que más se valora es la viabilidad,
+el MVP tiene que **demostrar que se puede implantar**, no solo que la idea es
+buena.
+
+### Qué construir
+
+Una **bandeja de trabajo diaria** para el personal administrativo de consultas
+externas. Cada mañana enseña qué va a fallar en los próximos días y propone qué
+hacer. La persona revisa y confirma con un clic.
+
+**Módulo 1: revisiones sin resultado** (el núcleo, porque son solo reglas).
+
+- Avisa de las citas de revisión de los próximos días cuya prueba no tendrá
+  resultado a tiempo: `PRUEBAS.fecha_programada` o `estado_prueba` frente a la
+  fecha del hueco de `CITAS.id_cita_revision`.
+- Propone moverla al primer hueco libre después del resultado previsto, en la
+  agenda que toca.
+- Prepara el aviso al paciente por su canal preferido
+  (`PACIENTES.preferencias_contacto`).
+
+**Módulo 2: huecos liberados** (también solo reglas, sin predicción).
+
+- Cuando se anula una cita (`MOVIMIENTOS_CITAS`), propone a quién ofrecer el
+  hueco. Mira las derivaciones que esperan para esa especialidad, por prioridad
+  y antigüedad, y solo a pacientes cuyas necesidades de accesibilidad encajen.
+- Prepara la oferta por el canal adecuado.
+
+**Pantalla de impacto**, calculada con los datos:
+
+- revisiones que se hicieron sin resultado;
+- huecos que se perdieron;
+- minutos de tareas administrativas asociadas (`TAREAS_ADMINISTRATIVAS`);
+- lo que se habría recuperado con la bandeja.
+
+**Fuera del MVP:**
+
+- La **predicción de ausencias**: hace falta validar el modelo y vigilar los
+  sesgos. Va como fase 2 en el pitch.
+- Integración real con el HIS, envío real de mensajes y login.
+
+### Por qué es viable
+
+Esto es lo que hay que contar en el pitch.
+
+- **No toca los sistemas del hospital.** Solo lee: empieza con una exportación
+  diaria en CSV y después pasa a una lectura con HL7/FHIR. Hay que preguntar a
+  Informática qué HIS usan y qué pueden exportar.
+- **Solo reglas en la primera versión.** Se pueden explicar y auditar, y no hace
+  falta validar ningún modelo clínico para pilotar.
+- **El personal decide.** La bandeja propone y nunca cambia una cita sola.
+- **Privacidad:** funciona dentro de la red del hospital y los datos no salen.
+- **Lo mantiene su propio equipo**, la Unidad de Análisis de Datos del IIS‑Princesa.
+- **Plan de piloto:** un servicio, tres meses, con indicadores medidos antes y
+  después:
+  - revisiones sin resultado;
+  - huecos perdidos;
+  - minutos administrativos;
+  - días de espera.
+
+### Herramientas (propuesta)
+
+Lo más rápido para una aplicación de datos que corra en local:
+
+- **Python + DuckDB** para consultar los CSV directamente con SQL.
+- **Streamlit** para la bandeja y la pantalla de impacto.
+
+Así no hay base de datos que montar y el mismo código sirve en un ordenador del
+hospital. Se puede cambiar según lo que domine el equipo.
+
+### Reparto del tiempo (orientativo)
+
+| Horas | Qué |
+|---|---|
+| 0‑2 | Cargar los CSV y comprobar con números que los dos problemas existen y cuánto pesan |
+| 2‑3 | Decidir, ponerle nombre y la frase de «X que hace Y». Hablar con los mentores de Consultas Externas e Informática |
+| 3‑13 | Construir: capa de datos, reglas de los dos módulos y bandeja |
+| 13‑16 | Pantalla de impacto |
+| 16‑20 | Pitch: problema, cifra, demo, por qué es viable, piloto, modelo de negocio |
+| 20‑22 | Grabar un vídeo de la demo por si falla en directo |
+| 22‑24 | Ensayar y margen |
 
 ## Cómo usar los datos
 

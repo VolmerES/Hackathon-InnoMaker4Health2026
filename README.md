@@ -45,9 +45,10 @@ data/             Los 11 CSV (no se suben: son material de la organización)
 
 - [x] Contexto del reto y modelo de datos
 - [x] Ganadores de ediciones anteriores y [dos ideas candidatas](docs/CONTEXTO.md#ideas-candidatas)
+- [x] Qué le interesa a cada organizador y [plan del MVP en 24 h](docs/CONTEXTO.md#el-mvp-en-24-horas)
 - [ ] Cargar y explorar los 11 CSV
 - [ ] Elegir **una** necesidad concreta
-- [ ] Prototipo
+- [ ] MVP: bandeja de trabajo (revisiones sin resultado y huecos liberados)
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [ ] Pitch
 
