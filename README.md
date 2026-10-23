@@ -16,6 +16,19 @@ Primaria y sigue con la agenda y los huecos, la cita y sus cambios, las
 comunicaciones con el paciente, el día de la consulta, las pruebas y las tareas
 administrativas.
 
+## Los tres pilares
+
+1. **Viabilidad**: se puede pilotar en un hospital real, con los datos y los
+   sistemas que ya tiene.
+2. **Accesibilidad**: funciona también para quien peor lo tiene para llegar a la
+   consulta.
+3. **Medicina personalizada**: cada paciente recorre su circuito según su caso.
+
+Qué significa cada uno en la práctica:
+[`docs/CONTEXTO.md`](docs/CONTEXTO.md#los-tres-pilares-del-proyecto).
+
+## Contexto
+
 El contexto completo, con el modelo de datos transcrito, está en
 **[`docs/CONTEXTO.md`](docs/CONTEXTO.md)**.
 

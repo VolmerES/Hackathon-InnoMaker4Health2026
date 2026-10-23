@@ -29,6 +29,66 @@ preparación, gestión de citas, consulta de información, coordinación, prueba
 interconsultas y seguimiento. Todo eso aumenta la carga administrativa y reduce
 el tiempo para la atención clínica.
 
+## Los tres pilares del proyecto
+
+Decididos el 23‑oct. Toda propuesta se mide contra estos tres:
+
+### 1. Viabilidad
+
+Se tiene que poder pilotar en La Princesa sin rehacer nada.
+
+- **Usa datos que el hospital ya registra.** Los CSV imitan sus sistemas de
+  agenda, citas y pruebas: no hacen falta sensores ni captura nueva.
+- **Se monta sobre lo que existe**, como capa encima de la agenda y no como
+  sustituto. Hay que preguntar a Informática y a Tecnologías y sistemas de
+  información cómo se integraría.
+- **Privacidad:** los datos de salud son de categoría especial en el RGPD. El
+  tratamiento se queda dentro del hospital y el prototipo solo usa datos
+  sintéticos.
+- **Una persona decide al final.** El sistema propone y el personal
+  administrativo o de enfermería confirma.
+- **Coste bajo y medible.** Se paga con el tiempo que libera (paso 5 de la hoja).
+
+### 2. Accesibilidad
+
+Que funcione también para quien peor lo tiene para llegar a la consulta.
+
+- **Datos:** `PACIENTES.necesidades_accesibilidad` y
+  `PACIENTES.preferencias_contacto`, y `COMUNICACIONES.canal` y
+  `respuesta_paciente` para ver qué canal funciona con quién.
+- **Cada paciente recibe el aviso por el canal que puede usar.** Una persona
+  mayor sin smartphone recibe una llamada o un SMS, no una notificación en una
+  app.
+- **Solo se le ofrece un hueco compatible** con sus necesidades, como movilidad,
+  acompañante o intérprete.
+- **Menos viajes:** juntar en el mismo día la prueba y la consulta cuando se
+  pueda (acto único).
+- **La interfaz del prototipo cumple WCAG** y los mensajes van en lectura fácil.
+
+### 3. Medicina personalizada
+
+En este reto se traduce en un **circuito personalizado**: cada paciente recorre
+las consultas externas según su caso, no según un protocolo igual para todos.
+
+- **Datos:** prioridad y motivo de la derivación (`DERIVACIONES_AP`), pruebas
+  pendientes (`PRUEBAS`), historial de cambios y ausencias (`MOVIMIENTOS_CITAS`)
+  y perfil y preferencias (`PACIENTES`).
+- **Ejemplos:**
+  - La cita de revisión se pone cuando ese paciente vaya a tener su resultado,
+    no a un plazo fijo.
+  - El recordatorio se ajusta a su historial: quien suele faltar recibe más
+    apoyo.
+  - Los huecos se reparten por necesidad clínica.
+- **Límite:** en sentido estricto, la medicina personalizada es tratamiento
+  según genética o biomarcadores, y eso no está en los datos. Hay que confirmar
+  con los mentores qué entiende el jurado por medicina personalizada.
+
+**Cuidado con predecir ausencias.** Un modelo que adivina quién va a faltar
+puede acabar castigando a los más vulnerables, que suelen ser también los de
+peor accesibilidad. La predicción solo sirve para **dar más apoyo**, como otro
+recordatorio, otro canal u ofrecer transporte. Nunca para quitar la cita o
+bajar la prioridad.
+
 ## Cómo usar los datos
 
 Los datos sirven para identificar ineficiencias, analizar procesos, detectar
@@ -271,6 +331,17 @@ antes de que quede libre.
 - **Impacto que se puede medir:** huecos perdidos al mes, ofertas que acabaron en
   cita, llamadas manuales evitadas (`TAREAS_ADMINISTRATIVAS` con
   `automatizable`) y días de espera recortados.
+
+### Cómo cumplen los pilares
+
+| | Revisiones sin resultado | Huecos vacíos |
+|---|---|---|
+| **Viabilidad** | Alta: son reglas sobre datos que ya existen y no necesitan modelo | Media: hace falta un modelo de ausencias y validarlo |
+| **Accesibilidad** | Avisa por el canal del paciente y evita viajes inútiles; puede juntar prueba y revisión | Ofrece el hueco por el canal adecuado y solo si es compatible con sus necesidades |
+| **Medicina personalizada** | Fuerte: la revisión se pone según las pruebas de cada paciente | Media: el apoyo depende del historial de cada uno (con el cuidado de arriba) |
+
+Las dos se pueden combinar en un mismo producto: un asistente que, para cada
+paciente, se adelanta a lo que va a fallar en su circuito.
 
 ## Fuentes
 
