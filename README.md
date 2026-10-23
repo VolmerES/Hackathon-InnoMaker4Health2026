@@ -60,7 +60,9 @@ python -m venv .venv
 - [x] Necesidad concreta: **los huecos vacíos**. En España falta a consulta el 10‑15 % de los pacientes, y casi la mitad de las faltas tiene causa administrativa. Los CSV son sintéticos: sirven para la demo, no para dimensionar el problema
 - [ ] MVP: bandeja de trabajo (citas en riesgo y huecos que se reaprovechan)
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
-- [ ] Pitch
+- [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado
+- [ ] Confirmar con los mentores lo marcado con ⚠️ en el guion
+- [ ] Ensayar el pitch con cronómetro
 
 ## Aviso
 
