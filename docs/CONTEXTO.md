@@ -784,6 +784,85 @@ nada, porque el software es el mismo.»*
 | **Esquema Nacional de Seguridad (ENS)** | Seguridad | ⚠️ Los sistemas del sector público lo tienen que cumplir. Lo ayuda que no tenga internet, que use TLS, que tenga registro y que dé el mínimo acceso |
 | Si entra en el reglamento de productos sanitarios o en el de IA | Mentores / regulatorio | ⚠️ Solo busca y muestra datos: probablemente no, pero hay que confirmarlo |
 
+### Tecnologías (propuesta)
+
+Todo es software libre con licencias que permiten venderlo.
+
+| Capa | Producción | MVP de 24 h | Licencia |
+|---|---|---|---|
+| **Pantalla** | React + Vite + TypeScript. Chat con respuesta en streaming (SSE) | La misma, o lo que mejor domine el Dev 2 | MIT |
+| **API y agente** | Python 3.12 + FastAPI + Pydantic. Bucle de agente escrito a mano con el cliente `openai` (llamadas a funciones). Sin frameworks pesados | Igual | MIT |
+| **Herramientas** | 6 funciones en SQL de solo lectura, con el paciente siempre fijado por el servidor | Las mismas sobre DuckDB | — |
+| **Datos** | PostgreSQL: copia con lo justo y registro de preguntas | **DuckDB sobre los CSV** (ya está `analisis/datos.py`) | PostgreSQL / MIT |
+| **Entrada de datos** | Receptor HL7 por MLLP con `hl7apy`, desde el motor de integración. O una exportación nocturna | No hace falta: se usan los CSV | MIT |
+| **Modelo** | Spark: **Qwen3‑30B‑A3B** en FP8. M6: **Qwen3‑8B** en Q4 | Qwen3‑8B o 4B, según el equipo de la demo | Apache‑2.0 |
+| **Servidor del modelo** | Spark: **vLLM**. M6: **Ollama** (o `llama.cpp`) | Ollama o `llama.cpp` | Apache‑2.0 / MIT |
+| **Reparto entre equipos** | **LiteLLM** como proxy compatible con OpenAI | No hace falta | MIT |
+| **HTTPS y entrada** | **Caddy**, con el certificado del hospital | No hace falta | Apache‑2.0 |
+| **Usuarios** | Directorio Activo del hospital por LDAP (`ldap3`) | Selector de médico (de AGENDAS) | MIT |
+| **Empaquetado** | Spark (DGX OS, que es Ubuntu): **Docker Compose**. M6: Ollama nativo (Docker en el Mac no usa la GPU) y la app como servicio de `launchd` | Un `instalar.sh` o `docker compose up` | — |
+| **Calidad** | `pytest` y **30 preguntas con su respuesta correcta**, que se repiten en cada cambio | Las 30 preguntas | MIT |
+| **Vigilancia** | Página de estado con semáforo y registros. Prometheus y Grafana si Informática los usa | Nada | Apache‑2.0 / AGPL |
+
+**Por qué no meter más cosas:**
+
+- **Sin LangChain ni frameworks de agentes.** Con 6 herramientas, un bucle de 50
+  líneas se entiende, se audita y falla menos.
+- **Sin base de datos vectorial ni RAG.** Los datos son tablas (citas, pruebas,
+  derivaciones), así que se consultan con SQL. Buscar por parecido solo haría
+  falta para informes en texto libre, que es la hoja de ruta.
+
+### Cómo encaja todo
+
+**1. Instalarlo (una vez, Informática):**
+
+1. Se pone el equipo en el CPD, se conecta a la red y se abre
+   `https://medici.local`.
+2. El asistente pide tres cosas:
+   - **de dónde salen los datos:** la dirección del motor HL7 o la carpeta de
+     la exportación;
+   - **el Directorio Activo;**
+   - **los servicios** que van a usarlo.
+3. Medici se prueba solo con un paciente de ejemplo y se pone en verde.
+
+**2. Los datos se mantienen al día (solo, todo el día):**
+
+- HCIS envía un mensaje por cada cita, cambio, prueba o derivación. El receptor
+  de Medici lo guarda en su copia.
+- Si al principio solo hay una exportación nocturna, se carga cada noche.
+
+**3. El médico lo usa (cada día):**
+
+1. Abre `https://medici` en el navegador de su consulta y entra con su usuario
+   de siempre.
+2. Ve **su agenda del día** y elige al paciente. O, si HCIS lo permite, pulsa
+   «Medici» con el paciente ya abierto ⚠️.
+3. **Pregunta:** «¿Ha estado antes en Digestivo?»
+
+**4. Lo que pasa por dentro (en 2–5 segundos):**
+
+```
+pregunta ─► API: comprueba que el paciente es de este médico
+          ─► modelo: «necesito citas(paciente)»
+          ─► API: ejecuta la consulta SQL de solo lectura para ESE paciente
+          ─► modelo: redacta la respuesta solo con esas filas
+          ─► pantalla: respuesta + filas de origen debajo
+          ─► registro: médico, paciente, pregunta, herramientas usadas, hora
+```
+
+- Si las herramientas no devuelven nada, la respuesta es **«no consta en los
+  datos disponibles»**.
+- **El paciente lo fija el servidor, no el modelo.** Aunque el modelo se
+  equivoque, no puede pedir datos de otro paciente.
+
+**5. Mantenerlo:**
+
+- La página de estado avisa si los datos llevan horas sin llegar o si un equipo
+  de IA no responde.
+- Las actualizaciones llegan como un fichero y se pueden deshacer.
+- Las 30 preguntas de prueba se repiten antes de cada actualización. Si baja el
+  acierto, no se instala.
+
 ### Abrir Medici desde HCIS (si se puede)
 
 **Lo ideal:** el médico tiene abierto al paciente en HCIS y pulsa «Medici». Se
