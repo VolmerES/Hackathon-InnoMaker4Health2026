@@ -606,8 +606,8 @@ GPU. El software es el mismo.
 ### Dónde se ejecuta el escriba
 
 - **Los escribas comerciales** (Dragon Copilot, Abridge, Nabla…) mandan el audio
-  de la consulta **a la nube**. Del escriba de Quirónsalud y del que licita la
-  Consejería no sabemos dónde corren ⚠️.
+  de la consulta **a la nube**. El que licita la Consejería **también va en la nube
+  pública** (ver más abajo). Del de Quirónsalud no sabemos dónde corre ⚠️.
 - **El escriba de Jano** corre en el mismo equipo de Jano:
   1. el micrófono de la consulta envía el audio por la red interna;
   2. Whisper lo transcribe y Qwen3 redacta la nota;
@@ -617,6 +617,51 @@ GPU. El software es el mismo.
 - **No se ejecuta en el PC de la consulta**, porque no tiene GPU.
 - **Si el hospital ya tiene un escriba en la nube**, Jano recibe su nota por HL7 y
   hace igualmente los trámites.
+
+### El escriba que compra la Comunidad de Madrid: en la nube y 1,74 M€
+
+Es el expediente **A/SER‑000964/2026** de la Consejería de Digitalización
+([BOCM 16‑mar‑2026](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF),
+[TED 154988‑2026](https://ted.europa.eu/es/notice/154988-2026/pdf)).
+
+| | |
+|---|---|
+| Objeto | Transcripción de voz e informes estructurados en las consultas de los **centros de Atención Primaria**. Incluye la integración con APMadrid, automatizar trámites, indicadores, formación y soporte |
+| **Dónde corre** | **En la nube pública.** El contratista tiene que suministrar «la infraestructura y las soluciones de **nube pública** necesarias» |
+| **Valor estimado** | **1.441.600 €** sin IVA |
+| **Presupuesto de licitación** | **1.744.336 €** con IVA |
+| Duración | **3 meses**, del 1 de abril al 30 de junio de 2026, sin prórroga |
+| Financiación | Fondos europeos NextGenerationEU (PRTR C11.I03.P14.S13) |
+| Cómo se adjudica | **Precio, 70 puntos.** Solución técnica 14, planificación 8, transferencia 4, formación 4 |
+| A quién se adjudicó | No consta en lo que hemos leído ⚠️ |
+| Cuántos profesionales cubre | Está en el pliego técnico, que no hemos leído ⚠️ |
+
+**Por qué es un punto fuerte para Jano:**
+
+1. **Es nube, y Jano es local.** La Comunidad ha elegido que el audio de las
+   consultas de Primaria vaya a la nube pública. Jano demuestra que se puede
+   hacer **sin que salga nada del hospital**, que es lo que prefiere el director
+   de La Princesa.
+2. **No cubre el hospital.** El contrato es solo para Primaria. Las **consultas
+   externas del hospital** se quedan fuera, y ese es el hueco de Jano.
+3. **Se suman, no compiten.** Ese escriba automatiza las derivaciones en
+   APMadrid, así que llegarán al hospital mejor redactadas. **Jano las lee
+   mejor.** Primaria escribe y el hospital prepara la consulta.
+4. **El coste de la nube no se acaba con el contrato.** Son 3 meses de
+   implantación. Lo que cueste mantener la nube después no aparece en el anuncio
+   ⚠️. Con Jano, el hardware se paga una sola vez.
+
+**Cómo compararlo sin que nos lo tumben:**
+
+- **No es comparable uno a uno.** Esos 1,74 M€ pagan integración, formación y
+  soporte para toda la Atención Primaria de Madrid. Los 4.700 € de un Spark o
+  los ~14.000 € de tres son **solo el equipo**.
+- **La comparación honesta:** *«La Comunidad ha invertido 1,7 millones en un
+  escriba en la nube para Primaria. Lo que falta es el hospital, y nosotros lo
+  proponemos dentro del hospital, con un equipo que se compra una vez.»*
+- **Nunca decir** «lo hacemos por el 1 % de lo que cuesta». Los servicios del
+  piloto (la integración HL7 con Informática y la formación) también cuestan, y
+  hay que estimarlos ⚠️.
 
 ### Aprende el vocabulario de los médicos
 
