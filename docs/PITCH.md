@@ -6,30 +6,26 @@ personas de Pfizer. Cada uno escucha una cosa distinta (ver
 
 | Jurado | Lo que tiene que llevarse |
 |---|---|
-| Dirección de La Princesa | Más consultas con los mismos médicos **y menos trabajo para admisión**, casi sin coste y sin tocar sus sistemas |
+| Dirección de La Princesa | Menos revisiones inútiles con los mismos médicos y **IA local**, que es lo que le gusta: nada sale del hospital |
 | Wayra | Se puede implantar el mes que viene, cuesta casi nada y vale para cualquier hospital |
-| Pfizer | Centrado en el paciente, IA responsable cuando llegue y llega a todos |
+| Pfizer | Diagnóstico antes, IA responsable y centrada en el paciente |
 
-**Nombre provisional: ReCita.** Alternativas: *Kairos* (en griego, «el momento
-oportuno», en la línea de Hera, Thea o Aeris), *Nadie Falta* o *Hueco Vivo*.
-Hay que decidirlo en equipo.
+**Nombre provisional: Jano**, el dios romano de las puertas: una cara mira a
+Primaria y otra al hospital. Alternativas: *Umbral* o *Prima*. Hay que decidirlo
+en equipo.
 
-**La frase:** *ReCita detecta cada noche las citas que se van a perder y ofrece
-ese hueco a quien lo espera, sin que nadie tenga que coger el teléfono.*
-
-**La idea de fondo:** lo que más falta en un hospital son personas y
-presupuesto. ReCita no pide ninguna de las dos cosas: lo rutinario va solo y
-solo llega a una persona lo que de verdad la necesita.
+**La frase:** *Jano lee cada noche, dentro del hospital, las derivaciones de
+Primaria y prepara cada caso para que la primera consulta lo resuelva.*
 
 > ⚠️ **Antes de presentar, confirmar con los mentores** lo que va marcado con ⚠️
 > en el guion. Si alguna cosa no se confirma, se quita la frase.
-> - Que no es producto sanitario (MDR).
-> - La tasa real de faltas de La Princesa y la duración media de las citas.
-> - Cómo se reaprovechan hoy los huecos libres.
-> - Qué HIS usan y si exporta la agenda.
-> - Que ya envían recordatorios por SMS, y con qué proveedor.
-> - El precio público vigente de una consulta (la orden de 2023 actualizó los
->   115 y 71 € de 2017).
+> - Quién valida hoy las derivaciones en La Princesa y cuánto tarda.
+> - Qué parte de las primeras consultas pide una prueba.
+> - Si La Princesa ya tiene algún circuito de alta resolución.
+> - Si adelantar pruebas con un protocolo entra en el reglamento de productos
+>   sanitarios (MDR).
+> - Si la Unidad de Análisis de Datos tiene servidor con GPU.
+> - El precio público vigente de una consulta sucesiva.
 
 ## Quién habla
 
@@ -38,227 +34,202 @@ portátil de la demo.
 
 | Tramo | Quién | Tiempo |
 |---|---|---|
-| 1. El hueco | Biomédica | 0:00 – 0:40 |
-| 2. Por qué pasa | Biomédica | 0:40 – 1:20 |
-| 3. La solución y la demo | UI/UX | 1:20 – 2:50 |
+| 1. La visita que sobra | Biomédica | 0:00 – 0:45 |
+| 2. La evidencia | Biomédica | 0:45 – 1:20 |
+| 3. Jano y la demo | UI/UX | 1:20 – 2:50 |
 | 4. Por qué es viable | Dev 1 | 2:50 – 3:50 |
 | 5. Impacto y piloto | Dev 1 | 3:50 – 4:30 |
 | 6. Cierre | Biomédica | 4:30 – 5:00 |
 
 ## Diapositivas
 
-1. **Portada:** ReCita y la frase.
-2. **El hueco:** «57.000–71.000 citas vacías al año en La Princesa», con
-   «= 12–15 especialistas con la consulta vacía todo el año» debajo.
-3. **Por qué:** las tres causas administrativas (16 % · 16 % · 15 %) y «un
-   recordatorio solo: +10‑14 %».
-4. **El circuito cerrado:** detectar → contactar → liberar → reofrecer, todo
-   automático, y una flecha que se desvía a «una persona» solo para las
-   excepciones. Un dibujo, sin texto.
+1. **Portada:** Jano y la frase.
+2. **La visita que sobra:** «294.369 consultas de revisión al año en La
+   Princesa», con «muchas solo para ver un resultado» debajo.
+3. **La evidencia:** 22 % → 49 % resueltos en una visita cuando la prueba ya
+   está hecha.
+4. **El circuito:** derivación → Jano lee (dentro del hospital) → protocolo del
+   servicio → el especialista valida en bloque → prueba → primera consulta que
+   resuelve. Un dibujo, sin texto.
 5. **Demo** en directo, con el vídeo de respaldo preparado.
 6. **Viable el mes que viene:** los seis puntos, un icono y tres palabras cada uno.
-7. **Impacto y piloto:** citas, horas y euros recuperados; minutos de admisión
-   evitados; los indicadores del piloto y la licencia por hospital.
+7. **Impacto y piloto:** revisiones, horas y euros; los indicadores del piloto
+   en Digestivo y la licencia por hospital.
 8. **Cierre:** viable · accesible · personalizada, y la petición.
 
 ## Guion
 
-Unas 700 palabras: 5 minutos a ritmo tranquilo. **Ensayar con cronómetro**: si
+Unas 650 palabras: 5 minutos a ritmo tranquilo. **Ensayar con cronómetro**: si
 pasa de 4:45, recortar del tramo 3, nunca del 4.
 
-### 1. El hueco · Biomédica · 0:00
+### 1. La visita que sobra · Biomédica · 0:00
 
-> Mañana por la mañana, en una consulta de La Princesa, un especialista va a
-> esperar a un paciente que no va a venir.
+> María lleva cinco meses con molestias de estómago. Su médica de cabecera la
+> deriva a Digestivo. Tras semanas de espera, llega a su primera consulta. El
+> especialista la escucha veinte minutos… y le pide una ecografía. «Vuelva con
+> el resultado.»
 >
-> Y no será uno. Según los estudios publicados en España, entre el 12 y el 15 %
-> de las citas de consultas externas se quedan vacías ⚠️. La Princesa atiende
-> 473.000 consultas al año. Eso son **entre 57.000 y 71.000 huecos perdidos**.
->
-> Es como si entre 12 y 15 especialistas pasaran el año entero con la consulta
-> vacía. Mientras, en la lista de espera, hay pacientes que llevan meses
-> esperando ese hueco.
+> Esa segunda visita no aporta nada que no pudiéramos tener el primer día. Y no
+> es un caso raro: La Princesa hace **294.000 consultas de revisión al año**,
+> 1,65 por cada primera. Muchas solo sirven para ver un resultado.
 
-### 2. Por qué pasa · Biomédica · 0:40
+### 2. La evidencia · Biomédica · 0:45
 
-> Y lo más importante: **casi nunca es culpa del paciente**.
+> Está medido. Cuando la prueba ya está hecha, la primera consulta resuelve el
+> caso en una sola visita **en el 49 % de los pacientes**. Sin ella, en el 22 %.
+> Más del doble.
 >
-> En el hospital de Albacete preguntaron, uno a uno, a los que no fueron. Casi la
-> mitad tenía una causa administrativa: no sabía que tenía cita, tenía la cita
-> duplicada, o había cancelado y el sistema no lo registró.
->
-> El SMS de recordatorio, que ya se envía, mejora la asistencia solo un 10 %.
-> El problema no es avisar. **Es que nadie cierra el circuito.**
+> ¿Por qué no se hace? Porque alguien tendría que leer cada derivación antes de
+> la cita y decidir qué prueba adelantar. Son 250 al día, en texto libre. Y lo
+> que más falta en un hospital son personas.
 
-### 3. La solución · UI/UX · 1:20
+### 3. Jano y la demo · UI/UX · 1:20
 
-> Por eso hemos creado **ReCita**. Y lo hemos diseñado pensando en lo que más
-> falta en un hospital: **personas y presupuesto**. ReCita no pide ninguna de
-> las dos.
+> Por eso hemos creado **Jano**. Cada noche lee las derivaciones de Primaria con
+> **inteligencia artificial que funciona dentro del hospital**.
 >
-> *[Demo]* Este es Antonio. Recibe el recordatorio de siempre, pero ahora con un
-> enlace: confirmar, cancelar o cambiar. Antonio cancela, y **el hueco queda
-> libre al momento**, sin que nadie lo toque.
+> *[Demo]* Esta es la derivación de María, tal como la escribe su médica. Jano
+> saca la ficha: problema nuevo, cinco meses de evolución, y algo importante: la
+> analítica **ya se la hicieron en Primaria**. Así que el protocolo de Digestivo
+> propone solo la ecografía. No repetimos pruebas.
 >
-> Ese hueco no se pierde. ReCita lo ofrece a quien espera en Dermatología:
-> **primero por prioridad clínica**, y solo a quien de verdad puede venir. Lucía
-> lo acepta desde el móvil. Ha adelantado su cita dos meses, y nadie ha cogido
-> el teléfono.
+> Esta otra dice «perdió la cita de revisión». Jano la manda directa a revisión,
+> sin pasar otra vez por el médico de cabecera.
 >
-> Lo mismo con las citas duplicadas y con quien no contesta: segundo aviso
-> automático, por otro canal.
+> A esta le faltan datos: Jano se la devuelve a Primaria con la pregunta
+> concreta.
 >
-> ¿Y quién no puede hacerlo desde el móvil? Esta paciente tiene una
-> discapacidad visual. **Esa es la única que llega a la bandeja de admisión**,
-> para que la llame una persona.
+> El especialista ve la semana entera en una pantalla, revisa y aprueba **con un
+> clic**. María elige la hora de su ecografía desde el móvil, y llega a su
+> primera consulta con el resultado.
 >
-> **Lo rutinario va solo. El tiempo del personal, para quien lo necesita.**
+> **Jano lee. El protocolo y el especialista deciden.**
 
 ### 4. Por qué es viable · Dev 1 · 2:50
 
-> Sabemos que lo que importa es si esto se puede poner en marcha. Se puede, y
-> pronto.
+> Se puede poner en marcha el mes que viene.
 >
-> **Uno:** no necesita personal nuevo, sino que lo libera.
+> **Uno:** IA local. Corre en un servidor del hospital. **Ningún dato de un
+> paciente sale a la nube**, y no se paga por uso.
 >
-> **Dos:** cuesta casi nada. Software libre, sin hardware, en un servidor que ya
-> tenéis y con el SMS que ya enviáis ⚠️. El coste nuevo son céntimos por
-> mensaje.
+> **Dos:** IA pública española. Usamos modelos del Barcelona Supercomputing
+> Center, entrenados con historias clínicas en español y con licencia libre.
+> Funcionan sin GPU.
 >
-> **Tres:** no toca vuestros sistemas. Lee una exportación diaria de la agenda,
-> y las reglas las decide cada servicio. No hay caja negra.
+> **Tres:** la IA solo extrae datos. Lo clínico lo deciden los protocolos que
+> aprueba cada servicio ⚠️.
 >
-> **Cuatro:** los datos no salen del hospital. Funciona dentro de vuestra red.
+> **Cuatro:** no añade personal. El especialista valida fichas en bloque en
+> lugar de leer derivaciones una a una.
 >
-> **Cinco:** no diagnostica ni trata. No es producto sanitario y no necesita
-> marcado CE ⚠️.
+> **Cinco:** se prueba primero un mes en paralelo, sin decidir nada, y se mide
+> cuánto acierta.
 >
 > **Seis:** lo puede mantener vuestra propia Unidad de Análisis de Datos.
->
-> Lo hemos construido en 24 horas sobre la misma estructura de datos que nos
-> habéis dado.
 
 ### 5. Impacto y piloto · Dev 1 · 3:50
 
-> Si ReCita recupera solo una cuarta parte de esas citas perdidas, son **entre
-> 14.000 y 18.000 citas más al año** en La Princesa. Entre 4.700 y 5.900 horas
-> de consulta: tres o cuatro especialistas más sin contratar a nadie. A precio
-> público, **más de 1,2 millones de euros al año** de actividad recuperada ⚠️.
+> Si un 30 % de las primeras consultas necesita una prueba ⚠️, y tenerla hecha
+> sube la resolución del 22 al 49 %, son **unas 14.500 revisiones menos al año**
+> en La Princesa. 4.800 horas de consulta: tres especialistas más sin contratar
+> a nadie. **Un millón de euros al año** a precio público ⚠️. Y 14.500 viajes
+> menos al hospital.
 >
-> Y admisión deja de hacer más de mil horas al año de gestión de faltas, además
-> de las llamadas que ahora hace el sistema.
+> Proponemos un piloto de tres meses en **Digestivo**, midiendo antes y después:
+> - qué parte de las primeras se resuelve en una visita;
+> - cuántas revisiones hay por cada primera;
+> - los días hasta el diagnóstico;
+> - las pruebas duplicadas.
 >
-> Proponemos un **piloto de tres meses en un servicio**, midiendo antes y
-> después:
-> - las faltas;
-> - los huecos reaprovechados;
-> - los minutos de admisión;
-> - los días de espera.
->
-> Y como cualquier hospital con consultas externas tiene este problema, el
-> modelo es una **licencia anual por hospital**.
+> Y como cualquier hospital recibe derivaciones, el modelo es una licencia anual
+> por hospital.
 
 ### 6. Cierre · Biomédica · 4:30
 
-> ReCita es **viable**, porque se monta sobre lo que ya existe, sin personas ni
-> presupuesto nuevos. Es **accesible**, porque el tiempo que libera es para
-> quien no puede hacerlo solo. Y es **personalizada**, porque reparte cada hueco
-> según la necesidad clínica de quien espera.
+> Jano es **viable**, porque funciona dentro del hospital y con lo que ya tiene.
+> Es **accesible**, porque cada viaje que ahorra pesa más para quien más le
+> cuesta venir. Y es **personalizado**, porque prepara cada caso según su
+> historia, sin repetir lo que ya se hizo.
 >
-> Solo os pedimos una cosa: **un servicio de La Princesa y tres meses para
-> demostrarlo**. Gracias.
+> Solo os pedimos una cosa: **un servicio, tres meses, y el servidor que ya
+> tenéis**. Gracias.
 
 ## De dónde sale cada cifra
 
 | Frase | Cálculo y fuente |
 |---|---|
-| 12‑15 % de faltas | Albacete 14,6 %, Costa del Sol 14,2 %, Zaragoza 12,5 % ([HALLAZGOS](HALLAZGOS.md#cifras-reales-para-el-pitch)) |
-| 473.000 consultas | Memoria 2022 de La Princesa: 178.888 primeras + 294.369 sucesivas |
-| 57.000‑71.000 huecos | 473.257 × 12 % y × 15 % |
-| 12‑15 especialistas | 18.900‑23.700 h (con 20 min por cita ⚠️) ÷ 1.540 h al año de consulta por especialista (7 h × 220 días, una suposición) |
-| Casi la mitad, causa administrativa | Albacete: 16,1 % + 15,6 % + 15,1 % = 46,8 % |
-| El SMS mejora un 10 % | Cochrane: RR 1,10‑1,14 |
-| 14.000‑18.000 citas, 4.700‑5.900 h | Una cuarta parte de 57.000‑71.000, con 20 min por cita |
-| Tres o cuatro especialistas | 4.700‑5.900 h ÷ 1.540 h |
-| Más de 1,2 M€ | 14.200‑17.700 citas × 88 € (precio público medio: 115 € la primera, 71 € la sucesiva, con el reparto de La Princesa ⚠️). Es el **valor de la actividad recuperada, no un ahorro de caja**: decirlo así si lo preguntan |
-| Más de mil horas de gestión de faltas | 14.200‑17.700 faltas evitadas × 4,2 min (estimación de los datos de la organización) = 990‑1.240 h |
+| 294.000 revisiones, 1,65 por primera | Memoria 2022 de La Princesa: 294.369 sucesivas y 178.888 primeras |
+| 49 % frente al 22 % | Estudio multicéntrico de 795 primeras visitas (*Rev Calid Asist*); en Digestivo, 57 % frente al 34 % ([HALLAZGOS](HALLAZGOS.md#7-la-puerta-de-entrada)) |
+| 250 derivaciones al día | 35,35 % de las primeras vienen de Primaria (memoria 2022) = 63.237 al año ÷ unos 250 días laborables |
+| 30 % de primeras con prueba | **Suposición**: en los CSV sintéticos es el 32 %. Hay que preguntar la cifra real ⚠️ |
+| 14.500 revisiones menos | 178.888 × 30 % × (49 % − 22 %) = 14.490 |
+| 4.800 horas, tres especialistas | 14.490 × 20 min = 4.830 h ÷ 1.540 h al año de consulta por especialista (7 h × 220 días; suposición) |
+| Un millón de euros | 14.490 × 71 € (precio público de la sucesiva, Orden 727/2017 ⚠️). Es **valor de la actividad recuperada, no un ahorro de caja** |
 
-Si os preguntan por los CSV: **son sintéticos**. Sirven para enseñar que la
-herramienta funciona con la estructura de datos del hospital, no para medir el
-problema. Decirlo antes de que lo pregunten da credibilidad.
+Si os preguntan por los CSV: **son sintéticos**. Sirven para enseñar que Jano
+funciona con la estructura de datos del hospital, no para medir el problema.
+Decirlo antes de que lo pregunten da credibilidad.
 
 ## Lo que la demo tiene que enseñar
 
-La demo cuenta una historia con dos móviles simulados en pantalla y la bandeja
-al lado. Si algo no llega a tiempo, se cambia el guion, no al revés.
+Si algo no llega a tiempo, se cambia el guion, no al revés.
 
-- [ ] **Antonio cancela** desde el enlace del recordatorio → el hueco se libera
-      solo.
-- [ ] **El hueco se ofrece en cascada**: candidatos de la lista de espera
-      ordenados por prioridad clínica y antigüedad, filtrados por
-      accesibilidad. **Lucía acepta** desde el móvil.
-- [ ] **Cita doble** detectada y resuelta sola (el paciente elige cuál conserva).
-- [ ] **Sin respuesta → segundo aviso automático** por otro canal.
-- [ ] **La bandeja de excepciones** solo enseña a quien necesita una persona (la
-      paciente con discapacidad visual).
-- [ ] **Contadores**: resuelto solo frente a resuelto por una persona, huecos
-      reocupados y minutos de admisión evitados.
+- [ ] **La derivación de María**, en texto libre y con su ficha al lado: tipo,
+      evolución, **analítica ya hecha en Primaria**, antecedentes.
+- [ ] **El protocolo** propone solo la prueba que falta.
+- [ ] **«Perdió la cita de revisión»** → directa a revisión.
+- [ ] **Faltan datos** → devolución a Primaria con la pregunta.
+- [ ] **La bandeja del especialista**: la semana entera, aprobar con un clic.
+- [ ] **Contadores**: derivaciones leídas, pruebas adelantadas, duplicadas
+      evitadas y casos enviados a una persona.
+- [ ] Fichas **precalculadas** por si la IA falla en directo.
 
-Antonio y Lucía son pacientes de los CSV sintéticos, con nombres inventados
+María y los demás son pacientes de los CSV sintéticos, con nombres inventados
 para la demo.
 
 ## Preguntas que pueden hacer
 
 ### Dirección de La Princesa
 
-- **«¿Esto no lo hace ya admisión?»** Lo hace a mano: llama a quien puede,
-  cuando puede. ReCita hace solo lo rutinario y le deja a admisión los casos que
-  necesitan a una persona. No sustituye a nadie: le devuelve tiempo.
-- **«¿Cuánto nos cuesta?»** Casi nada: software libre en un servidor que ya
-  tenéis, el SMS que ya enviáis y céntimos por mensaje nuevo. Lo mantiene
-  vuestra Unidad de Análisis de Datos.
-- **«¿Y si el paciente no tiene móvil o no sabe usarlo?»** Pasa a la bandeja y
-  le llama una persona, como ahora. La diferencia es que admisión tiene tiempo
-  para hacerlo, porque lo demás va solo.
-- **«¿Cómo se integra con nuestro sistema?»** Solo lectura. Para el piloto
-  basta una exportación diaria de la agenda. Después, FHIR. Lo concretamos con
-  Informática.
-- **«¿Y la protección de datos?»** No sale nada del hospital. No crea datos
-  nuevos: usa los que ya están para el mismo fin, que es gestionar la
-  asistencia. Se haría la evaluación de impacto como con cualquier sistema.
-- **«¿Y si ofrecemos el hueco y luego aparece el paciente original?»** Solo se
-  ofrecen huecos liberados de verdad (cancelación o duplicado) o cuando el
-  segundo contacto ha fallado y ha pasado la hora límite. Esa hora la decide
-  cada servicio. La sobrecitación (que el estudio de Albacete propone alrededor
-  del 10 %) sería opcional y la controla el servicio.
-- **«¿Más trabajo para admisión?»** Menos: lo rutinario lo hace el sistema y
-  admisión deja de gestionar faltas que se podían evitar. En el piloto, los
-  cambios se aplican en el HIS en bloque, ya preparados. Después, el sistema
-  escribe directamente en la agenda, cuando Informática lo apruebe.
+- **«¿Y si la IA se equivoca?»** Solo extrae datos. Si no está segura, la
+  derivación va a una persona. Y el especialista valida todo en bloque antes de
+  que se pida ninguna prueba. Además, el primer mes funciona en paralelo, sin
+  decidir nada.
+- **«¿Qué servidor hace falta?»** Los modelos que leen las derivaciones son
+  pequeños y funcionan sin GPU. El resumen opcional sí agradece una GPU de gama
+  media, o se hace de noche en CPU.
+- **«¿No vamos a pedir pruebas de más?»** El protocolo solo incluye las pruebas
+  que ese servicio pide casi siempre en ese motivo. Y Jano quita las que ya hizo
+  Primaria, así que en total se piden menos. Las pruebas que no se usen se miden
+  en el piloto.
+- **«¿Cómo se integra con nuestro sistema?»** Lee las derivaciones de una
+  exportación diaria y deja preparadas las peticiones para que el especialista
+  las firme. La integración directa se hace con Informática.
+- **«¿Y la protección de datos?»** No sale nada del hospital. Además, un modelo
+  del BSC anonimiza el texto antes de guardar ningún registro.
 
 ### Wayra
 
-- **«¿Quién paga y cuánto?»** El hospital o el servicio de salud, con una
-  licencia anual pequeña. Por ejemplo, 50.000 € al año se pagarían con unas 570
-  citas recuperadas, el 4 % del escenario bajo. Como referencia, el absentismo
-  le cuesta más de 3 M€ al año a un solo hospital, el Costa del Sol.
-- **«¿Competencia?»** Hay proveedores de recordatorios por SMS, pero solo
-  recuerdan. Y los módulos de lista de espera del HIS no cierran el circuito.
-  Lo nuestro es detectar, liberar y reofrecer por prioridad y accesibilidad.
-  *No decir que no existe nada parecido sin haberlo comprobado.*
-- **«¿Cómo escala?»** Las reglas se configuran por hospital y por servicio, y
-  la entrada de datos es estándar (FHIR).
+- **«¿Quién paga y cuánto?»** El hospital, con una licencia anual pequeña. Por
+  ejemplo, 50.000 € al año se pagarían con unas 700 revisiones evitadas, el 5 %
+  del escenario.
+- **«¿Competencia?»** Hay herramientas de IA clínica en la nube y existen
+  consultas de alta resolución hechas a mano. Lo nuestro es local, en la puerta
+  de entrada y con el protocolo de cada servicio. *No decir que no existe nada
+  parecido sin haberlo comprobado.*
+- **«¿Cómo escala?»** Cada servicio carga su protocolo, y los modelos se
+  reajustan con las derivaciones que el propio hospital ya etiqueta.
 - **«¿Vais a seguir con esto?»** La respuesta tiene que ser sincera y estar
   pactada en el equipo antes de subir.
 
 ### Pfizer
 
-- **«¿Dónde está la IA?»** En la primera versión, a propósito, no la hay: las
-  reglas se pueden auditar y no hay que validar ningún modelo para pilotar. La
-  fase 2 es un modelo de predicción de faltas con datos reales, como el
-  Nostradamus que La Princesa ya tiene en Urgencias.
-- **«¿Qué tiene de medicina personalizada?»** Que el circuito se adapta a cada
-  paciente: el canal que puede usar, sus necesidades y su prioridad clínica. La
-  lista de espera deja de ser una cola igual para todos.
-- **«¿Y los sesgos?»** La predicción solo servirá para dar más apoyo (otro
-  aviso, otro canal), nunca para quitar una cita o bajar una prioridad.
+- **«¿Qué tiene de medicina personalizada?»** Cada caso se prepara con su
+  historia: lo que ya se hizo en Primaria, sus antecedentes y el motivo concreto.
+  No es una cola igual para todos.
+- **«¿Y los sesgos?»** La IA solo extrae datos del texto, y el piloto mide su
+  acierto por edad y sexo. Si falla más en algún grupo, esos casos van a una
+  persona.
+- **«¿Por qué no un modelo grande en la nube?»** Por privacidad y por coste. La
+  dirección del hospital lo quiere local, y los modelos clínicos españoles
+  pequeños bastan para esta tarea.

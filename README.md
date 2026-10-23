@@ -57,8 +57,9 @@ python -m venv .venv
 - [x] Ganadores de ediciones anteriores y [dos ideas candidatas](docs/CONTEXTO.md#ideas-candidatas)
 - [x] Qué le interesa a cada organizador y [plan del MVP en 24 h](docs/CONTEXTO.md#el-mvp-en-24-horas)
 - [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
-- [x] Necesidad concreta: **los huecos vacíos**. En España falta a consulta el 10‑15 % de los pacientes, y casi la mitad de las faltas tiene causa administrativa. Los CSV son sintéticos: sirven para la demo, no para dimensionar el problema
-- [ ] MVP: circuito automático (recordatorio con respuesta, citas dobles, segundo aviso, reofrecer el hueco) y bandeja **solo de excepciones**. El hospital no tiene personas ni presupuesto que añadir
+- [x] ~~Los huecos vacíos~~: aparcado, porque media sala va a por las faltas. Sus cifras reales siguen en [HALLAZGOS](docs/HALLAZGOS.md)
+- [x] **Idea elegida: Jano, la puerta de entrada.** IA local lee las derivaciones de Primaria y prepara cada caso (pruebas antes de la primera consulta, revisiones perdidas directas, devolución si faltan datos) para que la primera visita lo resuelva. Al director del hospital le gusta la IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-elegida-la-puerta-de-entrada-jano)
+- [ ] MVP: lector con modelos de Hugging Face, reglas por servicio, bandeja de validación del especialista e impacto
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado
 - [ ] Confirmar con los mentores lo marcado con ⚠️ en el guion

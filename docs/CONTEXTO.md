@@ -119,6 +119,8 @@ deducción nuestra va marcado como tal.
   *«no busca sustituir al profesional sanitario»*. Su IA de diagnóstico funciona
   *«siempre bajo supervisión del médico especialista»* y tiene un comité de ética
   clínica. La IA ayuda y el profesional decide.
+- **Al director del hospital le gusta la IA local** (dicho al equipo el 23‑oct).
+  Está en el jurado.
 
 ### Pfizer: el socio de la industria
 
@@ -190,144 +192,200 @@ Lo que más falta en un hospital es **personal y presupuesto** (dicho por el
 equipo, 23‑oct). Por eso la solución tiene que resolver lo máximo posible con el
 mínimo de las dos cosas:
 
-- **No puede añadir trabajo.** Una bandeja en la que alguien revisa cada cita
-  sustituye llamadas por clics, pero sigue gastando personas. **Lo rutinario
-  tiene que ir solo**, y el personal solo ve lo que de verdad necesita a una
-  persona.
-- **No puede costar casi nada.** Sin hardware, sin licencias de terceros, sobre
-  un servidor que el hospital ya tiene y con el canal de SMS que ya usa para los
-  recordatorios ⚠️.
-- **El paciente se gestiona solo cuando puede**: confirmar, cancelar o aceptar
-  un hueco con un enlace o una respuesta. Quien no puede (sin móvil, necesita
-  intérprete, no ve la pantalla) pasa a una persona. **La automatización libera
-  tiempo precisamente para atender a quien más lo necesita.**
+- **No puede añadir trabajo.** Lo rutinario tiene que ir solo y el personal solo
+  ve lo que de verdad necesita a una persona.
+- **Tiene que costar casi nada.** Software libre, sin licencias de terceros y,
+  como mucho, un servidor dentro del hospital para la IA local, si su Unidad de
+  Análisis de Datos no tiene ya uno ⚠️.
+- **El paciente se gestiona solo cuando puede** (con un enlace para elegir la
+  hora). Quien no puede pasa a una persona. **La automatización libera tiempo
+  justo para atender a quien más lo necesita.**
+
+### La idea elegida: la puerta de entrada (Jano)
+
+**Decidido el 23‑oct por la tarde**, por tres motivos:
+
+- **Media sala va a por los pacientes que faltan.** Hay que diferenciarse.
+- **Al director de La Princesa, que está en el jurado, le gusta la IA local.**
+- **Hay evidencia publicada.** Cuando la prueba ya está hecha, la primera
+  consulta resuelve el caso en una sola visita en el **49 %** de los pacientes,
+  frente al **22 %** sin ella (estudio multicéntrico, 795 primeras visitas). En
+  Digestivo sube del 34 al 57 %.
+
+**Nombre provisional: Jano**, el dios romano de las puertas y los comienzos.
+Tiene dos caras: una mira a Primaria y la otra al hospital. Sigue la línea de
+nombres de los ganadores (Hera, Thea, Aeris). Alternativas: *Umbral*, *Prima*.
+
+**La frase:** *Jano lee cada noche, dentro del hospital, las derivaciones de
+Primaria y prepara cada caso para que la primera consulta lo resuelva.*
+
+**El problema que ataca:**
+
+- La Princesa hace **1,65 consultas sucesivas por cada primera**: 294.369
+  sucesivas al año (memoria de 2022).
+- Muchas de esas sucesivas solo sirven para ver el resultado de una prueba que se
+  podía haber hecho antes.
+- Además, en los CSV, **dos de cada tres derivaciones no son un problema nuevo**
+  ([HALLAZGOS](HALLAZGOS.md#7-la-puerta-de-entrada)):
+  - **revisiones** de pacientes que el servicio ya conoce;
+  - pacientes que **perdieron su revisión** y tienen que volver a pasar por su
+    médico de cabecera.
+
+  El tamaño es sintético; hay que preguntar a la Unidad de Datos cuánto pesa en
+  La Princesa ⚠️.
 
 ### Qué construir
 
-> **Rehecho tras ver los datos** ([`HALLAZGOS.md`](HALLAZGOS.md)). El problema son
-> los huecos vacíos. **Los CSV son falsos**, así que el tamaño del problema sale
-> de cifras publicadas: en España falta a consulta el 10‑15 % de los pacientes,
-> y casi la mitad de esas faltas tiene causa administrativa (no sabía la cita,
-> tenía doble cita o canceló sin que se registrara). En La Princesa son unas
-> 473.000 consultas al año. Los CSV quedan como banco de pruebas de la demo.
-> «Revisiones sin resultado» se cae: solo el 1,5 % de las pruebas está enlazado
-> a su revisión.
-
-Un **circuito automático** que cada noche repasa las citas de los próximos días
-y resuelve solo lo rutinario. Por encima hay **una bandeja de excepciones**
-para el personal y una pantalla de impacto.
-
 | Paso | Qué hace | Quién |
 |---|---|---|
-| 1. **Recordatorio con respuesta** | El recordatorio lleva un enlace (o respuesta por SMS) para *confirmar*, *cancelar* o *cambiar*. Cancelar libera el hueco al momento | Automático |
-| 2. **Citas dobles** | Cada noche busca pacientes con dos citas vivas en la misma especialidad. Pregunta al paciente cuál mantiene; si no contesta, conserva la primera según la regla del servicio | Automático |
-| 3. **Segundo contacto** | Si no hay respuesta en 24 h, repite por otro canal: llamada automática, email o SMS a la persona de contacto | Automático |
-| 4. **Reofrecer el hueco** | El hueco liberado se ofrece en cascada a quien espera en esa especialidad, **por prioridad clínica** y después por antigüedad, solo a pacientes cuyas necesidades encajen. El primero que acepta se lo queda; a los demás se les avisa de que ya está cubierto | Automático |
-| 5. **Excepciones** | Pacientes sin móvil, que necesitan intérprete o una llamada de una persona, prioridades urgentes, conflictos. **Solo esto llega a la bandeja** | Personal |
+| 1. **Leer** | Cada noche, la IA local lee las derivaciones nuevas y saca una ficha: tipo (nueva, revisión o reanudar seguimiento), edad, antecedentes, tiempo de evolución, **pruebas ya hechas en Primaria**, datos que faltan, un resumen de una frase y lo segura que está | IA local |
+| 2. **Encaminar** | Reglas de cada servicio: *reanudar seguimiento* → cita de revisión directa, sin primera consulta ni nueva validación. *Revisión por empeoramiento* → revisión preferente. *Nueva* → protocolo de pruebas según el motivo, **sin repetir las que ya hizo Primaria**. *Faltan datos* → se devuelve al médico de cabecera con la pregunta concreta. *Poca confianza* → a una persona | Reglas |
+| 3. **Validar en bloque** | El especialista ve la lista de la semana con la ficha y la propuesta de cada derivación, y la aprueba o corrige con un clic. Hoy ya valida derivaciones; con la ficha tarda menos que leyendo el texto | Especialista |
+| 4. **Citar** | Las pruebas se programan antes de la primera consulta y la primera, cuando el resultado ya está. Si se puede, prueba y consulta el mismo día (acto único). El paciente elige la hora desde un enlace | Automático |
+| 5. **Consultar** | El especialista recibe al paciente con el resumen y los resultados, y lo resuelve en una visita | Especialista |
 
-**Las reglas las aprueba cada servicio**: horas límite, cuántos candidatos por
-oferta, qué hacer con una cita doble. El personal supervisa y atiende las
-excepciones, pero no revisa cita a cita.
-
-**En el piloto el sistema no escribe en el HIS.** Prepara cada cambio (anular,
-citar) y el personal los aplica en bloque, en segundos, sin llamadas. Escribir
-directamente en la agenda (con mensajes HL7 de citación) es la fase siguiente,
-cuando Informática lo apruebe.
+**La IA solo lee y extrae; no decide nada clínico.** Lo clínico lo deciden los
+protocolos que aprueba cada servicio y el especialista, que valida en bloque.
 
 **Pantalla de impacto**, con los datos de la demo:
 
-- confirmaciones, cancelaciones y citas dobles resueltas sin intervención;
-- huecos reofrecidos y ocupados;
-- llamadas y minutos de administración evitados;
-- casos que han ido a una persona y por qué;
-- escenario en euros y en horas de consulta con las cifras reales.
+- derivaciones procesadas, y cuántas de cada tipo;
+- **acierto del lector frente al `motivo_derivacion` real de los CSV**;
+- pruebas adelantadas y pruebas duplicadas evitadas;
+- revisiones evitadas (escenario);
+- devoluciones por datos incompletos;
+- casos enviados a una persona.
 
 **Fuera del MVP:**
 
-- Un **modelo de IA de ausencias**. Va como fase 2 en el pitch, con datos
-  reales y vigilando los sesgos.
-- Integración real con el HIS, envío real de mensajes y login. En la demo, los
-  mensajes y las respuestas de los pacientes se simulan.
+- La integración real con el HIS y la petición electrónica de pruebas.
+- Ajustar el modelo con texto real.
+- Que el propio paciente pueda volver a pedir su revisión perdida sin pasar por
+  Primaria (fase 2).
+
+**Si la IA falla en directo:** se precalculan las fichas de la demo y hay una
+regla de respaldo. En los CSV el texto es de plantilla, así que una regla
+sencilla también clasifica bien.
 
 ### Por qué es viable
 
 Esto es lo que hay que contar en el pitch.
 
-- **No añade personal: lo libera.** Lo rutinario va solo y el personal atiende
-  únicamente excepciones.
-- **Cuesta casi nada.** Software libre (Python, DuckDB o PostgreSQL), sin
-  hardware, sobre una máquina virtual del hospital, y con el canal de SMS que ya
-  existe ⚠️. El coste nuevo son céntimos por mensaje y, si se usan, las llamadas
-  automáticas.
-- **No toca los sistemas del hospital** en el piloto. Solo lee una exportación
-  diaria y prepara los cambios. Después, HL7/FHIR. Hay que preguntar a
-  Informática qué HIS usan y qué pueden exportar.
-- **Solo reglas**, que se pueden explicar y auditar. No hace falta validar
-  ningún modelo clínico para pilotar.
-- **Las reglas las decide el servicio** y nunca se quita una cita a un paciente
-  que no ha contestado: solo se reofrecen huecos liberados de verdad.
-- **Privacidad:** funciona dentro de la red del hospital y los datos no salen.
+- **IA local:** corre en un servidor del hospital. **Ningún dato de un paciente
+  sale a la nube** y no se paga por uso.
+- **Poca carga:** La Princesa recibe unas 63.000 derivaciones de Primaria al año
+  (el 35 % de sus 178.888 primeras), unas **250 por día laborable**, que se
+  procesan de noche.
+- **Modelos abiertos con licencia libre** (Apache 2.0): sin coste de licencia y
+  se pueden usar en un producto comercial.
+- **Mes en paralelo:** durante un mes, Jano lee las mismas derivaciones que el
+  personal sin decidir nada, y se mide su acierto antes de activarlo.
+- **Las reglas son del servicio y se pueden auditar.** La IA solo extrae.
+- **No añade personal:** el especialista valida fichas en bloque en lugar de leer
+  derivaciones una a una, y admisión cita menos sucesivas.
+- **Privacidad:** los datos de salud no salen de la red del hospital.
 - **Lo mantiene su propio equipo**, la Unidad de Análisis de Datos del IIS‑Princesa.
-- **Plan de piloto:** un servicio, tres meses, con indicadores medidos antes y
-  después:
-  - faltas;
-  - huecos reofrecidos y ocupados;
-  - minutos de administración;
-  - días de espera.
+- ⚠️ **Lo regulatorio:** adelantar una prueba es una decisión clínica, aunque la
+  tome un protocolo. Se mitiga con protocolos aprobados por el servicio y
+  validación del especialista. Hay que confirmar con los mentores si entra en el
+  reglamento de productos sanitarios (MDR).
+- **Plan de piloto:** **Digestivo**, que es donde hay evidencia (del 34 al 57 %),
+  durante tres meses, midiendo antes y después:
+  - % de primeras resueltas en una visita;
+  - sucesivas por primera;
+  - días hasta el diagnóstico;
+  - pruebas duplicadas;
+  - minutos de validación.
+
+### Aparcado: los huecos vacíos
+
+El diseño anterior era un circuito automático contra las faltas: recordatorio
+con respuesta, citas dobles, segundo aviso y reofrecer el hueco, con una bandeja
+solo de excepciones. Se aparca porque media sala va a ir a por eso. Está en el
+historial de git (commit `8726248`) y sus cifras reales siguen en
+[`HALLAZGOS.md`](HALLAZGOS.md#cifras-reales-para-el-pitch). Si sobra tiempo, el
+enlace al paciente para elegir hora es la misma pieza.
 
 ### El equipo
 
 | Quién | Perfil | Papel en el hackathon |
 |---|---|---|
-| Dev 1 | Software y robótica | **Datos y reglas**: la API sobre DuckDB, las reglas de los dos módulos y las cifras de impacto. Cuenta la viabilidad técnica en el pitch |
-| Dev 2 | Software | **Frontend**: la bandeja y la pantalla de impacto, siguiendo el diseño de UI/UX |
-| UI/UX | Diseño | **Las dos caras**: la bandeja de excepciones para el personal y lo que ve el paciente (el mensaje y la página del enlace para confirmar, cancelar o aceptar un hueco), con accesibilidad (WCAG) y lectura fácil. Hace las diapositivas y **presenta la demo** |
-| Biomédica | Ingeniería biomédica | **El puente clínico**: valida las reglas con los mentores (Consultas Externas, Unidad de Datos), define la prioridad clínica y argumenta lo regulatorio y la privacidad. **Abre el pitch con el problema** |
+| Dev 1 | Software y robótica | **El lector y las reglas**: la IA local (instrucciones, ficha en JSON, medir el acierto contra los CSV), las reglas de encaminado y la API. Cuenta la viabilidad en el pitch |
+| Dev 2 | Software | **Frontend**: la bandeja de validación del especialista, la ficha y la pantalla de impacto |
+| UI/UX | Diseño | **La ficha** (lo que ve el especialista en 10 segundos), la devolución al médico de cabecera y el mensaje al paciente, con accesibilidad (WCAG). Hace las diapositivas y **presenta la demo** |
+| Biomédica | Ingeniería biomédica | **Los protocolos**: qué pruebas adelantar según el motivo en cada especialidad, validados con los mentores clínicos (Endocrinología, Urgencias, Enfermería de Consultas Externas). Lo regulatorio y la evidencia. **Abre el pitch** |
 
 Esto lo propone Claude; el reparto lo decide el equipo.
 
-**El argumento regulatorio es de la biomédica.** La bandeja solo organiza
-citas, usa la prioridad que ya ha puesto el médico y no hace diagnóstico ni
-recomienda tratamientos. Así que **probablemente no es producto sanitario**
-según el Reglamento (UE) 2017/745 (MDR), y no necesita marcado CE para
-pilotarse. Es una baza de viabilidad muy fuerte, pero hay que confirmarla con
-los mentores antes de decirla en el pitch.
-
-**La robótica no hace falta aquí.** Ganadores anteriores llevaban dispositivo,
-pero este reto premia la viabilidad, y meter hardware la resta.
+**La robótica no hace falta aquí.** Este reto premia la viabilidad, y meter
+hardware la resta.
 
 ### Herramientas (propuesta)
 
-Con un perfil de UI/UX en el equipo, merece la pena una interfaz web de verdad en
-vez de Streamlit, que no deja diseñar:
-
-- **Backend:** Python + **FastAPI** + **DuckDB**, que lee los CSV directamente
-  con SQL (ya está en [`analisis/datos.py`](../analisis/datos.py)). Las reglas son
-  consultas SQL.
-- **Frontend:** una web sencilla con el framework que mejor domine el Dev 2
-  (por ejemplo React + Vite). Solo dos pantallas: la bandeja y el impacto.
+- **IA local:** modelos preentrenados de Hugging Face (ver
+  [Modelos de Hugging Face](#modelos-de-hugging-face)), servidos dentro del
+  hospital. En [`analisis/lector_ia.py`](../analisis/lector_ia.py) hay un primer
+  lector, todavía sin probar, que mide el acierto contra los CSV.
+- **Backend:** Python + FastAPI + DuckDB sobre los CSV (ya está
+  [`analisis/datos.py`](../analisis/datos.py)).
+- **Frontend:** una web sencilla con el framework que mejor domine el Dev 2.
 - **Diseño:** Figma en las primeras horas, para que el frontend no espere.
 
-No hay base de datos que montar: el mismo código correría en un ordenador del
-hospital.
+### Modelos de Hugging Face
 
-**Si se va de tiempo:** la pantalla de impacto puede salir directamente del
-backend como gráficos estáticos, y la bandeja es lo único que tiene que estar
-diseñado.
+Todos se descargan una vez y después funcionan **sin internet**, dentro del
+hospital (`HF_HUB_OFFLINE=1`). Licencias y descargas comprobadas en el Hub el
+23‑oct.
+
+**Capa 1: modelos pequeños, sin GPU.** Hacen casi todo el trabajo. Son de unos
+125 M de parámetros y corren en un servidor normal en milisegundos.
+
+| Para qué | Modelo | Licencia |
+|---|---|---|
+| **Pruebas ya hechas** («analítica», «ecografía»…) | [`BSC-NLP4BIA/bsc-bio-ehr-es-carmen-medprocner`](https://huggingface.co/BSC-NLP4BIA/bsc-bio-ehr-es-carmen-medprocner): procedimientos en texto clínico español (F1 0,81) | CC‑BY‑4.0 |
+| **Antecedentes y enfermedades** (HTA, DL, hipotiroidismo…) | [`BSC-NLP4BIA/bsc-bio-ehr-es-carmen-distemist`](https://huggingface.co/BSC-NLP4BIA/bsc-bio-ehr-es-carmen-distemist) | CC‑BY‑4.0 |
+| **Negaciones** («sin hallazgos», «sin mejoría») | [`BSC-NLP4BIA/negation-tagger`](https://huggingface.co/BSC-NLP4BIA/negation-tagger) | CC‑BY‑4.0 |
+| **Anonimizar** antes de guardar registros | [`BSC-NLP4BIA/bsc-bio-ehr-es-meddocan`](https://huggingface.co/BSC-NLP4BIA/bsc-bio-ehr-es-meddocan) | CC‑BY‑4.0 |
+| **Tipo de derivación** (nueva, revisión o reanudar) | [`PlanTL-GOB-ES/bsc-bio-ehr-es`](https://huggingface.co/PlanTL-GOB-ES/bsc-bio-ehr-es), RoBERTa clínico español, ajustado con las derivaciones etiquetadas. O sin entrenar: [`MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7`](https://huggingface.co/MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7) | Apache 2.0 / MIT |
+
+Los modelos de la capa 1 son del **Barcelona Supercomputing Center**, del Plan
+de Tecnologías del Lenguaje del Gobierno. Están entrenados con historias
+clínicas en español. Para el pitch: *IA pública española, dentro del hospital*.
+
+**Capa 2, opcional: un modelo generativo para el resumen de una frase.**
+
+| Modelo | Licencia | Nota |
+|---|---|---|
+| [`BSC-LT/salamandra-7b-instruct`](https://huggingface.co/BSC-LT/salamandra-7b-instruct) | Apache 2.0 | Del proyecto público español ALIA (BSC). Hay versión de 2B |
+| [`Qwen/Qwen3-4B`](https://huggingface.co/Qwen/Qwen3-4B) o [`Qwen3-8B`](https://huggingface.co/Qwen/Qwen3-8B) | Apache 2.0 | Los más descargados. Buenos dando JSON con formato fijo |
+
+Necesita una GPU de gama media o CPU de noche: 250 derivaciones caben de sobra.
+Si no hay presupuesto para GPU, **Jano funciona sin esta capa**.
+
+**Evitar:** `google/medgemma-*` (acceso restringido y licencia propia) y
+`mistralai/Ministral-8B-Instruct-2410` (licencia no comercial). Los dos chocan
+con un producto que Wayra quiera vender.
+
+**Para el pitch:**
+
+- **El hospital ya etiqueta cada derivación al validarla.** Esas etiquetas
+  sirven para reajustar el clasificador dentro del hospital, gratis y sin que
+  los datos salgan.
+- **CC‑BY‑4.0** permite uso comercial; solo obliga a citar al BSC.
+
+**Ojo con la demo:** el texto de los CSV es de plantilla. Un clasificador
+ajustado con él acertará casi el 100 %, y esa cifra no vale nada. Lo que luce
+es la **ficha**: pruebas, antecedentes y negaciones sacadas del texto. Si se da
+una cifra de acierto, hay que decir que es sobre datos sintéticos.
 
 ### Reparto del tiempo (orientativo)
 
-La exploración de los datos ya está hecha ([`HALLAZGOS.md`](HALLAZGOS.md)).
-
-| Horas | Devs | UI/UX | Biomédica |
+| Bloque | Devs | UI/UX | Biomédica |
 |---|---|---|---|
-| 0‑2 | Acordar el contrato de la API (qué devuelve la bandeja). Esqueleto de backend y frontend | Flujo de la bandeja y primeros bocetos | Mentores: ¿pasa esto en La Princesa? ¿Qué HIS usan? ¿Es producto sanitario? |
-| 2‑3 | **Todos:** nombre del producto, frase de «X que hace Y» y validar el flujo | | |
-| 3‑12 | Reglas y API (Dev 1). Bandeja con datos reales (Dev 2) | Diseño final en Figma y textos de los mensajes al paciente | Reglas de prioridad y de segundo contacto. Plan de piloto y argumento regulatorio |
-| 12‑16 | Pantalla de impacto y pulir la bandeja | Revisar la accesibilidad de la interfaz. Empezar las diapositivas | Cifras para el pitch con Dev 1 |
-| 16‑20 | Congelar el código. Preparar los datos de la demo | Diapositivas | Guion del pitch |
-| 20‑22 | Grabar un vídeo de la demo por si falla en directo | | |
-| 22‑24 | **Todos:** ensayar y margen | | |
+| 1 | Contrato de la API (la ficha en JSON). Lector con el modelo elegido y su acierto sobre una muestra | Boceto de la ficha y de la bandeja | Mentores: ¿pasa esto en La Princesa? ¿Quién valida las derivaciones? ¿MDR? |
+| 2 | Reglas de encaminado y backend. Bandeja con datos reales | Diseño final y textos (devolución al médico de cabecera, mensaje al paciente) | Protocolos de Digestivo (y de una segunda especialidad si da tiempo) |
+| 3 | Pantalla de impacto. Precalcular las fichas de la demo | Diapositivas | Cifras y guion del pitch |
+| 4 | Congelar el código. Grabar un vídeo de la demo por si falla | Ensayar | Ensayar |
 
 ## Cómo usar los datos
 

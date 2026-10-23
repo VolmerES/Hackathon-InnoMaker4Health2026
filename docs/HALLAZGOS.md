@@ -214,6 +214,43 @@ faltas y a los cambios de cita.
 Espera media de **14,7 minutos**, consulta de **20 minutos** y 3,5 minutos de la
 llegada a la admisión. Aquí no hay un problema grande.
 
+## 7. La puerta de entrada
+
+Segunda ronda, buscando problemas fuera de las faltas
+([`analisis/ideas2.py`](../analisis/ideas2.py)). Los tamaños son sintéticos;
+vale la estructura.
+
+**Dos de cada tres derivaciones no son un problema nuevo:**
+
+| Motivo | Derivaciones | Texto típico |
+|---|---:|---|
+| Valoración especializada | 16.475 | «Paciente con alteración analítica de 13 meses de evolución sin mejoría con tto en AP. **Pruebas básicas sin hallazgos relevantes.** Derivo a TRA para valoración» |
+| Revisión | 16.944 | «**Valorada en vuestra consulta hace años** por astenia. Refiere empeoramiento. Ruego revisión» |
+| Reanudar seguimiento | 16.378 | «En seguimiento previo por vuestro servicio, **perdió la cita de revisión**. Solicita nueva cita» |
+
+- «Reanudar seguimiento» es un bucle: el paciente pierde su revisión, vuelve a
+  su médico de cabecera, este escribe una derivación, el hospital la valida y la
+  cita como si fuera nueva. 316 de esas derivaciones acaban rechazadas.
+- El texto es libre, con erratas («Muejr», «molstias»), como el real. Dice qué
+  pruebas se hicieron ya en Primaria.
+
+**Pruebas:**
+
+- El **32 %** de las primeras consultas realizadas pide al menos una prueba
+  (9.677 de 30.601).
+- En todas las especialidades, la más pedida es la **analítica**, seguida de
+  ecografía y radiografía.
+
+**Evidencia real:** cuando la prueba está hecha, la primera consulta resuelve el
+caso en una visita en el **49 %** de los pacientes, frente al **22 %** sin ella
+(multicéntrico, 795 primeras visitas). En Digestivo, del 34 al 57 %. Las
+consultas de alta resolución resuelven en una visita entre el 44 % (Digestivo)
+y el 86 % (Cardiología).
+
+**Reprogramaciones:** la mitad las provoca el hospital: reorganización de la
+agenda (9.445) y ausencia del profesional (9.342). Cada una lleva una llamada
+manual (`LLAMADA_AVISO_CAMBIO`, 18.787).
+
 ## Qué significa para la propuesta
 
 - **Los huecos vacíos siguen siendo el problema**, pero su tamaño sale de las
