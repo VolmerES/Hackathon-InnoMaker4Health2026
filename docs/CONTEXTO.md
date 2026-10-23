@@ -960,7 +960,7 @@ navegador y se siguen tres pasos. Nadie del hospital toca la línea de comandos.
   Los modelos van dentro del instalador, porque **no hace falta internet**
   (`HF_HUB_OFFLINE=1`) y llevan sumas de comprobación.
 
-**El primer arranque, en `http://jano.local`:**
+**El primer arranque, en `http://medici.local`:**
 
 1. **Conectar con HCIS.** Informática escribe la IP y el puerto del motor de
    integración HL7. Hay un botón «Probar conexión» que se pone en verde.
