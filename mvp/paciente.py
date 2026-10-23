@@ -5,7 +5,7 @@ modelo tiene que citar. El servidor comprueba después que existe.
 """
 
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analisis"))
@@ -28,6 +28,7 @@ class Fila:
     tabla: str    # de qué tabla sale
     id: str       # id original en el CSV
     texto: str    # lo que ve el modelo
+    campos: dict = field(default_factory=dict)   # los datos en bruto, para las alertas
 
 
 TABLAS_MEDICI = ["pacientes", "derivaciones_ap", "citas", "huecos_agenda", "agendas",
@@ -48,8 +49,9 @@ def _fecha(valor) -> str:
     return valor.strftime("%d/%m/%Y") if valor else "sin fecha"
 
 
-def _numerar(prefijo: str, tabla: str, filas: list[tuple[str, str]]) -> list[Fila]:
-    return [Fila(f"{prefijo}{i}", tabla, id_, texto) for i, (id_, texto) in enumerate(filas, 1)]
+def _numerar(prefijo: str, tabla: str, filas: list[tuple[str, str, dict]]) -> list[Fila]:
+    return [Fila(f"{prefijo}{i}", tabla, id_, texto, campos)
+            for i, (id_, texto, campos) in enumerate(filas, 1)]
 
 
 def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
@@ -62,7 +64,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
     if p:
         filas += _numerar("F", "PACIENTES", [(id_paciente,
             f"Ficha: {p[0]} años, sexo {p[1]}. Contacto preferido: {p[2]}. "
-            f"Necesidades de accesibilidad: {p[3]}.")])
+            f"Necesidades de accesibilidad: {p[3]}.",
+            {"edad": p[0], "contacto": p[2], "accesibilidad": p[3]})])
 
     der = con.execute(
         "SELECT id_derivacion, fecha_solicitud, especialidad_destino, prioridad, "
@@ -71,7 +74,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         [id_paciente]).fetchall()
     filas += _numerar("D", "DERIVACIONES_AP", [(d[0],
         f"Derivación de Primaria el {_fecha(d[1])} a {ESPECIALIDADES.get(d[2], d[2])}, "
-        f"prioridad {d[3]}, estado {d[6]}. Motivo: {d[4]}. Observaciones del médico: {d[5]}")
+        f"prioridad {d[3]}, estado {d[6]}. Motivo: {d[4]}. Observaciones del médico: {d[5]}",
+        {"fecha": d[1], "especialidad": d[2], "prioridad": d[3], "motivo": d[4], "estado": d[6]})
         for d in der])
 
     citas = con.execute(
@@ -83,7 +87,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
     filas_citas = _numerar("C", "CITAS", [(c[0],
         f"Cita en {ESPECIALIDADES.get(c[3], c[3] or 'servicio desconocido')} el {_fecha(c[1])}"
         f"{' a las ' + c[2].strftime('%H:%M') if c[2] else ''}, visita "
-        f"{TIPO_VISITA.get(c[4], c[4])}, estado {c[5]}, prioridad {c[6]}.")
+        f"{TIPO_VISITA.get(c[4], c[4])}, estado {c[5]}, prioridad {c[6]}.",
+        {"fecha": c[1], "especialidad": c[3], "estado": c[5]})
         for c in citas])
     filas += filas_citas
     ref_cita = {f.id: f.ref for f in filas_citas}
@@ -105,7 +110,9 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         + (f"{que_paso[m[3]]} el {_fecha(m[2])}, a petición de {m[4]}. Motivo: {m[5]}."
            if m[3] in que_paso else
            f"quedó como NO REALIZADA el {_fecha(m[2])}: se cerró sin atender al paciente, "
-           f"no es una anulación. Motivo: {m[5]}."))
+           f"no es una anulación. Motivo: {m[5]}."),
+        {"tipo": m[3] if m[3] in que_paso else "NO_REALIZADA", "fecha": m[2],
+         "cita": ref_cita.get(m[1]), "motivo": m[5]})
         for m in mov])
 
     pruebas = con.execute(
@@ -115,7 +122,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
     filas += _numerar("P", "PRUEBAS", [(p[0],
         f"Prueba {p[1]}: solicitada el {_fecha(p[2])}, programada el {_fecha(p[3])}, "
         f"realizada {'el ' + _fecha(p[4]) if p[4] else 'no'}, estado {p[5]}, "
-        f"resultado disponible: {'sí' if p[6] else 'no'} (el valor del resultado no está en estos datos).")
+        f"resultado disponible: {'sí' if p[6] else 'no'} (el valor del resultado no está en estos datos).",
+        {"tipo": p[1], "programada": p[3], "realizada": p[4], "estado": p[5], "resultado": bool(p[6])})
         for p in pruebas])
 
     avisos = con.execute(
@@ -123,7 +131,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         "FROM comunicaciones WHERE id_paciente = ? ORDER BY fecha_envio", [id_paciente]).fetchall()
     filas += _numerar("A", "COMUNICACIONES", [(a[0],
         f"Aviso {a[3]} por {a[2]} el {_fecha(a[4])} sobre la cita [{ref_cita.get(a[1], a[1])}]: "
-        f"{a[5]}, respuesta del paciente: {a[6] or 'ninguna'}.")
+        f"{a[5]}, respuesta del paciente: {a[6] or 'ninguna'}.",
+        {"canal": a[2], "fecha": a[4], "resultado": a[5]})
         for a in avisos])
 
     return filas

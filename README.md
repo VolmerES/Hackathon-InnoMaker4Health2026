@@ -30,7 +30,8 @@ Qué significa cada uno en la práctica:
 ## Contexto
 
 El contexto completo, con el modelo de datos transcrito, está en
-**[`docs/CONTEXTO.md`](docs/CONTEXTO.md)**.
+**[`docs/CONTEXTO.md`](docs/CONTEXTO.md)**. Empieza por su
+[estado en un minuto](docs/CONTEXTO.md#estado-en-un-minuto-24oct).
 
 ## Estructura
 
@@ -40,7 +41,7 @@ docs/
   briefing/       Fotos del material impreso que entregó la organización
   HALLAZGOS.md    Lo que dicen los datos, con cifras
 analisis/         Scripts de exploración (Python + DuckDB)
-mvp/              Núcleo de Medici sin agente y prueba de acierto de 30 preguntas
+mvp/              Núcleo de Medici: chat sin agente, tarjeta «3 cosas» y sus pruebas
 demo/             Réplicas de HCIS y SELENE con historias sintéticas (Daniel)
 data/             Los 11 CSV (no se suben: son material de la organización)
 ```
@@ -63,7 +64,9 @@ python -m venv .venv
 - [x] **Idea decidida: Medici, el chatbot copiloto del médico.** El médico le pregunta en el ordenador por el paciente y Medici le contesta, con la fuente de cada dato y con IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-decidida-medici-el-copiloto-del-médico)
 - [x] Hardware decidido: **Mac mini M6** o **NVIDIA DGX Spark**, con una instalación muy sencilla. [Propuesta de infraestructura para todo el hospital](docs/CONTEXTO.md#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo). Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-medici-mac-mini-m6-o-nvidia-dgx-spark)
 - [x] Ideas que no entran (preparar la consulta, escriba, HL7…): en la [hoja de ruta](docs/CONTEXTO.md#hoja-de-ruta-ideas-no-decididas)
-- [ ] MVP sin agente: las consultas fijas y la [prueba de acierto](mvp/README.md) están hechas; falta medir con el modelo local, el servidor y la [pestaña dentro de HCIS](docs/CONTEXTO.md#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo)
+- [x] Chat sin agente medido con Qwen3‑8B: **29/30** con pacientes nuevos, 0 fuentes inventadas, 0,7 s ([`mvp/`](mvp/README.md))
+- [x] Tarjeta «3 cosas antes de que entre»: alertas por reglas, 0 errores en 2.000 pacientes
+- [ ] Servidor y [pestaña dentro de HCIS](docs/CONTEXTO.md#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo) sobre la réplica de Daniel
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado
 - [ ] Confirmar con los mentores lo marcado con ⚠️ en el guion

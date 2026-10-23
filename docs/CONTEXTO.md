@@ -3,6 +3,39 @@
 Transcripción del material impreso que se entregó el 23‑oct‑2026 (fotos en
 [`briefing/`](briefing/)) y de la información pública del evento.
 
+## Estado en un minuto (24‑oct)
+
+**Medici es el copiloto del médico en consultas externas:** el médico abre al
+paciente y Medici le dice lo que no puede pasar por alto y le contesta lo que
+pregunte, con la fuente de cada dato y con IA local. Nada sale del hospital.
+
+| | Qué | Dónde |
+|---|---|---|
+| ✅ **Construido y medido** | **Chat sin agente:** 6 consultas SQL fijas del paciente y una sola llamada al modelo, que solo ordena y redacta citando filas. Con Qwen3‑8B en un portátil (RTX 5060, 8 GB): **29/30** con pacientes nuevos, 6/6 «no consta», 0 fuentes inventadas, 0,7 s por respuesta | [`mvp/`](../mvp/README.md) · [Cómo construirlo](#cómo-construirlo-propuesta-pendiente-del-equipo) |
+| ✅ **Construido y medido** | **Tarjeta «3 cosas antes de que entre»:** alertas por reglas, sin IA, cada una con su fuente. Contrastadas con SQL directo en 2.000 pacientes: 0 errores | [La tarjeta](#la-tarjeta-3-cosas-antes-de-que-entre-construida-el-24oct) |
+| ✅ **Construido** (Daniel) | Réplicas de HCIS y SELENE con dos historias sintéticas y un agente con respuestas **precalculadas** | [`demo/`](../demo/README.md) |
+| 🟡 **Propuesto, pendiente del equipo** | Medici como **pestaña dentro de HCIS**; infraestructura (1 Mac mini M6 para el piloto, 2 × DGX Spark para todo el hospital); datos por HL7 | [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo) · [Infraestructura](#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo) |
+| ⬜ **Falta para la demo** | El servidor (FastAPI, 3 llamadas) y la pestaña con la tarjeta y el chat sobre `demo/web/hcis.html` | [El MVP en 24 h](#cómo-construirlo-propuesta-pendiente-del-equipo) |
+| 📍 **Hoja de ruta** | Preparar la consulta antes, escriba, escribir en HCIS, texto libre de las historias… | [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
+
+**Preguntar a los mentores hoy ⚠️:**
+
+- Cuánto tarda un especialista en revisar la historia antes de cada paciente.
+  Si se puede, cronometrarlo con la réplica de HCIS y con Medici.
+- Si La Princesa ya tiene algo parecido.
+- Cómo se abre HCIS: Chrome o Edge, modo IE o Java, Citrix.
+- Si un chat que solo busca y muestra datos entra en el reglamento de productos
+  sanitarios.
+
+**Decidir en el equipo ⚠️:**
+
+- Si la demo usa las tablas de los CSV (lo medido) o el texto libre de las
+  historias de Daniel (precalculado).
+- El precio de la licencia, antes de subir al escenario.
+
+Las secciones de abajo guardan el recorrido completo. Lo que está escrito para
+ideas anteriores lo dice al principio de cada sección.
+
 ## El evento
 
 | | |
@@ -197,9 +230,6 @@ mínimo de las dos cosas:
 - **Tiene que costar casi nada.** Software libre, sin licencias de terceros y,
   como mucho, un servidor dentro del hospital para la IA local, si su Unidad de
   Análisis de Datos no tiene ya uno ⚠️.
-- **El paciente se gestiona solo cuando puede** (con un enlace para elegir la
-  hora). Quien no puede pasa a una persona. **La automatización libera tiempo
-  justo para atender a quien más lo necesita.**
 
 ### La idea decidida: Medici, el copiloto del médico
 
@@ -226,8 +256,8 @@ una herramienta para ellos.
 
 | Estado | Qué |
 |---|---|
-| **Construido** | Los scripts de análisis de los CSV (`analisis/`; `lector_ia.py` es de la idea anterior y nunca se ha ejecutado). La demo de Daniel en `demo/`: réplicas de HCIS y SELENE con historias sintéticas y respuestas precalculadas. El núcleo sin agente y la prueba de acierto en `mvp/`, sin probar todavía con un modelo |
-| **Propuesto por el equipo (24‑oct)** | MVP **sin agente**: SQL fijo y el modelo solo ordena. Medici como **pestaña dentro de HCIS** |
+| **Construido y medido** | En `mvp/`: el chat sin agente (29/30 con Qwen3‑8B) y la tarjeta «3 cosas antes de que entre» (0 errores en 2.000 pacientes). En `demo/` (Daniel): réplicas de HCIS y SELENE con historias sintéticas y respuestas precalculadas. En `analisis/`: los scripts de exploración (`lector_ia.py` es de la idea anterior y nunca se ha ejecutado) |
+| **Propuesto por el equipo (24‑oct)** | MVP **sin agente**: SQL fijo y el modelo solo ordena. Medici como **pestaña dentro de HCIS**. La tarjeta «3 cosas» |
 | **Decidido por el equipo** | Chatbot copiloto, IA local, Mac mini M6 o DGX Spark, instalación fácil |
 | **Propuesto por Claude para construirlo** (falta que el equipo lo apruebe) | Todo lo de «Cómo construirlo», más abajo |
 | **Hoja de ruta** (ideas, no decididas) | Lo de la sección [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
@@ -366,14 +396,70 @@ Respuesta en español + las filas en las que se basa, debajo
   funcionando).
 - Todo lo de la hoja de ruta.
 
+### La tarjeta «3 cosas antes de que entre» (construida el 24‑oct)
+
+**Por qué:** el chat espera a que el médico pregunte. La tarjeta **se adelanta**
+(como 5 de los 7 ganadores anteriores): al abrir al paciente le dice lo que no
+puede pasar por alto. Además responde a «eso ya lo veo en HCIS»: HCIS te
+enseña todo; Medici te dice lo que importa.
+
+**Cómo:** reglas sobre los datos, **sin IA**, así que son siempre ciertas. Cada
+alerta lleva las filas de las que sale. Se ordenan por importancia y se
+enseñan las tres primeras.
+
+| Alerta | Importancia | Ejemplo |
+|---|---|---|
+| Necesidad de accesibilidad | 90 | «Necesita intérprete.» |
+| Citas cerradas sin atenderle | 80 si son 2 o más; 65 si es una | «2 citas se cerraron sin atenderle; la última, en Oftalmología el 16/05/2025.» |
+| Prueba que no se llegó a hacer | 78 | «No se llegó a hacer: ecografía (programada el …).» |
+| Pruebas pendientes | 75 | «Pruebas pendientes: ecografía (programada el 02/06/2025) y analítica (…).» |
+| Derivación preferente o urgente | 72 | «Derivación preferente de Primaria a Neurología (08/05/2025): valoración especializada.» |
+| Avisos que no le llegaron | 70 si son 2 o más; 55 si es uno | «1 aviso por SMS no le llegó (26/01/2025).» |
+| Pruebas hechas con resultado | 60 | «Ya tiene hecha la analítica (…), con resultado disponible.» |
+| Citas reprogramadas o anuladas | 50 si son 2 o más; 35 si es una | «1 cita anulada (paciente cancela).» |
+
+Ejemplo de tarjeta completa (un paciente de los CSV sintéticos):
+
+```
+── antes de que entre ──
+ • Necesita intérprete.                                                [F1]
+ • Prueba pendiente: endoscopia (programada el 13/05/2025).            [P1]
+ • 1 cita se cerró sin atenderle (Oftalmología, 11/02/2025).          [M1]
+```
+
+**Prueba** (`mvp/prueba_alertas.py`, 2.000 pacientes al azar):
+
+- Cada alerta se contrasta con una consulta SQL distinta de la que la generó,
+  directamente sobre las tablas. **No cuadró ninguna mal** (0 de 2.000).
+- **Qué sale:**
+  - A un 35 % de los pacientes no les sale nada. Ver «Nada que destacar» también
+    es útil.
+  - Un 39 % tiene una cosa, un 19 % dos, y un 6,5 % tres o más.
+- **Lo más frecuente:**
+
+  | Alerta | Pacientes |
+  |---|---|
+  | Citas cerradas sin atenderle | 23 % |
+  | Citas cambiadas | 23 % |
+  | Accesibilidad | 18 % |
+  | Avisos que no llegaron | 13 % |
+  | Pruebas pendientes | 7 % |
+
+- `python mvp/alertas.py --buscar-demo` encuentra pacientes con una tarjeta
+  completa de tres cosas distintas, para elegir a «María».
+
+**Lo que falta:** enseñarla en la pestaña de la réplica de HCIS, arriba del
+chat. Los valores de importancia son una propuesta: que los revise la
+biomédica con los mentores ⚠️.
+
 ### El equipo (propuesta)
 
 | Quién | Papel |
 |---|---|
-| Dev 1 (software y robótica) | **El agente:** el modelo local, las herramientas, la prueba de acierto y la API. Cuenta la viabilidad en el pitch |
-| Dev 2 (software) | **La pantalla:** agenda, chat y fuentes. Lleva el portátil de la demo |
+| Dev 1 (software y robótica) | **El servidor:** FastAPI con las 3 llamadas sobre `mvp/` (sesión, tarjeta y resumen, pregunta) y Ollama. Cuenta la viabilidad en el pitch |
+| Dev 2 (software) | **La pestaña** sobre `demo/web/hcis.html`: la tarjeta arriba, el chat y las fuentes. Lleva el portátil de la demo |
 | UI/UX | **Cómo se ve una respuesta con su fuente** en 5 segundos. Las pantallas de la instalación en tres pasos, las diapositivas y **presentar la demo** |
-| Biomédica | **Las preguntas reales** que hace un especialista antes de ver a un paciente, validadas con los mentores. La lista de 30 preguntas de la prueba, lo regulatorio y las cifras. **Abre el pitch** |
+| Biomédica | **Las preguntas reales** que hace un especialista antes de ver a un paciente, validadas con los mentores (cambiarlas en `mvp/prueba_acierto.py`). El orden de las alertas de la tarjeta, lo regulatorio y las cifras. **Abre el pitch** |
 
 El reparto lo decide el equipo.
 
@@ -381,9 +467,9 @@ El reparto lo decide el equipo.
 
 | Bloque | Devs | UI/UX | Biomédica |
 |---|---|---|---|
-| 1 | Elegir el modelo y servirlo. Las 6 herramientas | Boceto: agenda, chat y fuentes | Mentores: ¿qué preguntan los especialistas? ¿Cuántos sistemas abren? ¿La Princesa tiene ya algo así? |
-| 2 | Agente completo y API. Pantalla con datos reales | Diseño final y pantallas de instalación | Las 30 preguntas con su respuesta correcta |
-| 3 | Prueba de acierto. Precalcular la demo | Diapositivas | Cifras y guion |
+| 1 | ✅ Modelo servido, 6 consultas fijas, prueba de acierto y tarjeta | Boceto: pestaña con tarjeta, chat y fuentes | Mentores: ¿qué preguntan los especialistas? ¿Cuántos sistemas abren? ¿La Princesa tiene ya algo así? |
+| 2 | Servidor (FastAPI) y pestaña sobre la réplica de HCIS con datos reales | Diseño final y pantallas de instalación | Las 30 preguntas con su respuesta correcta |
+| 3 | Elegir a «María» (`alertas.py --buscar-demo`). Precalcular la demo | Diapositivas | Cifras y guion |
 | 4 | Congelar el código. Grabar un vídeo de la demo | Ensayar | Ensayar |
 
 ## Hoja de ruta (ideas, no decididas)
@@ -663,9 +749,15 @@ cambia HCIS, Medici sigue funcionando.
 peticiones (`SRM^S01`, `OMG^O19` o FHIR). En el piloto, Medici solo lee y
 propone, y la persona confirma en HCIS. Escribir directamente es la fase 2 ⚠️.
 
-**En la demo:** un script convierte los CSV en mensajes HL7 v2 y se los envía a
-Medici por MLLP, como haría el motor de integración. Así el jurado ve que se
-conecta sin tocar HCIS. Librerías: `hl7apy` o `hl7` (MIT).
+**Hoy no se usa HL7 en ningún sitio.** El MVP lee los CSV con DuckDB y consulta
+su copia con SQL. HL7 no es un lenguaje de base de datos: son los mensajes que
+se mandan los sistemas del hospital. Medici los recibiría y los guardaría en su
+copia, y luego seguiría consultando esa copia con SQL.
+
+**Si sobra tiempo en la demo (no está hecho):** un script que convierta los CSV
+en mensajes HL7 v2 y se los envíe a Medici por MLLP, como haría el motor de
+integración. Así el jurado vería que se conecta sin tocar HCIS. Librerías:
+`hl7apy` o `hl7` (MIT).
 
 **Preguntas para Informática ⚠️:**
 
@@ -687,7 +779,7 @@ y la convierte en acciones.
 | Momento | Qué hace Medici | De dónde lo saca |
 |---|---|---|
 | **Antes** | Ficha de la derivación y pruebas adelantadas | Derivación (`REF`) |
-| **Durante** | **Pregúntale a Medici**: un agente con herramientas de solo lectura sobre el historial del paciente (derivaciones, citas, faltas, pruebas, avisos, accesibilidad). Siempre enseña las filas en las que se basa, y si un dato no está responde «no consta» | Copia HL7 |
+| **Durante** | **Pregúntale a Medici** (construido): consultas fijas de solo lectura sobre el historial del paciente y el modelo solo ordena. Siempre enseña las filas en las que se basa, y si un dato no está responde «no consta» | Copia HL7 |
 | **Durante** | **Aviso de prueba duplicada**: el médico dice «le pido una analítica» y Medici avisa de que ya tiene una de hace tres semanas | Nota del escriba + `ORU` |
 | **Al cerrar** | **Cero clics después de la consulta**: de la nota saca la lista de trámites (pruebas, próxima cita, vuelta a Primaria). El especialista la confirma con un clic | Nota del escriba (`MDM`) |
 | **Después** | La vuelta a Primaria redactada, y la versión del paciente en lectura fácil, en su idioma y en audio | Modelos locales |
@@ -697,8 +789,8 @@ viene antes y después.»*
 
 **Por qué es innovador:**
 
-- Es una capa de agentes **local y abierta** sobre los estándares que ya tiene
-  el hospital (HL7).
+- Es una capa **local y abierta** sobre los estándares que ya tiene el
+  hospital (HL7).
 - **Sirve con cualquier escriba**, también con el que compre la Consejería.
 - **Cierra el circuito** de Primaria al hospital y de vuelta a Primaria.
 
@@ -738,7 +830,7 @@ similar) o con Mac mini M6. Solo el chatbot, que es lo decidido.
  ┌──────────────── CPD del hospital, red aislada (VLAN), sin internet ────────────────┐
  │                                                                                    │
  │  Medici · aplicación         ← proxy HTTPS (Caddy) + API (FastAPI) + la web          │
- │     │   · herramientas de solo lectura, siempre de UN paciente                     │
+ │     │   · consultas fijas de solo lectura, siempre de UN paciente                  │
  │     │   · registro: quién preguntó qué y cuándo                                    │
  │     │                                                                              │
  │     ├──► Datos de Medici (PostgreSQL): copia de solo lectura con lo justo           │
@@ -767,7 +859,7 @@ similar) o con Mac mini M6. Solo el chatbot, que es lo decidido.
 | | |
 |---|---|
 | Equipos | **2 × DGX Spark** en el CPD: uno trabaja y el otro está de reserva, o los dos repartiendo trabajo |
-| Modelo | **Qwen3‑30B‑A3B** (Apache‑2.0). Cabe sobrado en 128 GB y **acierta más llamando a las herramientas** que un 8B |
+| Modelo | **Qwen3‑30B‑A3B** (Apache‑2.0). Cabe sobrado en 128 GB y deja más margen que un 8B para historias largas y texto libre (sin medir todavía con nuestra prueba ⚠️) |
 | Capacidad | Con uno basta para todo el hospital (~30 preguntas a la vez). El segundo es por si falla el primero |
 | Coste del equipo | **~9.400 €** (2 × ~4.700 € con IVA) |
 | A favor | Un solo sitio que mantener, actualizar y auditar. Las respuestas más rápidas y el mejor modelo. Hay margen para crecer (el escriba, la hoja de ruta) |
@@ -783,7 +875,7 @@ similar) o con Mac mini M6. Solo el chatbot, que es lo decidido.
 | Capacidad | 2–4 preguntas a la vez cada uno. Dos cubren la punta (4–8) **por poco** |
 | Coste del equipo | **Más barato**: 3 × M6 con 32 GB, precio en € por confirmar ⚠️ (desde 899 $ el de 16 GB) |
 | A favor | Barato, silencioso, consume poco. Muy fácil para empezar: **un M6 basta para un piloto** de un servicio |
-| En contra | **Un modelo más pequeño, que se equivoca más** al elegir herramientas. Más lento en la punta. Más equipos que mantener. No hay sitio para crecer (escriba) |
+| En contra | **Un modelo más pequeño.** Con nuestros datos basta (Qwen3‑8B: 29/30), pero deja menos margen para historias largas. Más lento en la punta. Más equipos que mantener. No hay sitio para crecer (escriba) |
 | Alternativa | El **Mac mini M5 Pro** (hasta 64 GB, 307 GB/s), con más margen por equipo |
 
 **Lo que no recomiendo: un M6 en cada servicio o en cada planta.** Cada equipo

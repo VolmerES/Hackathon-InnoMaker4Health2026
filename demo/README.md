@@ -1,6 +1,6 @@
 # demo/
 
-La demo de **Jano** para el pitch: informes de derivación sintéticos y la
+La demo de **Medici** (antes «Jano») para el pitch: informes de derivación sintéticos y la
 pantalla con la que el especialista los valida.
 
 ```text
@@ -26,7 +26,7 @@ de estado.
 
 Abajo a la derecha, **el agente**, como el chat de cualquier web: botón redondo
 con el icono del médico y, al abrirlo, el lector. El HCE queda intacto detrás:
-es la idea, que Jano se acople al sistema que ya usan, no que lo sustituya.
+es la idea, que Medici se acople al sistema que ya usan, no que lo sustituya.
 
 Dos pacientes en el desplegable de arriba, los dos citados hoy en Digestivo:
 
@@ -68,7 +68,7 @@ campos de `DERIVACIONES_AP`) y debajo va `motivo_derivacion` y
 sin tildes, frases telegráficas, siglas (AP, AF, EF, NAMC, IBP, EC, FID, SOH,
 tto, pcte, s/p, rgo), analíticas pegadas en una línea, un caso en mayúsculas
 enteras y otro casi ilegible. Nada de apartados ordenados: eso es lo que hace
-difícil leer 250 al día y es justo lo que Jano tiene que digerir.
+difícil leer 250 al día y es justo lo que Medici tiene que digerir.
 
 El registro está tomado de lo que describe la literatura sobre historias
 clínicas españolas (notas escritas deprisa y con gran número de abreviaturas;
@@ -135,7 +135,7 @@ evitan pruebas que ya estaban hechas.
 
 ## La idea de la pantalla
 
-Dos columnas enfrentadas, como las dos caras de Jano: a la izquierda la hoja
+Dos columnas enfrentadas: a la izquierda la hoja
 tal como la escribió Primaria, a la derecha la ficha. Al pasar por encima de un
 campo de la ficha se resalta **la frase del texto de la que sale**. Es la forma
 de dejar ver que la IA solo extrae: cada dato tiene su origen a la vista, y lo

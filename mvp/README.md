@@ -7,11 +7,27 @@ citando las filas.
 ```text
 paciente.py       las 6 consultas fijas: filas numeradas [F1] [D1] [C1] [M1] [P1] [A1]
 responder.py      una sola llamada al modelo (API compatible con OpenAI) y comprobación de las fuentes
+alertas.py        la tarjeta «3 cosas antes de que entre»: reglas, sin IA
 prueba_acierto.py 30 preguntas con la respuesta correcta sacada de los CSV, y la nota
+prueba_alertas.py contrasta cada alerta con SQL directo en una muestra de pacientes
 resultados/       el detalle de cada prueba (no se sube: lleva filas de los CSV)
 ```
 
 Solo usa la biblioteca estándar y `duckdb`. Los CSV tienen que estar en `data/`.
+Los datos se leen con SQL sobre los CSV; HL7 todavía no se usa.
+
+## La tarjeta «3 cosas antes de que entre»
+
+```bash
+.venv/Scripts/python mvp/alertas.py P0037782            # la tarjeta de un paciente
+.venv/Scripts/python mvp/alertas.py P0037782 --json     # lo que recibiría la pantalla
+.venv/Scripts/python mvp/alertas.py --buscar-demo       # pacientes con tres cosas distintas
+.venv/Scripts/python mvp/prueba_alertas.py              # 2.000 pacientes contra SQL directo
+```
+
+Resultado del 24‑oct: **0 alertas que no cuadren** en 2.000 pacientes. Qué sale
+y por qué, en
+[`docs/CONTEXTO.md`](../docs/CONTEXTO.md#la-tarjeta-3-cosas-antes-de-que-entre-construida-el-24oct).
 
 ## Medir el acierto
 
@@ -55,8 +71,8 @@ cuando toca, cuántas filas inexistentes ha citado y los segundos por respuesta.
 
 | Tipo | Cuántas | Se da por buena si… |
 |---|---|---|
-| ¿Ha estado antes en {servicio}? (sí) | 3 | cita una cita de ese servicio |
-| ¿Ha estado antes en {servicio}? (no) | 2 | dice que no y no se inventa ninguna |
+| ¿Ha tenido citas en {servicio}? (sí) | 3 | cita una cita de ese servicio |
+| ¿Ha tenido citas en {servicio}? (no) | 2 | dice que no y no se inventa ninguna |
 | ¿Qué pruebas tiene pendientes? | 5 | nombra y cita todas las programadas (una sin ninguna) |
 | ¿Necesita algún apoyo para la consulta? | 4 | da la necesidad y cita la ficha (una sin ninguna) |
 | ¿Por qué lo manda su médico de cabecera? | 4 | cita la derivación y da el motivo |
