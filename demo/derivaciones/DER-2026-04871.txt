@@ -1,0 +1,22 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04871
+id_paciente .......... PAC-00417        edad 58      sexo Mujer
+fecha_solicitud ...... 12/10/2026 09:14
+origen ............... C.S. Ensanche de Vallecas · Dra. C. Herrero Nieto
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Normal
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: dispepsia. estudio
+
+mujer 58a, dolor epigastrico de 5 meses, posprandial, al principio dia si dia no y ahora
+casi diario. plenitud precoz. no disfagia no vomitos. peso estable (68 kg). ritmo intestinal
+normal, no rectorragias.
+AP: HTA (enalapril). no IQ previas. no AINEs de forma habitual. no fumadora. NAMC.
+ha hecho 2 tandas de omeprazol 20mg/24h 8 sem cada una, mejora algo y al dejarlo vuelve.
+EF: abd blando depresible, molestias a la palpacion en epigastrio, no masas ni megalias,
+murphy -
+analitica 12/09: hemograma normal Hb 13.4 / bioq con perfil hepatico normal GPT 24 GGT 31
+Ag H.pylori heces NEGATIVO 18/09. SOH negativa 18/09 (todo en HCE)
+dispepsia no investigada que no responde a IBP, ruego valoracion y estudio. gracias

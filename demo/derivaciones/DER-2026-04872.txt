@@ -1,0 +1,20 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04872
+id_paciente .......... PAC-01928        edad 71      sexo Hombre
+fecha_solicitud ...... 12/10/2026 10:02
+origen ............... C.S. Alcalá de Guadaíra · Dr. J. Mendoza Barral
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Normal
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: perdio cita revision digestivo, solicita nueva
+
+PACIENTE DE 71 A CON COLITIS ULCEROSA IZQUIERDA DX 2019 EN SEGUIMIENTO POR DIGESTIVO
+(ULTIMA CONSULTA 14/03/26, DRA SANZ). TTO MESALAZINA 3G/24H. SIN BROTES EN EL ULTIMO AÑO,
+1-2 DEPS/DIA SIN SANGRE Y SIN DOLOR.
+TENIA CITA EL 22/09 Y NO PUDO IR PORQUE INGRESARON A SU MUJER. LLAMO AL HOSPITAL Y LE
+DICEN QUE TIENE QUE PEDIRLA OTRA VEZ A TRAVES DE SU MEDICO DE FAMILIA, ASI QUE LA PIDO YO.
+NO HAY CAMBIOS CLINICOS NI NADA NUEVO QUE VALORAR, SOLO RECUPERAR SU SEGUIMIENTO.
+ANALITICA 02/10 NORMAL, PCR 2.1. CALPROTECTINA 48.
+VIENE CON ACOMPAÑANTE, ANDA MAL Y OYE POCO, MEJOR AVISARLE POR TELEFONO A LA HIJA.

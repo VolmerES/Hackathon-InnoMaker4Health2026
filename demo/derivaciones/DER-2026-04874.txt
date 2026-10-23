@@ -1,0 +1,20 @@
+=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===
+id_derivacion ........ DER-2026-04874
+id_paciente .......... PAC-02240        edad 62      sexo Mujer
+fecha_solicitud ...... 12/10/2026 12:05
+origen ............... C.S. Justicia · Dr. A. Villalba Torres
+especialidad_destino . APARATO DIGESTIVO
+prioridad ............ Preferente
+estado_solicitud ..... Pendiente de validar
+--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---
+
+MOTIVO: RECTORRAGIA DE 3 SEMANAS - PREFERENTE
+
+mujer de 62 a. sangrado rojo oscuro mezclado con las heces en casi todas las deposiciones
+desde hace 3 semanas. ha cambiado el ritmo, antes 1 dep/dia y ahora 3-4 blandas. ha perdido
+3 kg sin querer en 2 meses. no fiebre. no dolor anal ni esfuerzo defecatorio.
+tacto rectal: no hemorroides externas no fisuras, dedo limpio.
+AF: padre ca colon a los 68.
+analitica 09/10: Hb 10.8 VCM 76 ferritina 9 --> ferropenia. resto de bioq normal.
+Rectorragia + anemia ferropenica + AF de 1er grado. derivo PREFERENTE para descartar neo
+colorrectal.

@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SELENE · Carpeta del paciente</title>
+<style>
+/* HCE del hospital (tipo SELENE): aplicación de escritorio Windows, densa,
+   esquinas rectas, bordes hundidos, 11-12 px. Sin IA: solo la historia. */
+:root{
+  --gris:#d6d3ce; --gris-2:#eceae5; --campo:#fff;
+  --borde-osc:#808080; --borde-clr:#fff; --linea:#b5b2ac;
+  --azul:#0a3c74; --azul-2:#1b5a9e; --sel:#316ac5;
+  --texto:#101418; --texto-2:#4a5560;
+  --rojo:#9b1b1b; --verde:#1f5c38; --marca:#ffef9e;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--gris);color:var(--texto);font:12px/1.4 Tahoma,"Segoe UI",Verdana,sans-serif}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:1px dotted #000;outline-offset:1px}
+.mono{font-family:"Courier New",Consolas,monospace}
+.app{display:grid;grid-template-rows:auto auto auto auto 1fr auto;height:100vh}
+
+/* título */
+.titulo{background:linear-gradient(#1b5a9e,#0a3c74);color:#fff;display:flex;align-items:center;gap:8px;padding:3px 6px;font-size:11.5px}
+.titulo .logo{font-weight:bold;letter-spacing:.08em;background:#fff;color:#0a3c74;padding:1px 5px}
+.titulo .sep{opacity:.6}
+.titulo .botones{margin-left:auto;display:flex;gap:3px}
+.titulo .botones span{width:16px;height:14px;border:1px solid #84a9cd;background:#e7eef5;color:#0a3c74;text-align:center;line-height:12px;font-size:10px}
+
+/* menú */
+.menu{background:var(--gris-2);border-bottom:1px solid var(--linea);display:flex;font-size:11.5px}
+.menu button{background:none;border:0;padding:4px 9px;cursor:default}
+.menu button:hover{background:var(--sel);color:#fff}
+.menu u{text-decoration:underline}
+
+/* herramientas */
+.tools{background:var(--gris-2);border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:3px;padding:3px 5px;flex-wrap:wrap}
+.tb{display:flex;align-items:center;gap:5px;background:var(--gris-2);border:1px solid transparent;padding:3px 7px;cursor:pointer;font-size:11.5px;text-decoration:none;color:inherit}
+.tb:hover{border:1px solid var(--linea);background:#f7f6f3}
+.tb[aria-pressed="true"]{border:1px solid var(--borde-osc);background:#dfe6ee}
+.tb i{width:14px;height:14px;display:inline-block;border:1px solid #6d7b86;background:#cdd9e4;font-style:normal}
+.vsep{width:1px;height:20px;background:var(--linea);margin:0 4px}
+.tools label{font-size:11.5px}
+.tools select,.tools input[type=search]{border:1px solid var(--borde-osc);border-right-color:var(--borde-clr);border-bottom-color:var(--borde-clr);background:var(--campo);padding:2px 4px}
+.tools .busca{margin-left:auto;display:flex;align-items:center;gap:4px}
+.tools input[type=search]{width:200px}
+
+/* cintillo */
+.cintillo{background:linear-gradient(#20639f,#0a3c74);color:#fff;padding:5px 8px;display:flex;gap:16px;align-items:stretch;flex-wrap:wrap}
+.cintillo .nom{font-size:14px;font-weight:bold;line-height:1.2}
+.cintillo .nom small{display:block;font-weight:normal;font-size:11px;color:#cfe0f0;margin-top:2px}
+.cintillo dl{margin:0;display:grid;grid-template-columns:auto auto;gap:0 8px;font-size:11px;align-content:center}
+.cintillo dt{color:#b8d0e6}
+.cintillo dd{margin:0;color:#fff}
+.cintillo .cita{background:#f6f9fc;border:1px solid #7fa6c9;color:#123;padding:4px 7px;font-size:11px;max-width:46ch}
+.cintillo .cita b{display:block}
+.cintillo .alergia{margin-left:auto;background:#fff3f3;border:1px solid #b55;color:var(--rojo);padding:4px 7px;font-size:11px;max-width:40ch}
+.cintillo .alergia b{display:block;text-transform:uppercase}
+
+/* área de trabajo */
+.work{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:0;background:var(--gris)}
+.panel{background:var(--gris);display:flex;flex-direction:column;min-height:0;padding:4px}
+.hundido{background:var(--campo);border:1px solid var(--borde-osc);border-right-color:var(--borde-clr);border-bottom-color:var(--borde-clr);flex:1;min-height:0;display:flex;flex-direction:column}
+.cabpanel{background:var(--gris-2);border-bottom:1px solid var(--linea);padding:3px 6px;font-weight:bold;font-size:11.5px;display:flex;align-items:center;gap:6px}
+.cabpanel span.n{font-weight:normal;color:var(--texto-2)}
+.cabpanel .der{margin-left:auto;font-weight:normal;color:var(--texto-2)}
+
+/* árbol */
+.arbol{overflow:auto;flex:1;padding:4px 2px;font-size:11.5px}
+.arbol ul{list-style:none;margin:0;padding-left:15px}
+.arbol > ul{padding-left:4px}
+.arbol li{margin:1px 0}
+.arbol .nodo{display:flex;align-items:center;gap:4px;padding:1px 4px;cursor:pointer;width:100%;background:none;border:0;text-align:left}
+.arbol .nodo:hover{background:#e8eef5}
+.arbol .nodo[aria-current="true"]{background:var(--sel);color:#fff}
+.arbol .caja{width:9px;height:9px;border:1px solid var(--borde-osc);background:var(--campo);font-size:9px;line-height:7px;text-align:center;flex:0 0 auto;font-family:monospace}
+.arbol .doc{width:9px;height:11px;border:1px solid #6d7b86;background:#fff;flex:0 0 auto}
+.arbol .n{color:var(--texto-2)}
+.arbol .nodo[aria-current="true"] .n{color:#dbe7f5}
+
+/* pestañas */
+.tabs{display:flex;gap:2px;padding:4px 4px 0;background:var(--gris);flex-wrap:wrap}
+.tab{background:var(--gris-2);border:1px solid var(--linea);border-bottom:0;padding:3px 12px;font-size:11.5px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--campo);font-weight:bold;position:relative;top:1px}
+
+/* contenido */
+.vista{overflow:auto;flex:1;min-height:0}
+table.rejilla{width:100%;border-collapse:collapse;font-size:11.5px}
+table.rejilla th{background:var(--gris-2);border:1px solid var(--linea);padding:3px 6px;text-align:left;font-weight:bold;position:sticky;top:0;z-index:1}
+table.rejilla td{border-bottom:1px solid #e3e1dc;padding:3px 6px;vertical-align:top}
+table.rejilla tr:nth-child(even) td{background:#f7f8fa}
+table.rejilla tr.sel td{background:var(--sel);color:#fff}
+.docu{border-bottom:1px solid var(--linea)}
+.docu .barra{background:#eef2f6;border-bottom:1px solid #cdd4db;padding:3px 7px;display:flex;gap:10px;align-items:baseline;font-size:11.5px;flex-wrap:wrap}
+.docu .barra .f{font-family:"Courier New",monospace}
+.docu .barra .t{font-weight:bold}
+.docu .barra .s{color:var(--texto-2)}
+.docu .barra .a{margin-left:auto;color:var(--texto-2)}
+.docu pre{margin:0;padding:8px 10px 12px 12px;white-space:pre-wrap;font-family:"Courier New",Consolas,monospace;font-size:12px;line-height:1.5}
+.docu mark{background:var(--marca)}
+.docu mark.cita{background:#ffd978;outline:1px solid #b8860b}
+.vacio{padding:14px;color:var(--texto-2)}
+
+/* vista partida: rejilla arriba, documento abajo */
+.partida{display:grid;grid-template-rows:minmax(80px,38%) auto minmax(0,1fr);flex:1;min-height:0;height:100%}
+.partida .sup{overflow:auto;min-height:0}
+.partida .divisor{height:5px;background:var(--gris);border-top:1px solid var(--borde-clr);border-bottom:1px solid var(--linea)}
+.partida .inf{overflow:auto;min-height:0;background:#fff}
+.partida .inf .docu{border-bottom:0}
+
+/* barra de estado */
+.estado{background:var(--gris-2);border-top:1px solid var(--borde-clr);display:flex;font-size:11px;color:var(--texto-2);flex-wrap:wrap}
+.estado div{padding:3px 8px;border-right:1px solid var(--linea)}
+.estado .fin{margin-left:auto;border-right:0}
+
+
+@media (max-width:980px){
+  .app{height:auto}
+  .work{grid-template-columns:1fr}
+  .vista{max-height:60vh}
+  .cintillo .alergia{margin-left:0}
+}
+</style>
+<link rel="stylesheet" href="agente.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="titulo">
+    <span class="logo">SELENE</span>
+    <span>Historia Clínica Electrónica</span><span class="sep">·</span>
+    <span>H. U. de La Princesa · Consultas Externas · Aparato Digestivo</span><span class="sep">—</span>
+    <span id="t-paciente"></span>
+    <div class="botones" aria-hidden="true"><span>_</span><span>□</span><span>×</span></div>
+  </div>
+
+  <nav class="menu" aria-label="Menú">
+    <button><u>P</u>aciente</button><button><u>E</u>pisodios</button><button>E<u>v</u>olutivo</button>
+    <button>Pe<u>t</u>iciones</button><button><u>R</u>esultados</button><button><u>I</u>nformes</button>
+    <button>C<u>i</u>tas</button><button>He<u>r</u>ramientas</button><button>Ve<u>n</u>tana</button><button>Ay<u>u</u>da</button>
+  </nav>
+
+  <div class="tools">
+    <label for="sel-pac">Paciente:</label>
+    <select id="sel-pac"></select>
+    <span class="vsep"></span>
+    <button class="tb" aria-pressed="true"><i></i>Carpeta del paciente</button>
+    <button class="tb"><i></i>Peticiones</button>
+    <button class="tb"><i></i>Curso clínico</button>
+    <a class="tb" href="hcis.html"><i></i>Ver en HCIS</a>
+    <a class="tb" href="index.html"><i></i>Bandeja de derivaciones</a>
+    <div class="busca">
+      <label for="q-doc">Buscar en la historia:</label>
+      <input id="q-doc" type="search" placeholder="p. ej. ibuprofeno">
+    </div>
+  </div>
+
+  <div class="cintillo">
+    <div class="nom" id="c-nom"></div>
+    <dl id="c-datos"></dl>
+    <div class="cita" id="c-cita"></div>
+    <div class="alergia" id="c-alergia"></div>
+  </div>
+
+  <div class="work">
+
+    <div class="panel">
+      <div class="hundido">
+        <div class="cabpanel">Carpeta del paciente</div>
+        <div class="arbol" id="arbol"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:0 4px 4px 0">
+      <div class="tabs" id="tabs">
+        <button class="tab" aria-selected="true" data-vista="evolutivo">Evolutivo</button>
+        <button class="tab" aria-selected="false" data-vista="documentos">Documentos</button>
+        <button class="tab" aria-selected="false" data-vista="resultados">Resultados</button>
+      </div>
+      <div class="hundido">
+        <div class="cabpanel"><span id="v-titulo"></span><span class="n" id="v-meta"></span>
+          <span class="der" id="v-ayuda"></span></div>
+        <div class="vista" id="vista"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="estado">
+    <div>Usuario: SANZORIA (F.E.A. Aparato Digestivo)</div>
+    <div>Centro: 280004 · H. U. de La Princesa</div>
+    <div id="e-episodio"></div>
+    <div id="e-doc"></div>
+    <div class="fin">SELENE 7.4.2 · maqueta de demostración con datos sintéticos</div>
+  </div>
+
+</div>
+
+
+
+
+
+
+<script src="historial-datos.js"></script>
+<script src="historial-datos-2.js"></script>
+<script src="historial-ficha.js"></script>
+<script src="agente.js"></script>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sinT = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const $ = s => document.querySelector(s);
+const RESULTADOS = ["Analítica","Resultado de pruebas","Informe de endoscopia","Informe de radiología"];
+
+const PACIENTES = [
+  {id:"P1", episodio:"CEX-2026-118442", ...window.PACIENTE, docs:window.DOCS,
+   hechos:window.HECHOS, preguntas:window.PREGUNTAS, ficha:window.FICHAS.P1,
+   alergia:{t:"metamizol (Nolotil)", d:"Exantema y edema palpebral en el postoperatorio de enero de 2021."}},
+  {id:"P2", episodio:"CEX-2026-118517", ...window.P2.paciente, docs:window.P2.docs,
+   hechos:window.P2.hechos, preguntas:window.P2.preguntas, ficha:window.FICHAS.P2,
+   alergia:{t:"contrastes yodados", d:"Urticaria y opresión faríngea durante un TAC en 2016."}}
+];
+
+let P, docs, porId;
+let vista = "evolutivo", filtro = null, busca = "", seleccionado = null;
+
+/* ---------------- paciente ---------------- */
+function cargaPaciente(id){
+  P = PACIENTES.find(p => p.id === id);
+  docs = P.docs.slice().sort((a,b) => b.orden.localeCompare(a.orden));
+  porId = Object.fromEntries(docs.map(d => [d.id, d]));
+  filtro = null; busca = ""; vista = "evolutivo"; seleccionado = docs[0].id;
+  $("#q-doc").value = "";
+  pintaCintillo(); pintaArbol(); sincTabs(); pinta();
+  if (window.Agente) window.Agente.cambioDePaciente();
+}
+function pintaCintillo(){
+  $("#t-paciente").textContent = `${P.nombre} (${P.nhc})`;
+  $("#c-nom").innerHTML = `${esc(P.nombre)}<small>${P.edad} años · ${P.sexo} · F. nac. ${P.nacimiento}</small>`;
+  $("#c-datos").innerHTML = `
+    <dt>NHC</dt><dd class="mono">${P.nhc}</dd>
+    <dt>CIPA</dt><dd class="mono">${P.cipa}</dd>
+    <dt>Centro de salud</dt><dd>${esc(P.centro)}</dd>
+    <dt>Médico de A.P.</dt><dd>${esc(P.medico_ap)}</dd>`;
+  $("#c-cita").innerHTML = `<b>Cita: ${esc(P.cita.fecha)} · ${esc(P.cita.tipo)} · ${esc(P.cita.agenda)}</b>
+    ${esc(P.cita.motivo)}<br>Avisar por ${esc(P.contacto)} · ${esc(P.acc)}`;
+  $("#c-alergia").innerHTML = `<b>Alergias: ${esc(P.alergia.t)}</b>${esc(P.alergia.d)}`;
+  const pal = P.docs.reduce((a,d) => a + d.texto.split(/\s+/).length, 0);
+  const años = P.docs.map(d => +d.orden.slice(0,4));
+  $("#e-episodio").textContent = `Episodio: ${P.episodio}`;
+  $("#e-doc").textContent = `Documentos: ${docs.length} · ${pal} palabras · ${Math.min(...años)}-${Math.max(...años)}`;
+}
+
+/* ---------------- árbol ---------------- */
+function pintaArbol(){
+  const porTipo = {};
+  docs.forEach(d => (porTipo[d.tipo] = porTipo[d.tipo] || []).push(d));
+  const años = [...new Set(docs.map(d => d.orden.slice(0,4)))].sort().reverse();
+  const nodo = (txt, n, key, icono) =>
+    `<button class="nodo" data-filtro="${esc(key)}" aria-current="${filtro === key ? "true" : "false"}">
+       <span class="${icono}">${icono === "caja" ? "−" : ""}</span>${esc(txt)}${n != null ? ` <span class="n">(${n})</span>` : ""}
+     </button>`;
+  $("#arbol").innerHTML = `<ul>
+    <li>${nodo("Historia completa", docs.length, "todo", "caja")}
+      <ul>
+        <li>${nodo("Por tipo de documento", null, "tipos", "caja")}
+          <ul>${Object.entries(porTipo).map(([t,l]) => `<li>${nodo(t, l.length, "tipo:"+t, "doc")}</li>`).join("")}</ul></li>
+        <li>${nodo("Por año", null, "años", "caja")}
+          <ul>${años.map(a => `<li>${nodo(a, docs.filter(d => d.orden.startsWith(a)).length, "año:"+a, "doc")}</li>`).join("")}</ul></li>
+        <li>${nodo("Resultados y pruebas", docs.filter(d => RESULTADOS.includes(d.tipo)).length, "resultados", "doc")}</li>
+        <li>${nodo("Episodio actual · " + P.episodio, 1, "tipo:Derivación a consulta externa", "doc")}</li>
+      </ul></li></ul>`;
+  $("#arbol").querySelectorAll(".nodo").forEach(b => b.onclick = () => {
+    const k = b.dataset.filtro;
+    if (k === "tipos" || k === "años") return;
+    filtro = k === "todo" ? null : k;
+    vista = k === "resultados" ? "resultados" : (vista === "documentos" ? "documentos" : "evolutivo");
+    sincTabs(); pinta(); pintaArbol();
+  });
+}
+
+/* ---------------- contenido ---------------- */
+function seleccion(){
+  let l = docs;
+  if (filtro && filtro.startsWith("tipo:")) l = l.filter(d => d.tipo === filtro.slice(5));
+  if (filtro && filtro.startsWith("año:")) l = l.filter(d => d.orden.startsWith(filtro.slice(4)));
+  if (filtro === "resultados" || vista === "resultados") l = l.filter(d => RESULTADOS.includes(d.tipo));
+  if (busca.trim()) l = l.filter(d => sinT(d.texto + " " + d.tipo + " " + d.servicio).includes(sinT(busca)));
+  return l;
+}
+function resalta(html){
+  const pal = sinT(busca).trim().split(/\s+/).filter(w => w.length > 2).map(w => w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
+  return pal.length ? html.replace(new RegExp(pal.join("|"),"gi"), m => `<mark>${m}</mark>`) : html;
+}
+const bloqueDoc = d => `<article class="docu" id="doc-${d.id}">
+    <div class="barra"><span class="f">${d.fecha}</span><span class="t">${esc(d.tipo)}</span>
+      <span class="s">${esc(d.servicio)}</span>
+      <span class="a">${esc(d.autor)} · <span class="mono">${d.id}</span></span></div>
+    <pre>${resalta(esc(d.texto))}</pre></article>`;
+
+function pinta(){
+  const l = seleccion(), v = $("#vista");
+  $("#v-meta").textContent = `· ${l.length} de ${docs.length} documentos`;
+  $("#v-titulo").textContent = vista === "documentos" ? "Documentos del paciente"
+    : vista === "resultados" ? "Resultados y pruebas"
+    : filtro ? "Evolutivo · " + filtro.replace(/^(tipo|año):/,"") : "Evolutivo · toda la historia";
+  $("#v-ayuda").textContent = vista === "documentos" ? "Seleccione una fila para ver el documento" : "";
+
+  if (!l.length){ v.innerHTML = `<p class="vacio">La selección no devuelve documentos.</p>`; return; }
+
+  if (vista === "documentos"){
+    if (!l.some(d => d.id === seleccionado)) seleccionado = l[0].id;
+    v.innerHTML = `<div class="partida">
+      <div class="sup"><table class="rejilla"><thead><tr>
+        <th style="width:11ch">Fecha</th><th style="width:26ch">Tipo de documento</th>
+        <th>Servicio</th><th style="width:24ch">Profesional</th><th style="width:5ch">Id</th>
+      </tr></thead><tbody>${l.map(d => `<tr data-ir="${d.id}" class="${d.id === seleccionado ? "sel" : ""}">
+          <td class="mono">${d.fecha}</td><td>${esc(d.tipo)}</td><td>${esc(d.servicio)}</td>
+          <td>${esc(d.autor)}</td><td class="mono">${d.id}</td></tr>`).join("")}</tbody></table></div>
+      <div class="divisor"></div>
+      <div class="inf">${bloqueDoc(porId[seleccionado])}</div>
+    </div>`;
+    v.querySelectorAll("[data-ir]").forEach(tr => tr.onclick = () => { seleccionado = tr.dataset.ir; pinta(); });
+    return;
+  }
+  v.innerHTML = l.map(bloqueDoc).join("");
+}
+function sincTabs(){ document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.vista === vista))); }
+
+/* ---------------- interacción ---------------- */
+$("#sel-pac").innerHTML = PACIENTES.map(p => `<option value="${p.id}">${esc(p.nombre)} · ${p.edad} a · ${esc(p.cita.motivo.split(" (")[0])}</option>`).join("");
+$("#sel-pac").onchange = e => cargaPaciente(e.target.value);
+$("#q-doc").oninput = e => { busca = e.target.value; pinta(); };
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  vista = t.dataset.vista;
+  if (vista === "resultados") filtro = null;
+  sincTabs(); pinta();
+});
+
+
+window.HCE = {
+  paciente: () => P,
+  docs: () => docs,
+  porId: () => porId,
+  iraDoc(id, cita){
+  if (vista === "documentos"){ seleccionado = id; pinta(); }
+  else {
+    if (filtro && !seleccion().some(d => d.id === id)){ filtro = null; vista = "evolutivo"; sincTabs(); }
+    if (busca){ busca = ""; $("#q-doc").value = ""; }
+    pinta(); pintaArbol();
+  }
+  const el = document.getElementById("doc-" + id);
+  if (!el) return;
+  if (cita){
+    const pre = el.querySelector("pre"), e = esc(cita), i = pre.innerHTML.indexOf(e);
+    if (i >= 0) pre.innerHTML = pre.innerHTML.slice(0,i) + '<mark class="cita">' + e + "</mark>" + pre.innerHTML.slice(i + e.length);
+  }
+  el.scrollIntoView({block:"center"});
+  }
+};
+
+cargaPaciente("P1");
+window.Agente.montar();
+</script>
+</body>
+</html>

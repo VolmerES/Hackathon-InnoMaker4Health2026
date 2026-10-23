@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HCIS · Pantalla historia clínica de Digestivo</title>
+<link rel="stylesheet" href="agente.css">
+<style>
+/* Recreación de la pantalla de consulta de HCIS a partir de una captura real:
+   cinta de paciente, columna verde (Alertas · Historia Clínica · Relevante),
+   barra de iconos, pestañas con estetoscopio y el formulario en fieldsets con
+   la leyenda sobre el borde. Datos sintéticos. */
+:root{
+  --verde:#009b6b; --verde-txt:#0a7a52; --gris:#ececec; --blanco:#fff;
+  --borde:#c6c6c6; --borde-2:#b0b0b0; --rojo:#cc0000; --azul:#1a4fa0; --morado:#6d2b5f;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--gris);color:#000;font:12px/1.3 Verdana,Tahoma,Arial,sans-serif}
+button,input,select,textarea{font-family:Verdana,Tahoma,Arial,sans-serif;font-size:12px;color:inherit}
+.app{display:grid;grid-template-rows:auto auto 1fr;height:100vh}
+
+/* ---------- cinta del paciente ---------- */
+.cinta{background:#fff;padding:2px 8px 3px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;
+  font-size:12px;font-weight:bold;border-bottom:1px solid #ddd}
+.cinta .nhc{font-family:Verdana,sans-serif}
+.cinta .epi{color:#2a6ebb}
+.cinta .fin{margin-left:auto;display:flex;align-items:center;gap:8px;font-weight:bold}
+.cinta .fin span.lab{font-weight:bold}
+.cinta .alerta{background:#d40000;border-radius:4px;width:30px;height:21px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cinta .alerta span{width:13px;height:13px;border:2px solid #fff;border-radius:50%}
+.cinta select,.cinta a{font-weight:normal;font-size:11px}
+.cinta a{color:var(--azul)}
+
+/* ---------- barra de iconos ---------- */
+.iconos{background:#fff;border-bottom:1px solid var(--borde);padding:2px 6px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.iconos .i{width:19px;height:18px;display:inline-block;background-size:contain;cursor:pointer;border-radius:2px}
+.iconos .sep{width:1px;height:18px;background:#bbb;margin:0 4px}
+.iconos .fin{margin-left:auto;display:flex;gap:6px}
+
+.marco{display:grid;grid-template-columns:286px minmax(0,1fr);min-height:0;background:var(--gris)}
+
+/* ---------- columna izquierda ---------- */
+.izq{background:#fff;border-right:1px solid var(--borde);overflow:auto;min-height:0}
+.verde{background:var(--verde);color:#fff;font-weight:bold;font-size:12px;padding:5px 9px;display:flex;align-items:center;gap:8px}
+.verde .circ{width:15px;height:15px;border-radius:50%;background:#047a55;color:#fff;font-size:10px;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.verde .fin{margin-left:auto;display:flex;align-items:center;gap:6px}
+.tri-av{color:#f5c518;font-size:13px}
+.embudo{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:11px solid #f5c518}
+.menos{width:15px;height:15px;border-radius:50%;background:#fff;color:var(--verde);display:flex;align-items:center;justify-content:center;font-weight:bold}
+.alertas{min-height:18px;padding:4px 9px;border-bottom:1px solid #e3e3e3}
+.alertas .a{display:flex;gap:5px;align-items:flex-start;padding:2px 0;cursor:pointer}
+.alertas .a:hover{background:#eef7f3}
+.alertas .t{color:var(--rojo);font-weight:bold;font-size:11px}
+.alertas small{display:block;color:#444;font-weight:normal;font-size:10.5px}
+.cab-hc{display:flex;align-items:center;gap:6px;padding:6px 6px 4px}
+.cab-hc .q{width:15px;height:15px;background:#2a6ebb;color:#fff;font-weight:bold;font-size:10px;
+  display:flex;align-items:center;justify-content:center;border-radius:2px}
+.cab-hc .cuad{width:34px;height:15px;border:1px solid #c6c6c6;background:#fff}
+.arbol{padding:0 4px 8px;font-size:11.5px}
+.nodo{display:block;width:100%;background:none;border:0;text-align:left;
+  padding:1px 2px;cursor:pointer;line-height:1.45;font-size:11.5px}
+.nodo > span{margin-right:4px;vertical-align:-1px}
+.nodo:hover{background:#eef7f3}
+.nodo[aria-current="true"]{background:#d6ece3}
+.mas{display:inline-block;width:11px;height:11px;border:1px solid #9a9a9a;background:#fff;font:10px/9px monospace;text-align:center}
+.icR{display:inline-block;width:15px;height:14px;background:#fff;border:1px solid #d03a3a;color:#cc0000;
+  font:bold 11px/12px Georgia,"Times New Roman",serif;text-align:center}
+.bang{display:inline-block;color:#e8a200;font-weight:bold;font-size:13px;width:6px;text-align:center}
+.relev{padding:0 0 8px}
+.relev .tabs{display:flex;gap:1px;padding:3px 4px}
+.relev .tabs{padding:0}
+.relev .tabs span{width:48px;height:28px;border:1px solid #c6c6c6;background:#fafafa;display:flex;
+  align-items:center;justify-content:center;font-size:15px}
+.relev .tabs span.sel{background:#5d4a66}
+.relev .it{display:flex;gap:7px;align-items:center;padding:4px 8px;cursor:pointer}
+.relev .it:nth-child(even){background:#f4f4f4}
+.relev .it:hover{background:#eef7f3}
+.relev .carp{width:16px;height:12px;flex:0 0 auto}
+.relev .brot{width:14px;height:13px;flex:0 0 auto}
+.relev .tx{color:#0a6b4a;font-size:11.5px;font-weight:bold}
+
+/* ---------- zona derecha ---------- */
+.der{display:flex;flex-direction:column;min-height:0;background:var(--gris)}
+.pest{display:flex;align-items:flex-end;gap:3px;padding:3px 6px 0;background:var(--gris)}
+.pest button{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--borde);
+  border-bottom:0;border-radius:10px 10px 0 0;padding:5px 16px;cursor:pointer;color:var(--azul);
+  text-decoration:underline;font-size:12px}
+.pest button[aria-selected="true"]{color:#000;text-decoration:none;font-weight:bold;padding-bottom:6px}
+.pest .este{width:13px;height:13px;border:1.5px solid #333;border-top:0;border-right:0;border-radius:0 0 0 8px;flex:0 0 auto;position:relative}
+.pest .este::after{content:"";position:absolute;right:-4px;bottom:-2px;width:5px;height:5px;border-radius:50%;background:#2a6ebb}
+
+.hoja{flex:1;min-height:0;overflow:auto;background:#fff;border-top:1px solid var(--borde);padding:6px 12px 14px}
+.titulo{display:flex;align-items:center;gap:9px;font-weight:bold;font-size:13px;margin:6px 0 12px;letter-spacing:.01em}
+.ham{width:26px;height:22px;border:1px solid #adadad;border-radius:3px;background:#f0f0f0;
+  display:flex;flex-direction:column;justify-content:center;gap:3px;padding:4px;flex:0 0 auto}
+.ham i{height:2px;background:#666;display:block}
+
+/* fieldsets con la leyenda sobre el borde */
+fieldset{border:1px solid #d7d7d7;border-radius:9px;margin:0 0 13px;padding:9px 14px 14px;background:#fff}
+legend{padding:0 6px;font-size:11.5px;color:#333;display:flex;align-items:center;gap:6px;cursor:pointer}
+legend .t{color:var(--verde);font-size:10px}
+legend.rojo{color:var(--rojo)}
+fieldset.plegada{padding:0;min-height:0}
+fieldset.plegada .con{display:none}
+.rej{display:grid;grid-template-columns:max-content minmax(140px,1fr) max-content minmax(140px,1fr);gap:7px 10px;align-items:start}
+.rej .et{font-size:11.5px;padding-top:3px}
+.rej .et.rojo{color:var(--rojo)}
+.campo{border:1px solid #d2d2d2;border-radius:9px;background:#efefef;color:#8d8d8d;padding:3px 9px;min-height:21px;font-size:11.5px}
+.campo.blanca{background:#fff;color:#000;border-color:#8a8a8a;border-radius:3px}
+select.campo{color:#000;background:#fff;border-radius:3px;border-color:#8a8a8a;padding:2px 4px}
+
+/* cajas de texto con sus iconitos */
+.caja{position:relative;margin-top:2px}
+.caja .txt{border:1px solid #8a8a8a;background:#fff;padding:5px 8px;min-height:72px;max-height:260px;overflow:auto;
+  font:11.5px/1.5 "Courier New",monospace;white-space:pre-wrap}
+.caja .arriba{position:absolute;top:3px;right:5px;display:flex;gap:4px}
+.caja .abajo{display:flex;gap:5px;padding:3px 1px 0}
+.ic{width:15px;height:14px;display:inline-block;border:1px solid #9a9a9a;background:#f3f3f3;flex:0 0 auto}
+.ic.az{background:#cfe3f7;border-color:#6f9fd0}
+.ic.vd{background:#cfe9d6;border-color:#6fae84}
+.ic.rj{background:#f7d3d3;border-color:#c98c8c}
+.ic.am{background:#faeec2;border-color:#cbae55}
+.ic.x{border:0;background:none;color:#c00;font-weight:bold;text-align:center;line-height:13px;font-size:13px}
+.ic.flecha{border:0;background:none;color:#222;font-size:11px;line-height:13px}
+
+/* motivo de consulta: una línea con la R roja */
+.linea-motivo{display:flex;align-items:center;gap:8px}
+.icr{width:19px;height:19px;border:1px solid #c33;background:#fff;color:#c00;font:bold 13px/17px Georgia,serif;text-align:center;flex:0 0 auto}
+.linea-motivo .campo{flex:1;background:#fff;color:#000;border:1px solid #555;border-radius:2px;min-height:23px;padding:3px 7px}
+.bajo-motivo{display:flex;gap:7px;padding:4px 0 0 28px;align-items:center}
+.lupa{width:13px;height:13px;border:2px solid #2a6ebb;border-radius:50%;position:relative}
+.lupa::after{content:"";position:absolute;right:-4px;bottom:-3px;width:6px;height:2px;background:#2a6ebb;transform:rotate(45deg)}
+
+.btns{display:flex;gap:5px;flex-wrap:wrap}
+.btn{background:#f0f0f0;border:1px solid #adadad;border-radius:3px;padding:3px 10px;cursor:pointer;font-size:11.5px}
+.btn:hover{background:#e3e3e3}
+.ctes{margin-top:8px;font-size:11.5px}
+.ctes b{font-family:"Courier New",monospace}
+
+/* peticiones */
+.pet-cab{display:flex;align-items:flex-end;gap:6px;margin-bottom:-1px}
+.pet-cab .sel{border:1px solid #8a8a8a;border-radius:9px 9px 0 0;background:#fff;padding:6px 14px;min-width:210px}
+.pet-cab .nuevo{border:1px solid #c6c6c6;border-bottom:0;border-radius:9px 9px 0 0;background:#f6f6f6;padding:6px 12px}
+.pet-cab .iconos-pet{display:flex;gap:6px;margin-left:10px;padding-bottom:4px}
+.pet-cab .iconos-pet span{width:19px;height:19px;border:1px solid #a33;background:#e74c3c;border-radius:2px}
+.favoritos{border:1px solid #8a8a8a;background:#fff;padding:9px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px 18px;font-size:11.5px}
+
+/* historia clínica */
+.doc{border:1px solid #d7d7d7;margin-bottom:9px;background:#fff}
+.doc .cab{background:#f1f6f4;border-bottom:1px solid #e0e0e0;padding:4px 8px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:11.5px}
+.doc .cab .t{font-weight:bold}
+.doc .cab .s{color:#555}
+.doc .cab .a{margin-left:auto;color:#555}
+.doc pre{margin:0;padding:7px 10px 10px;white-space:pre-wrap;font:11.5px/1.5 "Courier New",monospace}
+.doc mark{background:#ffef9e}
+.doc mark.cita{background:#ffd978;outline:1px solid #b8860b}
+.doc.sena{box-shadow:inset 3px 0 0 var(--verde)}
+
+.pie{background:var(--gris);border-top:1px solid var(--borde);padding:6px;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.pie button{background:#7a3268;border:1px solid #5d2550;color:#fff;border-radius:3px;padding:4px 18px;cursor:pointer;font-size:11.5px}
+.pie button:hover{background:#8d3b78}
+
+@media (max-width:1000px){
+  .app{height:auto}
+  .marco{grid-template-columns:1fr}
+  .izq{max-height:40vh}
+  .rej{grid-template-columns:max-content 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="cinta">
+    <span class="nhc" id="c-nhc"></span>
+    <span id="c-nombre"></span>
+    <span>Fecha nacimiento: <span id="c-nac"></span></span>
+    <span id="c-sexo"></span>
+    <span>Episodio: <span class="epi" id="c-epi"></span> 23/10/2026</span>
+    <span class="fin">
+      <span class="lab" id="c-bio"></span>
+      <select id="sel-pac" aria-label="Paciente"></select>
+      <a href="historial.html">Ver en SELENE</a>
+      <span class="alerta" id="c-alerta" title="Alergias"><span></span></span>
+    </span>
+  </div>
+
+  <div class="iconos">
+    <span class="i" style="background:#b7c9e2"></span>
+    <span class="i" style="background:#9fd3a8"></span>
+    <span class="i" style="background:#9fb8d3"></span>
+    <span class="sep"></span>
+    <span class="i" style="background:#e8dcc0"></span>
+    <span class="i" style="background:#cfd9e8"></span>
+    <span class="i" style="background:#cbd8e6"></span>
+    <span class="sep"></span>
+    <span class="i" style="background:#8fd0a5"></span>
+    <span class="i" style="background:#f3d98b"></span>
+    <span class="sep"></span>
+    <span class="i" style="background:#f6e08a"></span>
+    <span class="i" style="background:#a9d9b4"></span>
+    <span class="i" style="background:#d6d6d6"></span>
+    <span class="i" style="background:#c3d4e8"></span>
+    <span class="i" style="background:#e3b9b9"></span>
+    <span class="i" style="background:#a8d7cf"></span>
+    <span class="i" style="width:38px;background:#e8f3e4;border:1px solid #7aa87a;font:bold 10px/16px Verdana;text-align:center;color:#2a6b2a">AT</span>
+    <span class="fin">
+      <span class="i" style="background:#f4d98c"></span>
+      <span class="i" style="background:#e0a0a0"></span>
+      <span class="i" style="background:#b9c9e4"></span>
+      <span class="i" style="background:#cfd9e8"></span>
+    </span>
+  </div>
+
+  <div class="marco">
+
+    <aside class="izq">
+      <div class="verde"><span class="circ">‹</span>Alertas <span class="tri-av">⚠</span></div>
+      <div class="alertas" id="alertas"></div>
+
+      <div class="verde">Historia Clínica <span class="fin"><span class="embudo"></span></span></div>
+      <div class="cab-hc"><span class="cuad"></span><span class="q">?</span>
+        <svg width="17" height="15" viewBox="0 0 17 15" aria-hidden="true">
+          <rect x="0.5" y="2.5" width="12" height="11" fill="#f3e6c8" stroke="#8a7a52"/>
+          <path d="M2.5 5.5h8M2.5 8h8M2.5 10.5h5" stroke="#8a7a52"/>
+          <path d="M9 11.5l5.5-6 2 1.7-5.5 6-2.6.9z" fill="#2f7d32" stroke="#1d5a20"/>
+        </svg><b>Historia Clínica</b></div>
+      <div class="arbol" id="arbol"></div>
+
+      <div class="verde">Relevante <span class="fin"><span class="menos">−</span></span></div>
+      <div class="relev">
+        <div class="tabs">
+          <span class="sel" title="Antecedentes">🌍</span><span title="Alergias">✳</span>
+          <span title="Hábitos">⊘</span><span title="Familiares">👥</span><span title="Documentos">📂</span>
+        </div>
+        <div id="relevante"></div>
+      </div>
+    </aside>
+
+    <section class="der">
+      <div class="pest" id="pestanas">
+        <button data-v="consulta" aria-selected="true"><span class="este"></span>Consulta</button>
+        <button data-v="historia" aria-selected="false"><span class="este"></span>Historia Clínica</button>
+        <button data-v="monograficos" aria-selected="false"><span class="este"></span>Monográficos</button>
+        <button data-v="pedidos" aria-selected="false"><span class="este"></span>Pedidos Recientes</button>
+        <button data-v="preoperatorio" aria-selected="false">Preoperatorio</button>
+        <button data-v="prescripcion" aria-selected="false"><span class="este"></span>Prescripción</button>
+        <button data-v="mas" aria-selected="false">…</button>
+      </div>
+
+      <div class="hoja" id="hoja"></div>
+
+      <div class="pie">
+        <button>Guardar</button><button>Guardar y salir</button>
+        <button>Salir</button><button>Generar Informe</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="historial-datos.js"></script>
+<script src="historial-datos-2.js"></script>
+<script src="historial-ficha.js"></script>
+<script src="agente.js"></script>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $ = s => document.querySelector(s);
+
+const PACIENTES = [
+  {id:"P1", episodio:"1288035412", informe:"24286143", ...window.PACIENTE, docs:window.DOCS,
+   hechos:window.HECHOS, preguntas:window.PREGUNTAS, ficha:window.FICHAS.P1,
+   bio:"P: 68 Kg, T: 162 cm, IMC: 25,9",
+   alergias:[{t:"METAMIZOL (NOLOTIL)", d:"Exantema y edema palpebral, enero de 2021", doc:"D06"}],
+   problemas:[["HIPERTENSIÓN ARTERIAL ESENCIAL","09/02/2016","D02"],
+              ["ADENOMA TUBULAR DE COLON","18/03/2015","D01"],
+              ["Histerectomía total laparoscópica","27/01/2021","D06"],
+              ["DISPEPSIA REFRACTARIA A IBP","18/05/2026","D13"],
+              ["Ansiedad y trastorno del sueño","14/11/2024","D11"],
+              ["Cólico renal izquierdo","21/05/2017","D03"]],
+   relevante:[["Toma ibuprofeno 3-4 días al mes","D11"],["Omeprazol sin suspender desde julio","D17"],
+              ["Control de colonoscopia vencido (2020)","D01"],["Celiaquía descartada","D15"]]},
+  {id:"P2", episodio:"1288035479", informe:"24286207", ...window.P2.paciente, docs:window.P2.docs,
+   hechos:window.P2.hechos, preguntas:window.P2.preguntas, ficha:window.FICHAS.P2,
+   bio:"P: 72 Kg, T: 171 cm, IMC: 24,6",
+   alergias:[{t:"CONTRASTES YODADOS", d:"Urticaria y opresión faríngea en TAC, 2016", doc:"E03"}],
+   problemas:[["FIBRILACIÓN AURICULAR PERMANENTE","03/03/2018","E04"],
+              ["ENFERMEDAD RENAL CRÓNICA G3a","21/04/2023","E08"],
+              ["ANGIODISPLASIA GÁSTRICA SANGRANTE","27/11/2019","E05"],
+              ["ANEMIA FERROPÉNICA RECIDIVANTE","12/03/2026","E11"],
+              ["ERGE con esofagitis grado A","06/05/2012","E01"],
+              ["Artroplastia total de rodilla derecha","09/06/2021","E07"]],
+   relevante:[["Adiro 100 pendiente de retirar","E09"],["Pérdida de 6 kg en 8 meses","E12"],
+              ["Colonoscopia de control vencida (2026)","E02"],["Hierro iv por intolerancia al oral","E06"]]}
+];
+
+let P, docs, porId, vista = "consulta", seleccionado = null;
+
+/* ---------------- carga ---------------- */
+function cargaPaciente(id){
+  P = PACIENTES.find(p => p.id === id);
+  docs = P.docs.slice().sort((a,b) => b.orden.localeCompare(a.orden));
+  porId = Object.fromEntries(docs.map(d => [d.id, d]));
+  seleccionado = docs[0].id;
+  pintaCinta(); pintaAlertas(); pintaArbol(); pintaRelevante(); pinta();
+  if (window.Agente) window.Agente.cambioDePaciente();
+}
+function pintaCinta(){
+  const ap = P.nombre.split(" ");
+  $("#c-nhc").textContent = P.nhc.replace("PAC-","");
+  $("#c-nombre").textContent = (ap.slice(1).join(" ") + ", " + ap[0]).toUpperCase();
+  $("#c-nac").textContent = P.nacimiento;
+  $("#c-sexo").textContent = (P.sexo === "Mujer" ? "Mujer" : "Varón") + ", " + P.edad + " años";
+  $("#c-epi").textContent = P.episodio;
+  $("#c-bio").textContent = P.bio;
+  $("#c-alerta").title = "Alergias: " + P.alergias.map(a => a.t).join(", ");
+}
+function pintaAlertas(){
+  $("#alertas").innerHTML = P.alergias.map(a =>
+    `<div class="a" data-doc="${a.doc}"><span class="bang">!</span>
+      <span class="t">${esc(a.t)}<small>${esc(a.d)}</small></span></div>`).join("");
+  $("#alertas").querySelectorAll("[data-doc]").forEach(b => b.onclick = () => iraDoc(b.dataset.doc));
+}
+function pintaArbol(){
+  $("#arbol").innerHTML = P.problemas.map(([t,f,doc]) =>
+    `<button class="nodo" data-doc="${doc}" aria-current="${doc === seleccionado ? "true" : "false"}">
+       <span class="mas">+</span><span class="icR">R.</span><span class="bang">!</span>${esc(t)} ${f}</button>`).join("");
+  $("#arbol").querySelectorAll("[data-doc]").forEach(b => b.onclick = () => iraDoc(b.dataset.doc));
+}
+function pintaRelevante(){
+  $("#relevante").innerHTML = P.relevante.map(([t,doc]) =>
+    `<div class="it" data-doc="${doc}">
+      <svg class="carp" viewBox="0 0 16 12" aria-hidden="true"><path d="M0.5 11.5v-9h5l1.4 1.6h8.6v7.4z" fill="#f6d77a" stroke="#b08a1e"/><path d="M0.5 11.5l2.4-6h13l-2.4 6z" fill="#fbe9ae" stroke="#b08a1e"/></svg>
+      <svg class="brot" viewBox="0 0 14 13" aria-hidden="true"><circle cx="4.5" cy="4.5" r="3.4" fill="#4cae4f"/><circle cx="9" cy="4" r="3" fill="#3f9c43"/><circle cx="7" cy="7.5" r="3.2" fill="#55b85a"/><path d="M7 9.5v3" stroke="#2e7d32" stroke-width="1.6"/></svg>
+      <span class="tx">${esc(t)}</span></div>`).join("");
+  $("#relevante").querySelectorAll("[data-doc]").forEach(b => b.onclick = () => iraDoc(b.dataset.doc));
+}
+
+/* ---------------- textos ---------------- */
+const ultimo = tipo => docs.find(d => d.tipo === tipo);
+const motivoTexto = () => {
+  const d = ultimo("Derivación a consulta externa");
+  if (!d) return "";
+  const m = d.texto.match(/MOTIVO:\s*(.+)/);
+  return m ? m[1].trim() : "";
+};
+const derivacionTexto = () => {
+  const d = ultimo("Derivación a consulta externa");
+  return d ? d.texto.replace(/^MOTIVO:.*\n/,"").trim() : "";
+};
+const historiaActual = () => docs.filter(d => /Nota de consulta|Nota de enfermería/.test(d.tipo)).slice(0,3)
+  .map(d => `[${d.fecha} · ${d.tipo} · ${d.autor}]\n${d.texto.trim()}`).join("\n\n");
+const laboratorio = () => { const d = ultimo("Analítica"); return d ? `[${d.fecha}]\n${d.texto.trim()}` : ""; };
+const imagenTxt = () => {
+  const d = docs.find(x => /radiología|endoscopia/i.test(x.tipo));
+  return d ? `[${d.fecha} · ${d.tipo}]\n${d.texto.trim()}` : "";
+};
+const antecedentesTxt = () => P.problemas.map(([t,f]) => `${t} — ${f}`).join("\n");
+
+const FAVORITOS = ["Peticion de Hemograma","Perfil General Bioquimica","Perfil Sedimento-Tira Orina",
+ "Petición a Radiología","Petición a Radiología Urgente","Petición a AP",
+ "Petición a B. Sangre","Petición a HdD Médico","Petición a HdD Alergia",
+ "Petición a HdD Psiquiátrico","Petición a HdD Oncológico","RX + Anestesia fuera Quirófano (NO_INGRESADOS)"];
+
+const herrArriba = `<div class="arriba"><span class="ic az"></span><span class="ic vd"></span>
+  <span class="ic flecha">◀</span><span class="ic vd"></span></div>`;
+const herrAbajo = `<div class="abajo"><span class="ic az"></span><span class="ic am"></span>
+  <span class="ic" style="background:#d9d2ec"></span><span class="ic x">✕</span></div>`;
+const caja = (txt, alto) => `<div class="caja"><div class="txt" style="min-height:${alto||72}px">${esc(txt)}</div>
+  ${herrArriba}</div>${herrAbajo}`;
+const fs = (leyenda, con, o) => { o = o || {};
+  return `<fieldset class="${o.plegada ? "plegada" : ""}">
+    <legend class="${o.rojo ? "rojo" : ""}"><span class="t">${o.plegada ? "▼" : "▲"}</span>${esc(leyenda)}</legend>
+    <div class="con">${con}</div></fieldset>`;
+};
+
+function pintaConsulta(){
+  return `<div class="titulo"><span class="ham"><i></i><i></i><i></i></span>PANTALLA HISTORIA CLÍNICA DE DIGESTIVO</div>
+
+  ${fs("Datos generales:", `<div class="rej">
+      <span class="et">Informe:</span><div class="campo">${P.informe}</div>
+      <span class="et">Tipo de documento:</span><div class="campo">Pantalla Historia Clínica de APARATO DIGESTIVO</div>
+      <span class="et">Especialidades:</span><div class="campo">APARATO DIGESTIVO</div>
+      <span class="et rojo">Sección:</span><select class="campo"><option></option><option selected>CONSULTAS EXTERNAS</option></select>
+      <span class="et rojo">Procedencia:</span><div class="campo">ATENCIÓN PRIMARIA · ${esc(P.centro.toUpperCase())}</div>
+      <span class="et rojo">Sit. Emergentes:</span><select class="campo"><option>-- Seleccionar --</option></select>
+    </div>`)}
+
+  ${fs("Otras Visitas:", `<div class="rej">
+      <span class="et">Cita actual:</span><div class="campo">${esc(P.cita.fecha)} · ${esc(P.cita.agenda)}</div>
+      <span class="et">Documentos:</span><div class="campo">${docs.length} (${docs[docs.length-1].fecha} – ${docs[0].fecha})</div>
+    </div>`, {plegada:true})}
+
+  ${fs("Motivo de consulta:", `<div class="linea-motivo"><span class="icr">R</span>
+      <div class="campo">${esc(motivoTexto())}</div><span class="ic az"></span></div>
+    <div class="bajo-motivo"><span class="lupa"></span><span class="ic flecha">◀</span><span class="ic vd"></span></div>`)}
+
+  ${fs("Antecedentes:", caja(antecedentesTxt(), 86))}
+
+  ${fs("Historia actual:", caja(derivacionTexto() + "\n\n" + historiaActual(), 190))}
+
+  ${fs("Constantes", `<div class="btns">
+      <button class="btn">Nuevas ctes.</button><button class="btn">Consulta ctes.</button>
+      <button class="btn">Balance hídrico</button><button class="btn">Antropometría</button>
+      <button class="btn">Formulario de auxiliares</button></div>
+    <div class="ctes">${esc(P.bio)} · ${P.id === "P1"
+      ? 'TA <b>136/84</b> · FC <b>70</b> lpm <span style="color:#555">(06/10/2026)</span>'
+      : 'TA <b>134/80</b> · INR <b>2,3</b> <span style="color:#555">(07/07/2026)</span>'}</div>`)}
+
+  ${fs("Exploración:", caja("", 72))}
+
+  ${fs("Escalas clínicas", `<div style="display:flex;align-items:center;gap:7px"><span class="lupa"></span>Seleccionar escala</div>`)}
+
+  ${fs("Lista de problemas y orientación diagnóstica y terapéutica:", caja("", 92), {rojo:true})}
+
+  ${fs("Peticiones:", `<div class="pet-cab">
+      <select class="sel"><option>Mis favoritos</option><option>Todas las peticiones</option></select>
+      <span class="nuevo">📄+</span>
+      <span class="iconos-pet"><span></span><span style="background:#2f2f2f;border-color:#111"></span>
+        <span></span><span></span><span style="background:#f1c40f;border-color:#b7950b"></span></span>
+    </div>
+    <div class="favoritos">${FAVORITOS.map(f => `<span>${esc(f)}</span>`).join("")}</div>`)}
+
+  ${fs("Pruebas complementarias:", `
+    ${fs("Laboratorio:", caja(laboratorio(), 120))}
+    ${fs("Imagen:", caja(imagenTxt(), 110))}
+    ${fs("Otros:", caja("", 60))}`)}`;
+}
+
+function pintaHistoria(){
+  return `<div class="titulo"><span class="ham"><i></i><i></i><i></i></span>
+      HISTORIA CLÍNICA · ${docs.length} documentos (${docs[docs.length-1].fecha} – ${docs[0].fecha})</div>
+    ${docs.map(d => `<article class="doc" id="doc-${d.id}">
+      <div class="cab"><span>${d.fecha}</span><span class="t">${esc(d.tipo)}</span>
+        <span class="s">${esc(d.servicio)}</span><span class="a">${esc(d.autor)} · ${d.id}</span></div>
+      <pre>${esc(d.texto)}</pre></article>`).join("")}`;
+}
+function pintaOtra(nombre){
+  return `<div class="titulo"><span class="ham"><i></i><i></i><i></i></span>${esc(nombre.toUpperCase())}</div>
+    ${fs(nombre, `<div style="color:#555">Pantalla no incluida en la maqueta. Los datos de la demo están en
+      <b>Consulta</b> y en <b>Historia Clínica</b>.</div>`)}`;
+}
+
+function pinta(){
+  const h = $("#hoja");
+  h.innerHTML = vista === "consulta" ? pintaConsulta()
+    : vista === "historia" ? pintaHistoria()
+    : pintaOtra(document.querySelector(`.pest button[data-v="${vista}"]`).textContent.trim());
+  h.scrollTop = 0;
+  h.querySelectorAll("legend").forEach(l => l.onclick = () => {
+    const f = l.parentElement;
+    f.classList.toggle("plegada");
+    l.querySelector(".t").textContent = f.classList.contains("plegada") ? "▼" : "▲";
+  });
+  document.querySelectorAll(".pest button").forEach(t => t.setAttribute("aria-selected", String(t.dataset.v === vista)));
+}
+
+function iraDoc(id, cita){
+  if (vista !== "historia"){ vista = "historia"; pinta(); }
+  seleccionado = id; pintaArbol();
+  const el = document.getElementById("doc-" + id);
+  if (!el) return;
+  if (cita){
+    const pre = el.querySelector("pre"), e = esc(cita), i = pre.innerHTML.indexOf(e);
+    if (i >= 0) pre.innerHTML = pre.innerHTML.slice(0,i) + '<mark class="cita">' + e + "</mark>" + pre.innerHTML.slice(i + e.length);
+  }
+  document.querySelectorAll(".doc.sena").forEach(x => x.classList.remove("sena"));
+  el.classList.add("sena");
+  el.scrollIntoView({block:"center"});
+}
+
+/* ---------------- interacción ---------------- */
+$("#sel-pac").innerHTML = PACIENTES.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join("");
+$("#sel-pac").onchange = e => cargaPaciente(e.target.value);
+document.querySelectorAll(".pest button").forEach(t => t.onclick = () => { vista = t.dataset.v; pinta(); });
+$("#c-alerta").onclick = () => iraDoc(P.alergias[0].doc);
+
+window.HCE = {
+  paciente: () => P,
+  docs: () => docs,
+  porId: () => porId,
+  iraDoc: (id, cita) => iraDoc(id, cita)
+};
+
+cargaPaciente("P1");
+window.Agente.montar();
+</script>
+</body>
+</html>
