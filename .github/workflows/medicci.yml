@@ -1,0 +1,37 @@
+# Compila Medicci en Windows y Ubuntu, pasa las pruebas y deja los ejecutables
+# para descargar en la pestaña Actions (sin instalar Rust ni Visual Studio).
+name: medicci
+
+on:
+  push:
+    paths: ["medicci-rs/**", "bd/sql/**", "justfile", ".github/workflows/medicci.yml"]
+  workflow_dispatch:
+
+jobs:
+  compila:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            exe: medicci.exe
+          - os: ubuntu-latest
+            exe: medicci
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: medicci-rs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: medicci-rs
+      - name: Pruebas
+        run: cargo test --release
+      - name: Compila
+        run: cargo build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: medicci-${{ matrix.os }}
+          path: medicci-rs/target/release/${{ matrix.exe }}

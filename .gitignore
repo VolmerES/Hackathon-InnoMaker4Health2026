@@ -16,3 +16,8 @@ Thumbs.db
 
 # Resultados de la prueba de acierto: llevan filas de los CSV
 mvp/resultados/
+
+# Medicci: la base se crea sola desde bd/sql, y las capturas son de prueba
+.capturas/
+bd/jano.db
+medicci-rs/medicci.db
