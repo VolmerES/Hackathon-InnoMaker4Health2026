@@ -14,8 +14,8 @@ personas de Pfizer. Cada uno escucha una cosa distinta (ver
 Primaria y otra al hospital. Alternativas: *Umbral* o *Prima*. Hay que decidirlo
 en equipo.
 
-**La frase:** *Jano lee cada noche, dentro del hospital, las derivaciones de
-Primaria y prepara cada caso para que la primera consulta lo resuelva.*
+**La frase:** *Jano es el asistente que prepara cada consulta: el paciente llega con
+la prueba hecha y el especialista, con todo lo que necesita saber.*
 
 > ⚠️ **Antes de presentar, confirmar con los mentores** lo que va marcado con ⚠️
 > en el guion. Si alguna cosa no se confirma, se quita la frase.
@@ -244,6 +244,7 @@ para la demo.
   - **Un escriba comercial** cuesta entre **110 y 600 $ por médico al mes**,
     según estimaciones de terceros en EE. UU. ⚠️.
   - **Y Jano no solo escribe.**
+- **«¿No es como los resúmenes previos de Epic o Navina?»** Ellos resumen la historia para que el médico lea menos, pero el paciente llega igual. Jano actúa días antes y el paciente llega con la prueba hecha, que es lo que cambia el resultado (del 22 al 49 %). Y además es local y para la sanidad pública española.
 - **«¿Competencia?» / «¿Esto no existe ya?»** Cada pieza existe por separado:
   - escribas en la nube;
   - chat con la historia clínica;

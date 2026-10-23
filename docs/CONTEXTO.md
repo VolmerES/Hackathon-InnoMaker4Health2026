@@ -216,8 +216,23 @@ mínimo de las dos cosas:
 Tiene dos caras: una mira a Primaria y la otra al hospital. Sigue la línea de
 nombres de los ganadores (Hera, Thea, Aeris). Alternativas: *Umbral*, *Prima*.
 
-**La frase:** *Jano lee cada noche, dentro del hospital, las derivaciones de
-Primaria y prepara cada caso para que la primera consulta lo resuelva.*
+**La idea (decidida el 23‑oct por la noche):** *Jano es el asistente que
+prepara cada consulta.* Lee dentro del hospital las derivaciones de Primaria y
+el historial del paciente, y deja la consulta lista para que el especialista lo
+resuelva en una visita.
+
+**Preparar no es resumir.** Los resúmenes previos a la visita ya existen:
+Epic Art, Navina, DeepScribe… Le ahorran al médico unos minutos de lectura,
+pero el paciente llega igual. Jano actúa **días antes**, y el paciente llega
+con la prueba hecha. Eso es lo que sube la resolución en una visita del 22 al
+49 %.
+
+| Cuándo | Qué hace el asistente |
+|---|---|
+| **Al llegar la derivación** (días o semanas antes) | La lee y comprueba qué falta. Propone las pruebas del protocolo del servicio, sin repetir las de Primaria, y el especialista las valida en bloque. Si faltan datos, pide al médico de cabecera lo concreto. Manda al paciente las instrucciones de la prueba en lectura fácil, en su idioma y en audio |
+| **La mañana de la consulta** | Una ficha por paciente de la agenda del día: por qué viene, qué se ha hecho, **resultados ya disponibles**, citas anteriores y faltas, pruebas duplicadas, y si necesita intérprete o accesibilidad |
+| **Durante la consulta** | «Pregúntale a Jano»: responde sobre el historial y enseña de dónde saca cada dato |
+| **Al cerrar** (si da tiempo) | Los trámites, la vuelta a Primaria y la versión del paciente |
 
 **El problema que ataca:**
 
@@ -1193,3 +1208,4 @@ paciente, se adelanta a lo que va a fallar en su circuito.
 - La Princesa: [plantilla orgánica (abr‑2024)](https://comunidad.madrid/sites/default/files/doc/sanidad/rrhh/rrhh-plantillas_organicas-estatutarios-h._la_princesa.pdf) · [70 aniversario, más de 2.600 profesionales](https://www.comunidad.madrid/file/498221/download)
 - Lo que ya existe: [Infanta Elena · IA en las derivaciones de Digestivo (AEG 2021)](https://www.elsevier.es/es-revista-gastroenterologia-hepatologia-14-congresos-24-reunion-anual-asociacion-espanola-gastroenterologia-134-sesion-neurogastroenterologia-y-motilidad-6428-comunicacion-puede-la-inteligencia-artificial-mejorar-77422-pdf) · [Asturias · IA en dermatología con Legit.Health](https://elreferente.es/startups/asturias-incorpora-ia-en-atencion-primaria-con-legit-health/) · [Docman10X · lectura de cartas en Primaria (Reino Unido)](https://htworld.co.uk/?p=2297)
 - Precios de escribas: [Microsoft · Dragon Copilot baja de precio (mayo 2026)](https://www.schneider.im/lu/microsoft-dragon-copilot-price-decrease-licensing-changes/) · [Commure · Nabla, precio y funciones](https://www.commure.com/blog-scribe/nabla-ai-review) · [Dupple · herramientas de documentación clínica 2026](https://dupple.com/learn/best-ai-clinical-documentation-tools) · [Plaud · Ambience](https://www.plaud.ai/blogs/articles/ambience-healthcare-review) · [Healee · cuentas de los escribas](https://blog.healee.com/the-review-tax-honest-math-on-ambient-ai-scribes-in-a-virtual-practice/)
+- Resúmenes previos a la visita: [Commure · pre-visit summaries](https://www.commure.com/blog/pre-visit-summaries-what-are-they-why-they-matter-and-how-ai-is-changing-pre-charting) · [Navina](https://tooldirectory.ai/tools/navina) · [Epic · AI Charting](https://www.healthcareitnews.com/news/epics-ai-charting-tool-now-available-ehr-clients) · [AAFP · herramientas para revisar historias](https://www.aafp.org/practice-operations/administrative-simplification/chart-review/technologies-chart-review-burden)
