@@ -298,15 +298,35 @@ Respuesta en español + las filas en las que se basa, debajo
   llamada. Habría que volver a elegir qué filas mandar (por fecha, por servicio
   o con búsqueda), o un agente. Es hoja de ruta.
 
-**Construido el 24‑oct, sin probar todavía con un modelo:** [`mvp/`](../mvp/)
+**Construido y medido el 24‑oct:** [`mvp/`](../mvp/)
 
 - `paciente.py`: las 6 consultas fijas.
 - `responder.py`: la llamada al modelo y la comprobación de las fuentes.
 - `prueba_acierto.py`: 30 preguntas con la respuesta correcta sacada de los
-  CSV, también las trampas de «no consta». Con respuestas perfectas simuladas
-  el corrector da 30/30. Contestando siempre «no consta» se sacaría 11/30: es
-  el suelo que hay que superar con claridad. Cómo se ejecuta, en
-  [`mvp/README.md`](../mvp/README.md).
+  CSV, también las trampas de «no consta». Contestando siempre «no consta» se
+  sacaría 11/30: es el suelo.
+- `docker-compose.yml`: Ollama con la GPU y la prueba, todo en Docker.
+
+**Resultado con Qwen3‑8B (Q4_K_M) en un portátil con una RTX 5060 de 8 GB:**
+
+| | |
+|---|---|
+| Acierto en 30 pacientes **que no se usaron para ajustar nada** (semilla 2026) | **29/30**. El fallo: dice que la cita se reprogramó, pero no da el motivo |
+| «No consta» cuando toca (alergias, medicación, diagnóstico…) | **6/6** |
+| Filas inventadas citadas | **0** |
+| Tiempo por respuesta | **0,7 s** de mediana, 1,5 s como mucho |
+
+- En las otras dos tandas (semillas 42 y 7) sale 30/30, pero **no cuentan**: con
+  ellas se corrigieron la redacción de las filas y el corrector.
+- **Lo que se arregló por el camino:**
+  - Ollama 0.40 ignora `/no_think`, así que Qwen3 gastaba la respuesta
+    razonando por dentro y la devolvía vacía. Ahora se pide con
+    `reasoning_effort: "none"`.
+  - El modelo confundía una cita «no realizada» con una «anulada». Se arregló
+    escribiendo la fila más clara, sin tocar el modelo.
+- **Son pocas preguntas y los datos son sintéticos.** Sirve para decir que
+  funciona, no para dar un porcentaje de precisión clínica.
+- Cómo se ejecuta, en [`mvp/README.md`](../mvp/README.md).
 
 **Qué se puede preguntar con los CSV:**
 

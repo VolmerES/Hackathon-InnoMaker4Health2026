@@ -97,7 +97,8 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 > antes de que María entre.
 >
 > Y ahora una pregunta trampa: «¿Tiene alergias?» Medici contesta: **«No consta
-> en los datos disponibles.»** No se inventa nada. Si no lo sabe, lo dice.
+> en los datos disponibles.»** Si no lo sabe, lo dice. En nuestra prueba, 29
+> de 30 respuestas correctas y ninguna fuente inventada.
 >
 > **Medici solo lee. No decide nada clínico.** Y solo ve al paciente que el médico
 > tiene delante.
@@ -150,6 +151,7 @@ Unas 550 palabras. **Ensayar con cronómetro.**
 | Casi medio millón de consultas | 473.257 consultas externas: 178.888 primeras + 294.369 sucesivas (memoria 2022 de La Princesa) |
 | 8.000 horas, cinco especialistas | **Hipótesis:** 1 minuto ahorrado × 473.257 consultas = 7.888 h ÷ 1.540 h de consulta al año por especialista (7 h × 220 días; suposición) ≈ 5,1. Con 2 minutos, unos 10 |
 | 4.700 € el Spark | Precio de la Founders Edition en la UE, con IVA (oct‑2026) |
+| 29 de 30, ninguna fuente inventada | `mvp/prueba_acierto.py --semilla 2026` con Qwen3‑8B Q4_K_M en un portátil con RTX 5060 de 8 GB (24‑oct). 0,7 s de mediana por respuesta. Ver [CONTEXTO](CONTEXTO.md#cómo-construirlo-propuesta-pendiente-del-equipo) |
 | Cientos de médicos por Spark | **Estimado** a partir del benchmark de LMSYS (8B, 32 peticiones a la vez); falta una prueba de carga ⚠️ |
 
 Si os preguntan por los CSV: **son sintéticos.** Sirven para enseñar que Medici
@@ -176,8 +178,10 @@ demo.
 
 - **«¿Y si se inventa algo?»** Solo responde con lo que encuentra en los datos
   de ese paciente, enseña la fila de la que lo saca y, si no está, dice «no
-  consta». Lo hemos medido con 30 preguntas de respuesta conocida *(dar la cifra
-  real de la prueba; si no se hizo, quitar la frase)*.
+  consta». Lo hemos medido con 30 preguntas de respuesta conocida, con
+  pacientes que no usamos para ajustarlo: **29 bien, 6 de 6 «no consta» cuando
+  tocaba y ninguna fuente inventada**. El fallo fue una respuesta incompleta,
+  no inventada. Son datos sintéticos: en el piloto se mide con casos reales.
 - **«¿Qué servidor hace falta?»** Un Mac mini para un servicio, o un DGX Spark
   de unos 4.700 € para muchos médicos. Las cifras exactas, con una prueba de
   carga antes del piloto ⚠️.

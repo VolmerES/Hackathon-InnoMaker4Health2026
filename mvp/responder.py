@@ -27,8 +27,9 @@ Reglas:
 3. Si la pregunta trata de algo que estas filas no recogen (alergias, diagnósticos,
    medicación, antecedentes, hábitos o el valor de un resultado), responde
    "consta": false, "respuesta": "No consta en los datos disponibles." y "fuentes": [].
-4. Si preguntan si ha pasado algo que las filas sí recogen y no aparece, di que
-   no aparece en sus datos, sin inventar.
+4. Si preguntan si hay algo que las filas sí recogen (pruebas pendientes, cambios
+   de cita, citas en un servicio…) y no lo hay, dilo directamente, por ejemplo
+   «No tiene pruebas pendientes», sin inventar.
 5. Responde en español, en 1 a 3 frases.
 
 Devuelve solo JSON: {"consta": true o false, "respuesta": "...", "fuentes": ["C1", ...]}"""
@@ -54,8 +55,14 @@ class Respuesta:
     bruto: str = ""
 
 
-def _llamar(mensajes: list[dict], formato: dict | None, url: str, modelo: str) -> str:
-    cuerpo = {"model": modelo, "messages": mensajes, "temperature": 0}
+def _llamar(mensajes: list[dict], formato: dict | None, url: str, modelo: str,
+            sin_pensar: bool = True) -> str:
+    # max_tokens: un tope para que una respuesta atascada no bloquee la consulta
+    cuerpo = {"model": modelo, "messages": mensajes, "temperature": 0, "max_tokens": 400}
+    if sin_pensar:
+        # Ollama 0.40 ignora «/no_think»: Qwen3 razona por dentro, gasta los 400
+        # tokens y devuelve la respuesta vacía. Así se apaga de verdad.
+        cuerpo["reasoning_effort"] = "none"
     if formato:
         cuerpo["response_format"] = formato
     peticion = urllib.request.Request(
@@ -63,7 +70,7 @@ def _llamar(mensajes: list[dict], formato: dict | None, url: str, modelo: str) -
         data=json.dumps(cuerpo).encode(),
         headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
     )
-    with urllib.request.urlopen(peticion, timeout=300) as r:
+    with urllib.request.urlopen(peticion, timeout=120) as r:
         return json.load(r)["choices"][0]["message"]["content"] or ""
 
 
@@ -84,9 +91,9 @@ def responder(filas: list[Fila], pregunta: str, url: str = URL, modelo: str = MO
     try:
         bruto = _llamar(mensajes, {"type": "json_schema",
                                    "json_schema": {"name": "respuesta", "schema": ESQUEMA}},
-                        url, modelo)
+                        url, modelo, sin_pensar)
     except urllib.error.HTTPError:
-        bruto = _llamar(mensajes, {"type": "json_object"}, url, modelo)   # servidores más viejos
+        bruto = _llamar(mensajes, {"type": "json_object"}, url, modelo, sin_pensar)   # servidores más viejos
     segundos = time.perf_counter() - inicio
 
     try:

@@ -95,9 +95,17 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         "WHERE c.id_paciente = ? AND (m.tipo_movimiento IN ('REPROGRAMACION', 'ANULACION') "
         "OR m.estado_nuevo = 'NO_REALIZADA') ORDER BY m.fecha_hora_movimiento",
         [id_paciente]).fetchall()
+    # Escrito para que no se confundan: «no realizada» no es «anulada».
+    que_paso = {
+        "REPROGRAMACION": "fue reprogramada (cambiada de fecha)",
+        "ANULACION": "fue anulada",
+    }
     filas += _numerar("M", "MOVIMIENTOS_CITAS", [(m[0],
-        f"{m[3]} de la cita [{ref_cita.get(m[1], m[1])}] el {_fecha(m[2])}, "
-        f"a petición de {m[4]}. Motivo: {m[5]}.")
+        f"La cita [{ref_cita.get(m[1], m[1])}] "
+        + (f"{que_paso[m[3]]} el {_fecha(m[2])}, a petición de {m[4]}. Motivo: {m[5]}."
+           if m[3] in que_paso else
+           f"quedó como NO REALIZADA el {_fecha(m[2])}: se cerró sin atender al paciente, "
+           f"no es una anulación. Motivo: {m[5]}."))
         for m in mov])
 
     pruebas = con.execute(

@@ -15,6 +15,27 @@ Solo usa la biblioteca estándar y `duckdb`. Los CSV tienen que estar en `data/`
 
 ## Medir el acierto
 
+### Con Docker (lo que se usó el 24‑oct)
+
+Hace falta Docker Desktop con la GPU de NVIDIA disponible:
+
+```bash
+docker compose -f mvp/docker-compose.yml up -d ollama
+docker exec medici-ollama ollama pull qwen3:8b
+docker compose -f mvp/docker-compose.yml run --rm prueba --semilla 2026
+docker compose -f mvp/docker-compose.yml run --rm prueba --modelo qwen3:4b
+```
+
+En Git Bash para Windows, poner `MSYS_NO_PATHCONV=1` delante de
+`docker compose`.
+
+**Resultado con `qwen3:8b` en una RTX 5060 de 8 GB:** 29/30 con pacientes que no
+se usaron para ajustar nada (semilla 2026). Además, 6/6 «no consta», 0 filas
+inventadas y 0,7 s de mediana por respuesta. Detalle en
+[`docs/CONTEXTO.md`](../docs/CONTEXTO.md#cómo-construirlo-propuesta-pendiente-del-equipo).
+
+### Sin Docker
+
 En el portátil de la demo, con [Ollama](https://ollama.com) instalado:
 
 ```bash

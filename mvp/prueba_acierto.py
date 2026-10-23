@@ -20,12 +20,12 @@ from datetime import datetime
 from pathlib import Path
 
 from paciente import ESPECIALIDADES, cargar, datos_del_paciente
-from responder import MODELO, URL, responder
+from responder import MODELO, URL, Respuesta, responder
 
 # Cómo pregunta el médico. La biomédica puede cambiar las frases aquí.
 PREGUNTAS = {
-    "especialidad_si": "¿Ha estado antes en {esp}?",
-    "especialidad_no": "¿Ha estado antes en {esp}?",
+    "especialidad_si": "¿Ha tenido citas en {esp}?",
+    "especialidad_no": "¿Ha tenido citas en {esp}?",
     "pendientes": "¿Qué pruebas tiene pendientes?",
     "accesibilidad": "¿Necesita algún apoyo para la consulta?",
     "motivo": "¿Por qué lo manda su médico de cabecera?",
@@ -49,6 +49,10 @@ CLAVES_ACCESIBILIDAD = {"MOVILIDAD_REDUCIDA": "movilidad", "INTERPRETE": "interp
 CLAVES_CONTACTO = {"SMS": "sms", "LLAMADA": "llam|telef", "EMAIL": "email|e-mail|correo",
                    "APP": "app|aplicacion", "CARTA": "carta"}
 NEGACION = r"\b(no|ninguna|ninguno|ningun|sin)\b"
+# Palabras que salen en cualquier derivación o en la propia pregunta: no prueban nada.
+GENERICAS = {"derivacion", "primaria", "prioridad", "ordinaria", "preferente", "estado",
+             "citada", "motivo", "observaciones", "medico", "saludo", "cordial", "paciente",
+             "cabecera", "servicio", "solicita"}
 
 
 def normal(texto: str) -> str:
@@ -134,7 +138,9 @@ def generar_casos(con, semilla: int) -> list[dict]:
 def _clave_motivo(motivo: str) -> str:
     """La palabra que tiene que salir en la respuesta para dar el motivo por bueno."""
     if motivo == "Cita no realizada":
-        return r"no (se )?(realiz|acud|asist|present)|falt"
+        return r"no (se )?(realiz|acud|asist|present)|falt|atend"
+    if motivo in ("Paciente cancela", "Petición del paciente"):
+        return r"cancel|peticion del paciente|lo pidio"
     palabras = [normal(p) for p in motivo.split() if normal(p) not in ("paciente", "cita", "del", "de")]
     return max(palabras, key=len)[:6]           # «Paciente cancela» → «cancel», vale para «canceló»
 
@@ -159,12 +165,15 @@ def esperado(caso: dict, filas) -> dict:
     if t == "motivo":
         der = [f for f in filas if f.tabla == "DERIVACIONES_AP"]
         motivos = [re.search(r"Motivo: ([^.]+)\.", f.texto).group(1) for f in der]
+        # Vale el motivo («Revisión») o lo que cuenta el médico en las observaciones.
+        palabras = {p for f in der for p in re.findall(r"[a-z]{6,}", normal(f.texto))} - GENERICAS
         return {"refs": [f.ref for f in der], "claves": [normal(m.split()[-1]) for m in motivos],
-                "texto": " / ".join(motivos)}
+                "palabras": sorted(palabras), "texto": " / ".join(motivos)}
     if t == "cambios":
         mov = [f for f in filas if f.tabla == "MOVIMIENTOS_CITAS"]
         motivos = [re.search(r"Motivo: ([^.]+)\.", f.texto).group(1) for f in mov]
         return {"refs": [f.ref for f in mov], "claves": [_clave_motivo(m) for m in motivos],
+                "hay_anulacion": any("fue anulada" in f.texto for f in mov),
                 "texto": " / ".join(motivos) or "ninguno"}
     return {"refs": [], "texto": "No consta"}
 
@@ -193,6 +202,11 @@ def corregir(caso: dict, esp: dict, r) -> tuple[bool, str]:
     if t in ("motivo", "cambios"):
         cita = bool(citadas & set(esp["refs"]))
         nombra = any(re.search(c, texto) for c in esp["claves"])
+        if t == "motivo" and not nombra:                    # o al menos 2 palabras de las observaciones
+            nombra = len(set(re.findall(r"[a-z]{6,}", texto)) & set(esp["palabras"])) >= 2
+        # «fue anulada», «se han anulado»; no «no es una anulación»
+        if t == "cambios" and not esp["hay_anulacion"] and re.search(r"\banulad[ao]s?\b", texto):
+            return False, "dice «anulada» y ninguna cita se anuló"
         return (cita and nombra, "correcto" if cita and nombra else
                 ("no cita la fila" if not cita else "cita la fila pero no da el motivo"))
     return False, "tipo desconocido"
@@ -213,6 +227,9 @@ def main() -> None:
     con = cargar()
     casos = generar_casos(con, args.semilla)
     resultados = []
+    if not args.solo_preguntas:
+        print(f"Cargando {args.modelo} (la primera llamada no cuenta para el tiempo)…")
+        responder(datos_del_paciente(con, casos[0]["paciente"]), "Hola", args.url, args.modelo)
     for n, caso in enumerate(casos, 1):
         filas = datos_del_paciente(con, caso["paciente"])
         esp = esperado(caso, filas)
@@ -220,8 +237,12 @@ def main() -> None:
         print(f"    correcto: {esp['texto']}  {esp['refs']}")
         if args.solo_preguntas:
             continue
-        r = responder(filas, caso["pregunta"], args.url, args.modelo, sin_pensar=not args.pensar)
-        ok, motivo = corregir(caso, esp, r)
+        try:
+            r = responder(filas, caso["pregunta"], args.url, args.modelo, sin_pensar=not args.pensar)
+            ok, motivo = corregir(caso, esp, r)
+        except Exception as e:                      # se cuenta como fallo y se sigue
+            r = Respuesta(False, f"ERROR: {e}", [], segundos=120.0)
+            ok, motivo = False, "sin respuesta"
         print(f"    Medici ({r.segundos:.1f} s): {r.respuesta}  {r.fuentes}")
         print(f"    {'✅' if ok else '❌'} {motivo}")
         resultados.append({**caso, "filas": len(filas), "esperado": esp, "respuesta": r.respuesta,
@@ -248,7 +269,7 @@ def main() -> None:
     carpeta = Path(__file__).resolve().parent / "resultados"
     carpeta.mkdir(exist_ok=True)
     nombre = re.sub(r"[^\w.-]", "_", args.modelo)
-    destino = carpeta / f"{datetime.now():%Y%m%d-%H%M}-{nombre}.json"
+    destino = carpeta / f"{datetime.now():%Y%m%d-%H%M%S}-{nombre}-semilla{args.semilla}.json"
     destino.write_text(json.dumps({"modelo": args.modelo, "url": args.url, "semilla": args.semilla,
                                    "aciertos": aciertos, "total": len(resultados),
                                    "casos": resultados}, ensure_ascii=False, indent=2, default=str),

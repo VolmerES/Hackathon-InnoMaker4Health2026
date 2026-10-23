@@ -1,0 +1,43 @@
+# Medici en local: el modelo (Ollama con la GPU) y la prueba de acierto.
+#
+#   docker compose -f mvp/docker-compose.yml up -d ollama
+#   docker exec medici-ollama ollama pull qwen3:8b
+#   docker compose -f mvp/docker-compose.yml run --rm prueba                      # qwen3:8b
+#   docker compose -f mvp/docker-compose.yml run --rm prueba --modelo qwen3:4b
+#
+# Los CSV tienen que estar en data/. El detalle queda en mvp/resultados/.
+
+services:
+  ollama:
+    image: ollama/ollama:0.40.4
+    container_name: medici-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - medici-modelos:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=30m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  prueba:
+    build: .
+    container_name: medici-prueba
+    working_dir: /app
+    volumes:
+      - ..:/app
+    environment:
+      - MEDICI_URL=http://ollama:11434/v1
+      - MEDICI_MODELO=qwen3:8b
+    entrypoint: ["python", "mvp/prueba_acierto.py"]
+    depends_on:
+      - ollama
+    profiles: ["prueba"]
+
+volumes:
+  medici-modelos:
