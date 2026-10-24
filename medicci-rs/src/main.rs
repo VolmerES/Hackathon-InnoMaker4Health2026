@@ -2474,15 +2474,33 @@ impl eframe::App for Medicci {
 /// demás, al no poder, se cierran. El puerto sale del usuario de Windows, para
 /// que en un mismo servidor (Citrix) cada médico tenga la suya. Al reiniciar,
 /// la nueva espera a que la vieja lo suelte.
-fn una_sola(usuario: &str, esperar: bool) -> Option<std::net::TcpListener> {
-    let puerto = 40000 + usuario.bytes().fold(7u32, |h, b| h.wrapping_mul(31).wrapping_add(b as u32)) % 20000;
-    for _ in 0..if esperar { 50 } else { 1 } {
-        if let Ok(l) = std::net::TcpListener::bind(("127.0.0.1", puerto as u16)) {
-            return Some(l);
+///
+/// Windows reserva rangos de puertos (Hyper-V, WSL) que cambian al reiniciar:
+/// ahí el puerto da «acceso denegado», no «en uso», y se prueba el siguiente.
+/// Solo «en uso» quiere decir que ya hay otra burbuja. Si no se puede coger
+/// ninguno, la burbuja abre igual, sin cerrojo.
+fn una_sola(usuario: &str, esperar: bool) -> Result<Option<std::net::TcpListener>, ()> {
+    let base = 40000 + usuario.bytes().fold(7u32, |h, b| h.wrapping_mul(31).wrapping_add(b as u32)) % 20000;
+    for intento in 0..if esperar { 50 } else { 1 } {
+        if intento > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(100));
         }
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        let mut en_uso = false;
+        for puerto in base..base + 300 {
+            match std::net::TcpListener::bind(("127.0.0.1", puerto as u16)) {
+                Ok(l) => return Ok(Some(l)),
+                Err(e) if e.kind() == std::io::ErrorKind::AddrInUse => {
+                    en_uso = true;
+                    break;
+                }
+                Err(_) => {}
+            }
+        }
+        if !en_uso {
+            return Ok(None);
+        }
     }
-    None
+    Err(())
 }
 
 fn main() -> eframe::Result<()> {
@@ -2513,7 +2531,7 @@ fn main() -> eframe::Result<()> {
         }
     }
     let usuario = std::env::var("USER").or_else(|_| std::env::var("USERNAME")).unwrap_or_default();
-    let Some(_cerrojo) = una_sola(&usuario, reinicio) else {
+    let Ok(_cerrojo) = una_sola(&usuario, reinicio) else {
         eprintln!("Medicci ya está abierta.");
         return Ok(());
     };
