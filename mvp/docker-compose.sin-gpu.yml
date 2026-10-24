@@ -1,0 +1,5 @@
+# Para equipos sin GPU de NVIDIA: el modelo corre en el procesador (más lento).
+# Lo añade arrancar.bat / arrancar.sh solo cuando no encuentra nvidia-smi.
+services:
+  ollama:
+    deploy: !reset {}

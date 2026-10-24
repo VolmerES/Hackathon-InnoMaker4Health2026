@@ -33,6 +33,23 @@ El contexto completo, con el modelo de datos transcrito, está en
 **[`docs/CONTEXTO.md`](docs/CONTEXTO.md)**. Empieza por su
 [estado en un minuto](docs/CONTEXTO.md#estado-en-un-minuto-24oct).
 
+## Arrancar Medici con un clic
+
+Solo hace falta **Docker Desktop** y los 11 CSV del reto en `data/` (no van en
+GitHub).
+
+- **Windows:** doble clic en **`arrancar.bat`**.
+- **Linux:** `./arrancar.sh`.
+
+Levanta el modelo de IA local y el servidor, descarga el modelo la primera vez
+(unos 5 GB), manda la historia de la agenda por HL7, comprueba que las
+tarjetas salen bien y abre el navegador con María. Sin GPU de NVIDIA también
+funciona, pero más lento. Con el modelo ya descargado tarda **unos 30
+segundos**.
+
+La burbuja de escritorio, conectada al mismo servidor: `just conectada 129798`
+(ver [`medicci-rs/`](medicci-rs/README.md)).
+
 ## Estructura
 
 ```text
