@@ -12,6 +12,9 @@ TABLAS = [
     "MOVIMIENTOS_CITAS", "OCUPACIONES_HUECO", "COMUNICACIONES",
     "TAREAS_ADMINISTRATIVAS", "CIRCUITO_CONSULTA", "PRUEBAS",
 ]
+# No están en los CSV del reto: los informes clínicos de la base inventada
+# (mvp/base_inventada.py). Si no hay fichero, no hay vista.
+OPCIONALES = ["DOCUMENTOS_HCE"]
 
 
 def conectar(extra: tuple[Path, ...] = ()) -> duckdb.DuckDBPyConnection:
@@ -23,4 +26,9 @@ def conectar(extra: tuple[Path, ...] = ()) -> duckdb.DuckDBPyConnection:
             f"CREATE VIEW {t.lower()} AS "
             f"SELECT * FROM read_csv({rutas}, header=true, sample_size=-1, union_by_name=true)"
         )
+    for t in OPCIONALES:
+        rutas = [(d / f"{t}.csv").as_posix() for d in (DATA, *extra) if (d / f"{t}.csv").exists()]
+        if rutas:
+            con.execute(f"CREATE VIEW {t.lower()} AS SELECT * FROM read_csv({rutas}, header=true, "
+                        f"sample_size=-1, union_by_name=true)")
     return con

@@ -16,6 +16,9 @@ NOMBRES = {"F": ["María Alonso", "Carmen Ruiz", "Lucía Sanz", "Ana Gil", "Pila
            "M": ["José Pardo", "Antonio Vega", "Manuel Ortiz", "Javier Lozano", "Luis Cano",
                  "Pedro Ibáñez", "Ramón Soler", "Andrés Molina", "Francisco Rubio", "Miguel Santos",
                  "Alberto Gallego", "Rafael Méndez"]}
+# Los de la base inventada (mvp/base_inventada.py), con el nombre de sus informes
+NOMBRES_FIJOS = {"P0000417": "María Alonso Vega", "P0002856": "Ramón Esteve Gálvez"}
+POCOS = 10            # con tan pocos pacientes (la base inventada), entran todos
 # cuántos del reto con 3, 2, 1 y 0 cosas en la tarjeta (María cuenta en las de 3)
 CUPOS = {3: 5, 2: 4, 1: 3, 0: 2}
 CRONICOS = 6          # los generados con más citas
@@ -27,6 +30,12 @@ def elegir_agenda(con, filas_de) -> list[dict]:
     accesibilidad, una prueba pendiente y una derivación de Primaria.
     `filas_de(nhc)` devuelve las filas del paciente (paciente.datos_del_paciente).
     """
+    todos = [r[0] for r in con.execute(
+        "SELECT DISTINCT id_paciente FROM citas WHERE id_paciente NOT LIKE 'G%' ORDER BY 1").fetchall()]
+    if len(todos) <= POCOS:
+        # una base pequeña, de historias largas: todos por orden de NHC, sin cupos ni tope de filas
+        orden = [(None, nhc, filas_de(nhc)[0].campos) for nhc in todos]
+        return _con_nombre(con, orden)
     maria = [r[0] for r in con.execute(
         "SELECT p.id_paciente FROM pacientes p WHERE p.sexo = 'F' AND p.id_paciente NOT LIKE 'G%' "
         "AND p.necesidades_accesibilidad <> 'NINGUNA' "
@@ -69,12 +78,17 @@ def elegir_agenda(con, filas_de) -> list[dict]:
     for i, c in enumerate(cronicos):
         orden.insert(min(CADA * (i + 1) - 1, len(orden)), c)
 
+    return _con_nombre(con, orden)
+
+
+def _con_nombre(con, orden) -> list[dict]:
+    """La agenda: cada paciente con su hora (cada 20 minutos desde las 9) y un nombre."""
     usados = {"F": 0, "M": 0}
     agenda = []
     for i, (_, nhc, ficha) in enumerate(orden):
         sexo = con.execute("SELECT sexo FROM pacientes WHERE id_paciente = ?", [nhc]).fetchone()[0]
         lista = NOMBRES.get(sexo, NOMBRES["F"])
-        nombre = lista[usados.get(sexo, 0) % len(lista)]
+        nombre = NOMBRES_FIJOS.get(nhc) or lista[usados.get(sexo, 0) % len(lista)]
         usados[sexo] = usados.get(sexo, 0) + 1
         agenda.append({"nhc": nhc, "hora": f"{9 + (i * 20) // 60:02d}:{(i * 20) % 60:02d}",
                        "nombre": nombre, "edad": ficha["edad"], "sexo": sexo,
