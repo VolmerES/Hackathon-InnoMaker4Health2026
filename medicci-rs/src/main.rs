@@ -2841,7 +2841,10 @@ mod pruebas {
     use super::*;
 
     fn con_paciente(ident: &str) -> Medicci {
-        let datos = datos::base_de_prueba(&format!("resumen-{}", ident));
+        // una base por llamada: las pruebas corren a la vez y no pueden compartir fichero
+        static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let datos = datos::base_de_prueba(&format!("resumen-{}-{}", ident, n));
         let mut app = Medicci::nuevo(datos, Some(ident.into()), None);
         app.abre_resumen();
         app
