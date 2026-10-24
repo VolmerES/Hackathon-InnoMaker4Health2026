@@ -34,9 +34,6 @@ const BOLA: f32 = 56.0;                     // diámetro de la burbuja
 const PANEL: Vec2 = vec2(420.0, 640.0);     // el chat desplegado
 const HUECO: f32 = 12.0;                    // entre el chat y la burbuja
 const AIRE: f32 = 16.0;                     // borde transparente donde cabe la sombra
-// Las ventanas del chat y del resumen, cerradas, se apartan de la pantalla:
-// transparentes en su sitio, al grabar la pantalla salían como un recuadro negro.
-const FUERA: Pos2 = pos2(-30000.0, -30000.0);
 const MARGEN: f32 = 24.0;                   // de la burbuja al borde derecho
 #[cfg(windows)]
 const BAJO: f32 = 72.0;                     // de la burbuja al borde de abajo (barra de tareas)
@@ -256,6 +253,8 @@ struct Medicci {
     hcis_mirado: f64,
     zona: Option<[i32; 4]>,         // el monitor de HCIS, sin la barra de tareas (hcis::zona)
     zona_mirada: f64,
+    chat_sitio: (Option<(Pos2, Vec2)>, u8),    // adónde se ha mandado la ventana del chat
+    resumen_sitio: (Option<(Pos2, Vec2)>, u8), // y la del resumen ampliado
     // --simulacion: la burbuja hace lo que dice la simulación (mvp/simular.py)
     simulacion: bool,
     paso_n: Option<i64>,
@@ -454,6 +453,8 @@ impl Medicci {
             hcis_mirado: f64::NEG_INFINITY,
             zona: None,
             zona_mirada: f64::NEG_INFINITY,
+            chat_sitio: (None, 0),
+            resumen_sitio: (None, 0),
             simulacion: false,
             paso_n: None,
             paso_mirado: f64::NEG_INFINITY,
@@ -1190,17 +1191,21 @@ impl Medicci {
         // el borde derecho del chat, con el de la burbuja; abajo, el hueco
         let pos = pos2((bola.right() - tam.x).round(),
                        (bola.top() + 2.0 * AIRE - HUECO - tam.y).round());
+        let ppp = ctx.input(|i| i.viewport().native_pixels_per_point.unwrap_or(1.0));
+        let fisico = (pos.to_vec2() * ppp).to_pos2();
         let constructor = egui::ViewportBuilder::default()
             .with_title("Medicci · Chat")
             .with_mouse_passthrough(!visible)
             .with_inner_size(tam)
-            .with_position(if visible { pos } else { FUERA })
+            .with_position(pos)
             .with_decorations(false)
             .with_transparent(true)
             .with_resizable(false)
             .with_taskbar(false);           // no siempre encima: HCIS o SELENE pueden taparlo
         ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("medicci_chat"), constructor,
                                     |ctx, _clase| {
+            // siempre junto a la burbuja, también si esta cambia de pantalla
+            lleva_a(ctx, fisico, tam, &mut self.chat_sitio);
             if !visible {
                 return;                     // plegado: transparente y sin clics
             }
@@ -2620,6 +2625,27 @@ fn texto_nota(r: &Resumen) -> String {
     t
 }
 
+/// Lleva una ventana del chat o del resumen a su sitio y su tamaño: egui solo
+/// la coloca al crearla. El sitio va en píxeles de verdad y se pasa a los
+/// puntos de la propia ventana: con dos pantallas de escala distinta (125 % y
+/// 100 %) los puntos de una no valen en la otra. Se reintenta unas veces.
+fn lleva_a(ctx: &egui::Context, fisico: Pos2, tam: Vec2, sitio: &mut (Option<(Pos2, Vec2)>, u8)) {
+    if sitio.0 != Some((fisico, tam)) {
+        *sitio = (Some((fisico, tam)), 0);
+    }
+    let (ppp, real) = ctx.input(|i| (i.viewport().native_pixels_per_point.unwrap_or(1.0),
+                                     i.viewport().outer_rect));
+    let bien = real.is_some_and(|r| (r.min.to_vec2() * ppp - fisico.to_vec2()).length() < 3.0
+                                    && (r.size() - tam).length() < 2.0);
+    if bien || sitio.1 >= 8 {
+        return;
+    }
+    sitio.1 += 1;
+    ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(tam));
+    ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition((fisico.to_vec2() / ppp).to_pos2()));
+    ctx.request_repaint();
+}
+
 impl Medicci {
     /// La ventana del resumen ampliado. Como la del chat, existe desde el
     /// arranque y, cerrada, es transparente y deja pasar los clics.
@@ -2641,18 +2667,24 @@ impl Medicci {
         let pos = *self.resumen_pos.get_or_insert_with(|| {
             (origen + (monitor - tam) / 2.0).to_pos2().round()
         });
+        // cerrada, se encoge a un punto detrás de la burbuja: transparente y en
+        // grande, al grabar la pantalla salía como un recuadro negro
+        let bola = ctx.input(|i| i.viewport().outer_rect).map(|r| r.min).unwrap_or(pos);
+        let (sitio, tam) = if abierta { (pos, tam) } else { (bola, Vec2::splat(1.0)) };
+        let fisico = (sitio.to_vec2() * ppp).to_pos2();
         let constructor = egui::ViewportBuilder::default()
             .with_title("Medicci · Resumen")
             .with_mouse_passthrough(!abierta)
             .with_inner_size(tam)
-            .with_position(if abierta { pos } else { FUERA })
+            .with_position(sitio)
             .with_decorations(false)
             .with_transparent(true)
             .with_resizable(false)
             .with_taskbar(false);
         let id = egui::ViewportId::from_hash_of("medicci_resumen");
         let Some(resumen) = (if abierta { self.resumen.take() } else { None }) else {
-            ctx.show_viewport_immediate(id, constructor, |_, _| {});
+            let resumen_sitio = &mut self.resumen_sitio;
+            ctx.show_viewport_immediate(id, constructor, |ctx, _| lleva_a(ctx, fisico, tam, resumen_sitio));
             return;
         };
 
@@ -2666,6 +2698,7 @@ impl Medicci {
         let mut accion = None;
 
         ctx.show_viewport_immediate(id, constructor, |ctx, _clase| {
+            lleva_a(ctx, fisico, tam, &mut self.resumen_sitio);
             if ctx.input(|i| i.viewport().close_requested() || i.key_pressed(egui::Key::Escape)) {
                 cerrar = true;
             }
