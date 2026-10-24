@@ -5,16 +5,15 @@ usando solo la biblioteca estándar.
 """
 
 import json
-import os
 import re
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 
-from paciente import Fila, formatear
-
 from config import valor
+from paciente import Fila, formatear
+from seleccion import seleccionar
 
 # Adonde diga el hospital o el pliego: medici.conf o variables de entorno.
 URL = valor("MEDICI_URL", "http://localhost:11434/v1")
@@ -57,6 +56,7 @@ class Respuesta:
     inventadas: list[str] = field(default_factory=list)     # citadas pero inexistentes
     segundos: float = 0.0
     bruto: str = ""
+    usadas: list = field(default_factory=list)              # las filas que vio el modelo
 
 
 def _llamar(mensajes: list[dict], formato: dict | None, url: str, modelo: str,
@@ -86,6 +86,7 @@ def _leer_json(texto: str) -> dict:
 
 def responder(filas: list[Fila], pregunta: str, url: str = URL, modelo: str = MODELO,
               sin_pensar: bool = True) -> Respuesta:
+    filas = seleccionar(filas, pregunta)          # un crónico no cabe entero: lo que hace falta
     usuario = f"Datos del paciente:\n{formatear(filas)}\n\nPregunta: {pregunta}"
     if sin_pensar:
         usuario += " /no_think"          # Qwen3: contesta sin razonar en voz alta (más rápido)
@@ -113,4 +114,4 @@ def responder(filas: list[Fila], pregunta: str, url: str = URL, modelo: str = MO
     texto = datos.get("respuesta") or "No consta en los datos disponibles."
     if not consta and not fuentes:
         texto = texto if re.search(r"no (consta|aparece)", texto, re.I) else "No consta en los datos disponibles."
-    return Respuesta(consta, texto, fuentes, inventadas, segundos, bruto)
+    return Respuesta(consta, texto, fuentes, inventadas, segundos, bruto, filas)

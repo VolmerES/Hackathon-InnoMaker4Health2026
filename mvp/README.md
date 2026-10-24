@@ -140,6 +140,44 @@ Para otro servidor (vLLM en un Spark, `llama.cpp`…): `--url http://equipo:8000
 Al final sale la nota por tipo de pregunta, cuántas veces dice «no consta»
 cuando toca, cuántas filas inexistentes ha citado y los segundos por respuesta.
 
+## Pacientes crónicos: cientos de citas en un modelo pequeño
+
+```bash
+.venv/Scripts/python mvp/generar_pacientes.py            # 200 sintéticos en data/generados
+MEDICI_CSV=data/generados .venv/Scripts/python mvp/prueba_acierto.py
+MEDICI_CSV=data/generados .venv/Scripts/python mvp/prueba_alertas.py --n 200
+```
+
+`generar_pacientes.py` escribe los 11 CSV con el mismo formato que los del reto,
+con cuatro perfiles: normales (1–6 citas), crónicos (9–79), muy crónicos
+(117–409) y extremos (1.300–1.650 citas en 15 años).
+
+**Lo que pasaba** (24‑oct): un crónico ocupa de 9.000 a 245.000 tokens. Ollama
+corta en silencio en unos 2.050, se pierden las instrucciones y la ficha, y el
+modelo contesta mal («no tiene pendientes» cuando sí las tiene). La tarjeta
+contaba toda la vida («157 citas sin atender», 43 pruebas desde 2012).
+
+**Cómo se arregló, sin más máquina:**
+
+- **`seleccion.py`:** al modelo no va la historia entera, sino lo que hace falta
+  para la pregunta: el tema (pruebas, citas, avisos, derivaciones), lo pendiente
+  y lo más reciente primero, hasta un presupuesto que cabe en la memoria del
+  modelo (`MEDICI_CONTEXTO`, 2.048 tokens por defecto). Siempre van la ficha y
+  un resumen de toda la historia contado con SQL (`[R1]`, con las pruebas
+  pendientes por su nombre), y si algo se queda fuera se dice (`[R2]`).
+- **`alertas.py`:** lo ya pasado se mira en el último año de seguimiento, lo
+  pendiente siempre, y las listas se cortan («y 3 más»).
+
+**Resultado:**
+
+| | Antes | Después |
+|---|---|---|
+| Paciente con 5.984 filas | Cortado, respuestas mal | 31 filas elegidas, cuentas exactas (157 sin atender), 1,5 s |
+| Acierto con el lote generado (semillas 42 y 7) | — | 30/30 y 30/30, 0 fuentes inventadas, 6/6 «no consta» |
+| Acierto con los pacientes del reto (2026 y 99) | 30/30 y 28/30 | 30/30 y 28/30: no empeora |
+| Tarjeta contra SQL directo | — | 0 fallos en 2.000 del reto y 200 generados |
+| Avisos de corte de Ollama | En todos los crónicos | 0 |
+
 ## Qué preguntas hace
 
 | Tipo | Cuántas | Se da por buena si… |

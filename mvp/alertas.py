@@ -4,6 +4,11 @@ Las alertas las deciden reglas sobre los datos, no la IA: son siempre ciertas y
 cada una lleva las filas de las que sale ([M2], [P1]…). Se ordenan por
 importancia y se enseñan las tres primeras.
 
+Con un crónico de años no sirve contar toda la vida («157 citas sin atender»):
+lo que ya pasó se mira en el último año de seguimiento, contado desde lo último
+que hay del paciente, y las listas se cortan («y 38 más»). Lo pendiente cuenta
+siempre.
+
     python mvp/alertas.py P0102733          # la tarjeta de un paciente
     python mvp/alertas.py --buscar-demo     # pacientes con una tarjeta completa, para la demo
 """
@@ -19,6 +24,9 @@ from paciente import ESPECIALIDADES, Fila, cargar, datos_del_paciente
 
 MAXIMO = 3
 RECIENTE = timedelta(hours=48)
+VENTANA = timedelta(days=365)     # lo que ya pasó, solo el último año
+CORTE = 3                          # elementos de una lista antes de «y N más»
+FUENTES = 5                        # filas de origen que se enseñan por alerta
 
 ACCESIBILIDAD = {
     "INTERPRETE": "Necesita intérprete",
@@ -40,7 +48,8 @@ class Alerta:
     tipo: str
     prioridad: int          # más alto, más arriba
     texto: str
-    fuentes: list[str]
+    fuentes: list[str]      # las más recientes, como mucho FUENTES
+    total: int = 0          # cuántas filas cuenta la alerta
 
 
 def _fecha(valor) -> str:
@@ -52,7 +61,21 @@ def _veces(n: int, una: str, varias: str) -> str:
 
 
 def _lista(partes: list[str]) -> str:
+    if len(partes) > CORTE:
+        return ", ".join(partes[:CORTE]) + f" y {len(partes) - CORTE} más"
     return partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " y " + partes[-1]
+
+
+def _momento(v):
+    """Fecha u hora de una fila como datetime (las citas traen solo la fecha)."""
+    return v if isinstance(v, datetime) else datetime(v.year, v.month, v.day) if v else None
+
+
+def _alerta(tipo, prioridad, texto, filas) -> Alerta:
+    clave = lambda f: _momento(f.campos.get("fecha") or f.campos.get("realizada")  # noqa: E731
+                               or f.campos.get("programada")) or datetime.min
+    recientes = sorted(filas, key=clave, reverse=True)
+    return Alerta(tipo, prioridad, texto, [f.ref for f in recientes[:FUENTES]], len(filas))
 
 
 def alertas(filas: list[Fila]) -> list[Alerta]:
@@ -62,71 +85,89 @@ def alertas(filas: list[Fila]) -> list[Alerta]:
     servicio_de = {f.ref: ESPECIALIDADES.get(f.campos["especialidad"], "otro servicio") for f in de["CITAS"]}
     lista: list[Alerta] = []
 
+    # el último año de seguimiento, contado desde lo último que hay del paciente
+    ahora = datetime.now()
+    momentos = [_momento(f.campos.get(k)) for t in ("DERIVACIONES_AP", "CITAS", "MOVIMIENTOS_CITAS",
+                                                    "PRUEBAS", "COMUNICACIONES")
+                for f in de[t] for k in ("fecha", "realizada")]
+    referencia = max((m for m in momentos if m and m <= ahora), default=ahora)
+    desde = referencia - VENTANA
+
+    def reciente(f, k="fecha"):
+        return (_momento(f.campos.get(k)) or datetime.min) >= desde
+
     for f in de["PACIENTES"]:
         if f.campos["accesibilidad"] in ACCESIBILIDAD:
-            lista.append(Alerta("accesibilidad", 90, f"{ACCESIBILIDAD[f.campos['accesibilidad']]}.", [f.ref]))
+            lista.append(Alerta("accesibilidad", 90, f"{ACCESIBILIDAD[f.campos['accesibilidad']]}.", [f.ref], 1))
 
     for f in de["DERIVACIONES_AP"]:
-        if f.campos["prioridad"] != "ORDINARIA" and f.campos["estado"] != "RECHAZADA":
+        if f.campos["prioridad"] != "ORDINARIA" and f.campos["estado"] != "RECHAZADA" and reciente(f):
             lista.append(Alerta("derivacion_prioritaria", 72,
                 f"Derivación {f.campos['prioridad'].lower()} de Primaria a "
                 f"{ESPECIALIDADES.get(f.campos['especialidad'], f.campos['especialidad'])} "
-                f"({_fecha(f.campos['fecha'])}): {f.campos['motivo'].lower()}.", [f.ref]))
+                f"({_fecha(f.campos['fecha'])}): {f.campos['motivo'].lower()}.", [f.ref], 1))
 
-    no_realizadas = [f for f in de["MOVIMIENTOS_CITAS"] if f.campos["tipo"] == "NO_REALIZADA"]
+    no_realizadas = [f for f in de["MOVIMIENTOS_CITAS"] if f.campos["tipo"] == "NO_REALIZADA" and reciente(f)]
     if no_realizadas:
-        ultima = no_realizadas[-1]
+        ultima = max(no_realizadas, key=lambda f: f.campos["fecha"])
         n = len(no_realizadas)
         servicio = servicio_de.get(ultima.campos["cita"], "otro servicio")
         cuando = _fecha(ultima.campos["fecha"])
-        lista.append(Alerta("citas_no_realizadas", 80 if n >= 2 else 65,
+        lista.append(_alerta("citas_no_realizadas", 80 if n >= 2 else 65,
             f"1 cita se cerró sin atenderle ({servicio}, {cuando})." if n == 1 else
-            f"{n} citas se cerraron sin atenderle; la última, en {servicio} el {cuando}.",
-            [f.ref for f in no_realizadas]))
+            f"{n} citas se cerraron sin atenderle en el último año; la última, en {servicio} el {cuando}.",
+            no_realizadas))
 
-    sin_hacer = [f for f in de["PRUEBAS"] if f.campos["estado"] == "NO_REALIZADA"]
+    sin_hacer = sorted((f for f in de["PRUEBAS"] if f.campos["estado"] == "NO_REALIZADA"
+                        and reciente(f, "programada")),
+                       key=lambda f: f.campos["programada"] or datetime.min, reverse=True)
     if sin_hacer:
-        lista.append(Alerta("prueba_no_realizada", 78,
+        lista.append(_alerta("prueba_no_realizada", 78,
             f"No se llegó a hacer: "
             + _lista([f"{PRUEBA.get(f.campos['tipo'], f.campos['tipo'])} "
                       f"(programada el {_fecha(f.campos['programada'])})" for f in sin_hacer]) + ".",
-            [f.ref for f in sin_hacer]))
+            sin_hacer))
 
-    pendientes = [f for f in de["PRUEBAS"] if f.campos["estado"] == "PROGRAMADA"]
+    pendientes = sorted((f for f in de["PRUEBAS"] if f.campos["estado"] == "PROGRAMADA"),
+                        key=lambda f: f.campos["programada"] or datetime.max)
     if pendientes:
-        lista.append(Alerta("prueba_pendiente", 75,
+        lista.append(_alerta("prueba_pendiente", 75,
             _veces(len(pendientes), "Prueba pendiente: ", "Pruebas pendientes: ")
             + _lista([f"{PRUEBA.get(f.campos['tipo'], f.campos['tipo'])} "
                       f"(programada el {_fecha(f.campos['programada'])})" for f in pendientes]) + ".",
-            [f.ref for f in pendientes]))
+            pendientes))
 
-    fallidos = [f for f in de["COMUNICACIONES"] if f.campos["resultado"] == "FALLIDO"]
+    fallidos = sorted((f for f in de["COMUNICACIONES"] if f.campos["resultado"] == "FALLIDO" and reciente(f)),
+                      key=lambda f: f.campos["fecha"])
     if fallidos:
         canal, _ = Counter(f.campos["canal"] for f in fallidos).most_common(1)[0]
         n = len(fallidos)
-        lista.append(Alerta("avisos_fallidos", 70 if n >= 2 else 55,
+        lista.append(_alerta("avisos_fallidos", 70 if n >= 2 else 55,
             f"1 aviso por {CANAL.get(canal, canal)} no le llegó ({_fecha(fallidos[0].campos['fecha'])})."
             if n == 1 else
-            f"{n} avisos no le llegaron (sobre todo por {CANAL.get(canal, canal)}); el último, el "
-            f"{_fecha(fallidos[-1].campos['fecha'])}.", [f.ref for f in fallidos]))
+            f"{n} avisos no le llegaron en el último año (sobre todo por {CANAL.get(canal, canal)}); el último, el "
+            f"{_fecha(fallidos[-1].campos['fecha'])}.", fallidos))
 
-    con_resultado = [f for f in de["PRUEBAS"] if f.campos["estado"] == "REALIZADA" and f.campos["resultado"]]
+    con_resultado = sorted((f for f in de["PRUEBAS"] if f.campos["estado"] == "REALIZADA"
+                            and f.campos["resultado"] and reciente(f, "realizada")),
+                           key=lambda f: f.campos["realizada"], reverse=True)
     if con_resultado:
-        lista.append(Alerta("resultado_disponible", 60,
+        lista.append(_alerta("resultado_disponible", 60,
             _veces(len(con_resultado), "Ya tiene hecha la ", "Ya tiene hechas: ")
             + _lista([f"{PRUEBA.get(f.campos['tipo'], f.campos['tipo'])} "
                       f"({_fecha(f.campos['realizada'])})" for f in con_resultado])
-            + ", con resultado disponible.", [f.ref for f in con_resultado]))
+            + ", con resultado disponible.", con_resultado))
 
-    cambios = [f for f in de["MOVIMIENTOS_CITAS"] if f.campos["tipo"] in ("REPROGRAMACION", "ANULACION")]
+    cambios = [f for f in de["MOVIMIENTOS_CITAS"] if f.campos["tipo"] in ("REPROGRAMACION", "ANULACION")
+               and reciente(f)]
     if cambios:
         motivos = list(dict.fromkeys(f.campos["motivo"].lower() for f in cambios))
         cuenta = Counter(f.campos["tipo"] for f in cambios)
         partes = [_veces(cuenta[t], f"1 cita {uno}", f"{{n}} citas {varios}").format(n=cuenta[t])
                   for t, uno, varios in [("REPROGRAMACION", "reprogramada", "reprogramadas"),
                                          ("ANULACION", "anulada", "anuladas")] if cuenta[t]]
-        lista.append(Alerta("citas_cambiadas", 50 if len(cambios) >= 2 else 35,
-            f"{_lista(partes).capitalize()} ({_lista(motivos)}).", [f.ref for f in cambios]))
+        lista.append(_alerta("citas_cambiadas", 50 if len(cambios) >= 2 else 35,
+            f"{_lista(partes).capitalize()} ({_lista(motivos)}).", cambios))
 
     # Lo que ha pasado en las últimas 48 horas (una cita anulada, un resultado que
     # acaba de llegar por HL7) sube arriba del todo: es lo que el médico no sabe.

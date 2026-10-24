@@ -1,10 +1,11 @@
-"""Conexión DuckDB con una vista por cada CSV de data/."""
+"""Conexión DuckDB con una vista por cada CSV de data/ (u otra carpeta con MEDICI_CSV)."""
 
+import os
 from pathlib import Path
 
 import duckdb
 
-DATA = Path(__file__).resolve().parent.parent / "data"
+DATA = Path(os.environ.get("MEDICI_CSV") or Path(__file__).resolve().parent.parent / "data")
 
 TABLAS = [
     "PACIENTES", "DERIVACIONES_AP", "AGENDAS", "HUECOS_AGENDA", "CITAS",

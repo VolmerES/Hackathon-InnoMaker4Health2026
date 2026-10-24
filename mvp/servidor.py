@@ -205,7 +205,7 @@ class Peticion(SimpleHTTPRequestHandler):
             m.registrar(sesion=partes[2], paciente=nhc, accion="pregunta", pregunta=texto,
                         fuentes=r.fuentes, segundos=round(time.perf_counter() - inicio, 2))
             return self._json(200, {"respuesta": r.respuesta, "consta": r.consta,
-                                    "fuentes": m.fuentes(filas, r.fuentes), "segundos": round(r.segundos, 1)})
+                                    "fuentes": m.fuentes(r.usadas, r.fuentes), "segundos": round(r.segundos, 1)})
         self._json(404, {"error": "No existe"})
 
 
