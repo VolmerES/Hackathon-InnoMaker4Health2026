@@ -2694,8 +2694,8 @@ impl eframe::App for Medicci {
         self.coloca(ctx);
         if std::env::var_os("MEDICCI_DEPURA").is_some() {
             let (monitor, real) = ctx.input(|i| (i.viewport().monitor_size, i.viewport().outer_rect));
-            eprintln!("abierto={} t={:.2} lista={} intentos={} monitor={:?} real={:?} pedido={:?}",
-                      self.abierto, self.t, self.lista, self.intentos, monitor, real, self.pedido);
+            eprintln!("abierto={} t={:.2} intentos={} monitor={:?} real={:?} pedido={:?}",
+                      self.abierto, self.t, self.intentos, monitor, real, self.pedido);
         }
         self.burbuja(ctx);
         self.ventana_chat(ctx);
