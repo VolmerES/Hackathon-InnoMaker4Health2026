@@ -1,60 +1,92 @@
-/* Pestaña Medici: se pega al borde derecho de la pantalla de HCIS. */
-#medici{position:fixed;top:0;right:0;bottom:0;z-index:50;display:flex;font-family:Verdana,Tahoma,Arial,sans-serif;font-size:12.5px;color:#14202b}
-#medici .asa{align-self:flex-start;margin-top:84px;writing-mode:vertical-rl;transform:rotate(180deg);
-  background:#0f5b8f;color:#fff;border:0;border-radius:0 6px 6px 0;padding:14px 7px;cursor:pointer;
-  font-weight:700;letter-spacing:.08em;box-shadow:-2px 2px 8px rgba(0,0,0,.25);display:flex;gap:8px;align-items:center}
-#medici .asa:hover{background:#13699f}
-#medici .asa .num{writing-mode:horizontal-tb;transform:rotate(180deg);background:#f0a020;color:#14202b;border-radius:10px;
-  min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px}
-#medici .asa .num:empty{display:none}
-#medici .panel{width:380px;max-width:calc(100vw - 40px);background:#fff;border-left:1px solid #9fb3c4;
-  box-shadow:-4px 0 14px rgba(0,0,0,.18);display:flex;flex-direction:column;min-height:0}
-#medici.cerrada .panel{display:none}
-html.medici-abierta body{margin-right:420px}
+/* Medici en la web, con el mismo aspecto que la burbuja de escritorio de
+   medicci-rs: burbuja verde con el médico abajo a la derecha, panel crema,
+   cabecera verde oscuro, oro para lo importante y Noto Sans. */
+@font-face{font-family:"Noto Sans";src:url("/fuentes/NotoSans-Regular.ttf") format("truetype");font-weight:400}
+@font-face{font-family:"Noto Sans";src:url("/fuentes/NotoSans-Bold.ttf") format("truetype");font-weight:700}
+@font-face{font-family:"Noto Sans Mono";src:url("/fuentes/NotoSansMono-Regular.ttf") format("truetype")}
 
-#medici header{background:#0f5b8f;color:#fff;padding:9px 12px;display:flex;align-items:center;gap:10px}
-#medici header .logo{font-weight:800;letter-spacing:.06em;font-size:13px}
-#medici header .quien{display:flex;flex-direction:column;line-height:1.25;min-width:0}
-#medici header .quien b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#medici header .quien small{color:#cfe2f1;font-size:11px}
-#medici header .x{margin-left:auto;background:none;border:0;color:#fff;font-size:18px;cursor:pointer;padding:2px 7px;border-radius:4px}
-#medici header .x:hover{background:rgba(255,255,255,.15)}
+#medici{--verde:#1a5c44;--verde-osc:#0e2d20;--verde-2:#1d5a44;--verde-claro:#9dc3b1;--crema:#f6f3ec;
+  --linea:#e3ded1;--linea-suave:#efebe1;--oro:#d9a32b;--oro-suave:#fbf0d5;--rojo:#9c3b23;--gris:#6b7a72;
+  --tinta:#1d2a24;--tinta-2:#3f4c45;--mio:#e4eee8;--cita:#fbf7e8;
+  font-family:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--tinta);font-size:13px;line-height:1.45}
+#medici *{box-sizing:border-box}
 
-#medici .tarjeta{padding:10px 12px 8px;border-bottom:1px solid #dfe7ee;background:#fbfcfd}
-#medici .tarjeta{transition:background-color .4s}
-#medici .tarjeta.cambio{background:#fff3d6}
-#medici .tarjeta h3{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#4a5d6c}
-#medici .tarjeta ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
-#medici .tarjeta li{display:flex;gap:8px;align-items:flex-start;line-height:1.4}
-#medici .tarjeta li .p{flex:0 0 auto;width:8px;height:8px;border-radius:50%;margin-top:5px;background:#f0a020}
-#medici .tarjeta li.alta .p{background:#c8401c}
-#medici .tarjeta .nada{color:#4a5d6c}
-#medici .tarjeta .mas{color:#4a5d6c;font-size:11px;margin-top:4px}
+/* ---------- la burbuja ---------- */
+#medici .bola{position:fixed;right:24px;bottom:24px;width:56px;height:56px;border-radius:50%;z-index:61;
+  background:var(--verde);border:0;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1.5px var(--oro) inset,0 6px 18px rgba(0,0,0,.28);transition:transform .15s}
+#medici .bola:hover{transform:scale(1.05)}
+#medici .bola svg{width:52px;height:52px;transition:opacity .18s,transform .18s}
+#medici .bola .plegar{position:absolute;opacity:0;transform:rotate(-90deg)}
+#medici.abierto .bola .medico{opacity:0;transform:scale(.7)}
+#medici.abierto .bola .plegar{opacity:1;transform:none}
+#medici .bola .num{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 6px;border-radius:11px;
+  background:var(--oro);color:var(--tinta);font-weight:700;font-size:11.5px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 2px #fff}
+#medici .bola .num:empty{display:none}
 
-#medici .ref{display:inline-block;margin-left:4px;background:#e8f1f8;border:1px solid #b8cfe1;border-radius:3px;
-  padding:0 5px;font:10.5px/16px "Courier New",monospace;color:#0f5b8f;cursor:pointer;vertical-align:1px}
-#medici .ref:hover{background:#d4e6f4}
-#medici .origen{margin:5px 0 0;padding:5px 8px;background:#fffdf0;border-left:3px solid #d9b33c;
-  font:11px/1.45 "Courier New",monospace;color:#333;white-space:pre-wrap}
+/* ---------- el panel ---------- */
+#medici .panel{position:fixed;right:24px;bottom:92px;width:380px;max-width:calc(100vw - 32px);
+  height:min(620px,calc(100vh - 116px));z-index:60;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--crema);border:1px solid var(--linea);border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.22);
+  transform-origin:100% 100%;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s}
+#medici:not(.abierto) .panel{transform:translateY(10px) scale(.86);opacity:0;pointer-events:none}
 
-#medici .chat{flex:1;min-height:0;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:#f3f6f8}
-#medici .yo{align-self:flex-end;max-width:85%;background:#0f5b8f;color:#fff;padding:6px 10px;border-radius:8px 8px 2px 8px}
-#medici .ella{align-self:flex-start;max-width:94%;background:#fff;border:1px solid #d3dee7;padding:7px 10px;border-radius:8px 8px 8px 2px;line-height:1.45}
-#medici .ella.no{color:#7a5300}
-#medici .ella .t{display:block;margin-top:4px;font-size:10.5px;color:#6b7c89}
-#medici .pensando{color:#6b7c89;font-style:italic}
-#medici .vacio{margin:auto 0;color:#6b7c89;text-align:center;font-size:12px}
+#medici header{background:var(--verde-osc);color:#fff;height:64px;flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:0 10px 0 17px}
+#medici header .av{width:34px;height:34px;border-radius:50%;background:var(--verde);box-shadow:0 0 0 1px var(--oro) inset;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+#medici header .av svg{width:32px;height:32px}
+#medici header .tit{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+#medici header .tit b{font-size:16px}
+#medici header .tit small{font-size:11.5px;color:var(--verde-claro);display:flex;align-items:center;gap:6px}
+#medici header .led{width:7px;height:7px;border-radius:50%;background:var(--gris)}
+#medici header .led.si{background:#7fd1a3}
+#medici header .led.no{background:#e08a6d}
+#medici header .x{margin-left:auto;width:30px;height:30px;border-radius:50%;border:0;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#medici header .x:hover{background:rgba(255,255,255,.09)}
+#medici header .x i{width:12px;height:2px;background:#fff;border-radius:1px}
 
-#medici .chips{display:flex;flex-wrap:wrap;gap:5px;padding:7px 12px 0;background:#fff;border-top:1px solid #dfe7ee}
-#medici .chips button{background:#fff;border:1px solid #b8cfe1;border-radius:12px;padding:3px 9px;font-size:11.5px;color:#0f5b8f;cursor:pointer}
-#medici .chips button:hover{background:#e8f1f8}
-#medici form{display:flex;gap:6px;padding:8px 12px;background:#fff}
-#medici form input{flex:1;min-width:0;border:1px solid #9fb3c4;border-radius:4px;padding:7px 9px;font-size:12.5px}
-#medici form button{background:#0f5b8f;color:#fff;border:0;border-radius:4px;padding:7px 12px;font-weight:700;cursor:pointer}
-#medici form button:disabled{background:#8aa6bc;cursor:default}
-#medici footer{padding:6px 12px 8px;font-size:10.5px;color:#6b7c89;background:#fff;display:flex;gap:6px;align-items:center}
-#medici footer .led{width:8px;height:8px;border-radius:50%;background:#aab7c2}
-#medici footer .led.si{background:#2e9d5b}
-#medici footer .led.no{background:#c8401c}
+#medici .pac{background:#fff;border-bottom:1px solid var(--linea);padding:9px 16px;flex:0 0 auto;min-height:52px;display:flex;flex-direction:column;justify-content:center}
+#medici .pac b{font-size:13.5px}
+#medici .pac small{font-size:11px;color:var(--gris)}
 
-@media (max-width:900px){html.medici-abierta body{margin-right:0}#medici .panel{width:min(380px,calc(100vw - 40px))}}
+#medici .hilo{flex:1;min-height:0;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+
+/* la tarjeta «antes de que entre» */
+#medici .tarjeta{background:#fff;border:1px solid var(--linea);border-radius:4px 14px 14px 14px;padding:10px 12px;transition:background-color .4s}
+#medici .tarjeta.cambio{background:var(--oro-suave)}
+#medici .tarjeta h3{margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--gris)}
+#medici .tarjeta ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+#medici .tarjeta li{display:grid;grid-template-columns:8px 1fr;gap:9px;align-items:start}
+#medici .tarjeta li .p{width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--oro)}
+#medici .tarjeta li.alta .p{background:var(--rojo)}
+#medici .tarjeta li.alta .t{color:var(--rojo);font-weight:700}
+#medici .tarjeta li.nuevo .t{color:var(--rojo);font-weight:700}
+#medici .tarjeta .nada,#medici .tarjeta .mas{color:var(--gris);font-size:12px}
+
+/* fuentes: «¹ P1», al pulsar se ve la fila tal cual */
+#medici .fuentes{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+#medici .ref{border:0;background:none;padding:0 2px;font:11px/1.4 "Noto Sans Mono",ui-monospace,monospace;color:var(--verde-2);cursor:pointer;border-bottom:1px dotted var(--verde-claro)}
+#medici .ref:hover{color:var(--verde);border-bottom-style:solid}
+#medici .origen{margin:5px 0 2px;padding:5px 8px 5px 10px;background:var(--cita);border-left:2px solid var(--oro);border-radius:4px;
+  font:11px/1.45 "Noto Sans Mono",ui-monospace,monospace;color:#33454f;white-space:pre-wrap}
+
+/* conversación */
+#medici .yo{align-self:flex-end;max-width:84%;background:var(--mio);border-radius:14px 4px 14px 14px;padding:8px 12px;font-weight:700;color:var(--tinta)}
+#medici .ella{align-self:flex-start;max-width:90%;background:#fff;border:1px solid var(--linea);border-radius:4px 14px 14px 14px;padding:8px 12px;color:var(--tinta-2)}
+#medici .ella.no{color:var(--rojo);font-weight:700}
+#medici .ella .t{display:block;margin-top:4px;font-size:11px;font-weight:400;color:var(--gris)}
+#medici .pensando{color:var(--gris);font-style:italic}
+#medici .vacio{margin:auto 0;color:var(--gris);text-align:center;font-size:12.5px;padding:0 16px}
+
+/* pie: sugerencias y redactor */
+#medici .pie{background:#fff;border-top:1px solid var(--linea);flex:0 0 auto;padding:8px 12px 12px}
+#medici .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+#medici .chips:empty{display:none}
+#medici .chips button{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:3px 10px;font:inherit;font-size:11.5px;color:var(--verde-2);cursor:pointer}
+#medici .chips button:hover{border-color:var(--verde-claro);background:var(--crema)}
+#medici form{display:flex;align-items:center;gap:6px;background:var(--crema);border:1px solid var(--linea);border-radius:18px;padding:3px 3px 3px 13px}
+#medici form input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:13px;color:var(--tinta);padding:5px 0}
+#medici form input::placeholder{color:var(--gris)}
+#medici form button{width:28px;height:28px;border-radius:50%;border:0;background:var(--linea);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+#medici form.listo button{background:var(--verde)}
+#medici form button:disabled{cursor:default}

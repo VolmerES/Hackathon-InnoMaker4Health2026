@@ -36,9 +36,17 @@ button{font:inherit;color:inherit}
 fieldset{border:1px solid #d7d7d7;border-radius:9px;margin:0 0 12px;padding:8px 12px 10px}
 legend{padding:0 6px;font-size:11.5px;color:#333}
 legend b{color:var(--verde)}
-.fila{display:flex;gap:10px;padding:3px 0;border-bottom:1px solid #f1f1f1;font:11.5px/1.45 "Courier New",monospace}
-.fila:last-child{border-bottom:0}
-.fila .r{color:#999;flex:0 0 32px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{background:#efefef;border:1px solid #d7d7d7;padding:4px 7px;text-align:left;font-weight:bold;color:#333;white-space:nowrap}
+td{border:1px solid #e3e3e3;padding:4px 7px;vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+td.r{color:#999;font-family:"Courier New",monospace;width:34px}
+td .obs{display:block;margin-top:3px;color:#555;font:11px/1.45 "Courier New",monospace}
+.est{display:inline-block;padding:0 6px;border-radius:3px;font-size:10.5px;font-weight:bold;background:#eee;color:#444}
+.est.ok{background:#dff0e6;color:#1d6b3f}.est.mal{background:#f7dcdc;color:#a01b1b}.est.pend{background:#fbefcf;color:#7a5600}
+.ficha{display:grid;grid-template-columns:max-content 1fr max-content 1fr;gap:6px 12px;align-items:center}
+.ficha .et{color:#555}.ficha .v{border:1px solid #d2d2d2;border-radius:9px;background:#efefef;padding:2px 9px;min-height:21px}
+.ficha .v.rojo{color:var(--rojo);font-weight:bold;background:#fff4f4;border-color:#e2b3b3}
 .vacia{color:#888;font-style:italic}
 .aviso{background:#fff8e1;border:1px solid #e8d48a;padding:6px 9px;margin-bottom:10px;font-size:11px;color:#6b5a1e}
 </style>
@@ -78,6 +86,43 @@ const SECCIONES = [
   ["PRUEBAS", "Pruebas"], ["COMUNICACIONES", "Avisos al paciente"]];
 let agenda = [];
 
+/* Cómo enseña HCIS cada tabla: columnas con nombre, fechas y estados. */
+const ESP = {OFT:"Oftalmología", TRA:"Traumatología", DER:"Dermatología", CAR:"Cardiología", NRL:"Neurología", DIG:"Ap. digestivo"};
+const fecha = v => { if (!v) return ""; const [d] = String(v).split(" "); const [a, m, dd] = d.split("-"); return dd ? `${dd}/${m}/${a}` : esc(v); };
+const hora = v => v ? String(v).slice(0, 5) : "";
+const bonito = v => esc(String(v ?? "").replaceAll("_", " ").toLowerCase().replace(/^./, c => c.toUpperCase()));
+const estado = v => {
+  const k = String(v || "");
+  const clase = /^(REALIZADA|CITADA|ENTREGADO)$/.test(k) ? "ok" : /(NO_REALIZADA|ANULAD|FALLIDO|RECHAZADA)/.test(k) ? "mal"
+              : /(PROGRAMADA|PENDIENTE|URGENTE|EN_REVISION|REPROGRAM)/.test(k) ? "pend" : "";
+  return `<span class="est ${clase}">${bonito(k)}</span>`;
+};
+const COLUMNAS = {
+  DERIVACIONES_AP: [["Fecha", c => fecha(c.fecha)], ["Destino", c => ESP[c.especialidad] || esc(c.especialidad)],
+    ["Prioridad", c => bonito(c.prioridad)], ["Motivo", c => esc(c.motivo) + (c.observaciones ? `<span class="obs">${esc(c.observaciones)}</span>` : "")],
+    ["Estado", c => estado(c.estado)]],
+  CITAS: [["Fecha", c => fecha(c.fecha)], ["Hora", c => hora(c.hora)], ["Servicio", c => ESP[c.especialidad] || esc(c.especialidad || "")],
+    ["Visita", c => ({P:"Primera", S:"Sucesiva"}[c.tipo_visita] || esc(c.tipo_visita || ""))], ["Prioridad", c => bonito(c.prioridad)],
+    ["Estado", c => estado(c.estado)]],
+  MOVIMIENTOS_CITAS: [["Fecha", c => fecha(c.fecha)], ["Cita", c => esc(c.cita || "")],
+    ["Qué pasó", c => estado(c.tipo === "NO_REALIZADA" ? "NO_REALIZADA" : c.tipo)], ["Motivo", c => esc(c.motivo)]],
+  PRUEBAS: [["Prueba", c => bonito(c.tipo)], ["Programada", c => fecha(c.programada)], ["Realizada", c => fecha(c.realizada)],
+    ["Estado", c => estado(c.estado)], ["Resultado", c => c.resultado ? "Disponible" : "—"]],
+  COMUNICACIONES: [["Fecha", c => fecha(c.fecha)], ["Canal", c => bonito(c.canal)], ["Aviso", c => bonito(c.motivo)],
+    ["Cita", c => esc(c.cita || "")], ["Entrega", c => estado(c.resultado)], ["Respuesta", c => bonito(c.respuesta || "—")]],
+};
+function tabla_de(tabla, filas){
+  const cols = COLUMNAS[tabla];
+  return `<table><tr><th></th>${cols.map(([t]) => `<th>${t}</th>`).join("")}</tr>${filas.map(f =>
+    `<tr><td class="r">${f.ref}</td>${cols.map(([, v]) => `<td>${v(f.campos)}</td>`).join("")}</tr>`).join("")}</table>`;
+}
+function ficha(c, p){
+  return `<div class="ficha"><span class="et">Edad</span><span class="v">${c.edad} años</span>
+    <span class="et">Sexo</span><span class="v">${p.sexo === "F" ? "Mujer" : "Varón"}</span>
+    <span class="et">Contacto preferido</span><span class="v">${bonito(c.contacto)}</span>
+    <span class="et">Accesibilidad</span><span class="v ${c.accesibilidad !== "NINGUNA" ? "rojo" : ""}">${bonito(c.accesibilidad)}</span></div>`;
+}
+
 let abierto = null, pintado = "";
 async function abrePaciente(p){
   abierto = p; pintado = "";
@@ -99,8 +144,8 @@ async function pintaHistoria(p){
     <div class="aviso">Nombre inventado para la demo. Los datos son de los CSV sintéticos del reto.</div>` +
     SECCIONES.map(([tabla, titulo]) => {
       const filas = r.filas.filter(f => f.tabla === tabla);
-      return `<fieldset><legend><b>▲</b> ${titulo} (${filas.length})</legend>${filas.length
-        ? filas.map(f => `<div class="fila"><span class="r">${f.ref}</span><span>${esc(f.texto)}</span></div>`).join("")
+      return `<fieldset><legend><b>▲</b> ${titulo}${tabla === "PACIENTES" ? "" : ` (${filas.length})`}</legend>${filas.length
+        ? (tabla === "PACIENTES" ? ficha(filas[0].campos, p) : tabla_de(tabla, filas))
         : `<div class="vacia">Sin registros</div>`}</fieldset>`;
     }).join("");
   $("#hoja").scrollTop = arriba;
@@ -117,7 +162,12 @@ async function pintaAgenda(){
     : `<p class="vacia" style="padding:8px">Agenda vacía: esperando datos de HCIS…</p>`;
 }
 $("#agenda").onclick = e => { const b = e.target.closest(".cita"); if (b) abrePaciente(agenda.find(p => p.nhc === b.dataset.nhc)); };
-pintaAgenda();
+// ?paciente=P0129798 (o ?paciente=primera) abre ese paciente al cargar: para la demo
+const pedido = new URLSearchParams(location.search).get("paciente");
+pintaAgenda().then(() => {
+  const p = pedido === "primera" ? agenda[0] : agenda.find(x => x.nhc === pedido);
+  if (p) abrePaciente(p);
+});
 setInterval(() => { if (agenda.length < 8) pintaAgenda(); }, 3000);   // con HL7 la agenda se va llenando
 </script>
 

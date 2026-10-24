@@ -40,6 +40,7 @@ from responder import MODELO, URL, responder
 
 AQUI = Path(__file__).resolve().parent
 WEB = AQUI / "web"
+FUENTES = AQUI.parent / "medicci-rs" / "fuentes"     # Noto Sans, las mismas que la burbuja
 REGISTRO = AQUI / "resultados" / "registro.jsonl"
 
 
@@ -106,12 +107,18 @@ class Peticion(SimpleHTTPRequestHandler):
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=str(WEB), **kw)
 
+    def translate_path(self, path):
+        ruta = path.split("?")[0]
+        if ruta.startswith("/fuentes/"):
+            return str(FUENTES / Path(ruta).name)
+        return super().translate_path(path)
+
     def log_message(self, formato, *args):
         if "/api/" in self.path:
             sys.stderr.write(f"{self.command} {self.path}\n")
 
     def _json(self, codigo: int, cuerpo) -> None:
-        datos = json.dumps(cuerpo, ensure_ascii=False).encode()
+        datos = json.dumps(cuerpo, ensure_ascii=False, default=str).encode()
         self.send_response(codigo)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(datos)))
@@ -152,7 +159,8 @@ class Peticion(SimpleHTTPRequestHandler):
             filas = m.filas(partes[3])
             if not filas:
                 return self._json(404, {"error": "Paciente desconocido"})
-            return self._json(200, {"filas": [{"ref": f.ref, "tabla": f.tabla, "texto": f.texto}
+            return self._json(200, {"filas": [{"ref": f.ref, "tabla": f.tabla, "texto": f.texto,
+                                               "campos": f.campos}
                                               for f in filas if not f.campos.get("vacia")]})
         if partes[1] == "sesion" and partes[-1] == "tarjeta":
             nhc = self._sesion(partes)

@@ -90,7 +90,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
     filas += _numerar("D", "DERIVACIONES_AP", [(d[0],
         f"Derivación de Primaria el {_fecha(d[1])} a {ESPECIALIDADES.get(d[2], d[2])}, "
         f"prioridad {d[3]}, estado {d[6]}. Motivo: {d[4]}. Observaciones del médico: {d[5]}",
-        {"fecha": d[1], "especialidad": d[2], "prioridad": d[3], "motivo": d[4], "estado": d[6]})
+        {"fecha": d[1], "especialidad": d[2], "prioridad": d[3], "motivo": d[4], "estado": d[6],
+         "observaciones": d[5]})
         for d in der])
 
     citas = con.execute(
@@ -103,7 +104,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         f"Cita en {ESPECIALIDADES.get(c[3], c[3] or 'servicio desconocido')} el {_fecha(c[1])}"
         f"{' a las ' + c[2].strftime('%H:%M') if c[2] else ''}, visita "
         f"{TIPO_VISITA.get(c[4], c[4])}, estado {c[5]}, prioridad {c[6]}.",
-        {"fecha": c[1], "especialidad": c[3], "estado": c[5]})
+        {"fecha": c[1], "especialidad": c[3], "estado": c[5], "hora": c[2], "tipo_visita": c[4],
+         "prioridad": c[6]})
         for c in citas])
     filas += filas_citas
     ref_cita = {f.id: f.ref for f in filas_citas}
@@ -147,7 +149,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
     filas += _numerar("A", "COMUNICACIONES", [(a[0],
         f"Aviso {a[3]} por {a[2]} el {_fecha(a[4])} sobre la cita [{ref_cita.get(a[1], a[1])}]: "
         f"{a[5]}, respuesta del paciente: {a[6] or 'ninguna'}.",
-        {"canal": a[2], "fecha": a[4], "resultado": a[5]})
+        {"canal": a[2], "fecha": a[4], "resultado": a[5], "motivo": a[3], "respuesta": a[6],
+         "cita": ref_cita.get(a[1])})
         for a in avisos])
 
     # Una tabla vacía también es un dato: si no se dice, el modelo rellena el hueco
