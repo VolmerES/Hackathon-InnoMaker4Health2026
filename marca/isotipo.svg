@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Isotipo de Medicci: bocadillo con la m que se convierte en pulso">
+  <path d="M28 16H100A14 14 0 0 1 114 30V82A14 14 0 0 1 100 96H50L30 112V96H28A14 14 0 0 1 14 82V30A14 14 0 0 1 28 16Z" fill="#1F6B61"/>
+  <path d="M30 72V58a9 9 0 0 1 18 0V72M48 58a9 9 0 0 1 18 0V66H74L80 44L87 80L91 66H96" fill="none" stroke="#0E3B36" stroke-width="5" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="10"/>
+  <circle cx="103" cy="66" r="4.5" fill="#D4AF37"/>
+</svg>

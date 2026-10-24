@@ -51,7 +51,8 @@ from responder import MODELO, URL, responder
 
 AQUI = Path(__file__).resolve().parent
 WEB = AQUI / "web"
-FUENTES = AQUI.parent / "medicci-rs" / "fuentes"     # Noto Sans, las mismas que la burbuja
+FUENTES = AQUI.parent / "medicci-rs" / "fuentes"
+MARCA = AQUI.parent / "marca"                       # la identidad: medicci.css, el isotipo     # Noto Sans, las mismas que la burbuja
 # Lo que se puede apuntar desde la pantalla, además de lo que ya ve el servidor
 ACCIONES = {"ampliar_resumen", "copiar_nota", "ver_pestana", "cerrar"}
 
@@ -138,6 +139,8 @@ class Peticion(SimpleHTTPRequestHandler):
         ruta = path.split("?")[0]
         if ruta.startswith("/fuentes/"):
             return str(FUENTES / Path(ruta).name)
+        if ruta.startswith("/marca/"):
+            return str(MARCA / Path(ruta).name)
         return super().translate_path(path)
 
     def end_headers(self):

@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Medicci · Registro de accesos</title>
+<link rel="stylesheet" href="/marca/medicci.css">
 <style>
-@font-face{font-family:Noto;src:url(/fuentes/NotoSans-Regular.ttf)}
-@font-face{font-family:Noto;font-weight:bold;src:url(/fuentes/NotoSans-Bold.ttf)}
-:root{--verde:#009b6b;--osc:#00704d;--fondo:#f5f5f5;--oro:#f3c418;--linea:#d7d7d7;--gris:#6b7280;--rojo:#b42318}
+/* la identidad de Medicci (marca/IDENTIDAD.md) */
+:root{--verde:var(--verde-claustro);--osc:var(--verde-medici);--gris:var(--tinta-suave);--rojo:var(--terracota)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--fondo);color:#222222;font:13px/1.45 Noto,Verdana,sans-serif}
-header{background:var(--osc);color:#fff;padding:12px 18px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
-header b{font-size:15px;letter-spacing:.04em}
-header span{color:#bfe6d3;font-size:12px}
+body{margin:0;background:var(--fondo);color:var(--tinta);font:13px/1.45 var(--sans)}
+header{background:var(--osc);color:var(--fondo);padding:12px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header b{font:600 22px/1 var(--display);display:flex;align-items:center;gap:10px}
+header b img{width:30px;height:30px}
+header span{color:#BFD3CE;font-size:12px}
 nav{margin-left:auto;display:flex;gap:14px}
 nav a{color:var(--oro);font-size:12px;text-decoration:none}
 nav a[aria-current]{color:#fff;font-weight:bold}
@@ -49,7 +50,7 @@ a.pac{color:var(--verde);font-weight:bold;text-decoration:none;cursor:pointer}
 </style>
 </head>
 <body>
-<header><b>MEDICCI · registro de accesos</b>
+<header><b><img src="/marca/isotipo.svg" alt="">Medicci · registro de accesos</b>
   <span>Quién ha mirado a qué paciente, cuándo y qué vio. Solo se añaden líneas, y cada una lleva la huella de la anterior.</span>
   <nav><a href="/?paciente=primera">HCIS · pacientes</a><a href="/hl7.html">Mensajes HL7</a><a href="/registro.html" aria-current="page">Registro de accesos</a></nav>
 </header>
