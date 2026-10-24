@@ -16,9 +16,9 @@
   const MEDICO = `<svg class="medico" viewBox="-28 -28 56 56" aria-hidden="true">
     <circle cx="0" cy="-7.5" r="6.6" fill="#fff"/>
     <path d="M-13.5 14.5A13.5 11.5 0 0 1 13.5 14.5Z" fill="#fff"/>
-    <path d="M-4.6 3.2L4.6 3.2L0 10Z" fill="#1a5c44"/>
-    <path d="M-6.2 4.4C-7.6 13.8 2.6 14.6 6.4 9.4" fill="none" stroke="#d9a32b" stroke-width="1.8" stroke-linecap="round"/>
-    <circle cx="6.6" cy="9" r="2.5" fill="#d9a32b"/><circle cx="6.6" cy="9" r="1" fill="#fff"/></svg>`;
+    <path d="M-4.6 3.2L4.6 3.2L0 10Z" fill="#009b6b"/>
+    <path d="M-6.2 4.4C-7.6 13.8 2.6 14.6 6.4 9.4" fill="none" stroke="#f3c418" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="6.6" cy="9" r="2.5" fill="#f3c418"/><circle cx="6.6" cy="9" r="1" fill="#fff"/></svg>`;
   const PLEGAR = `<svg class="plegar" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M5 9l7 7 7-7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const ENVIAR = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5L13 7L3 12.5L5 7Z" fill="#fff"/></svg>`;

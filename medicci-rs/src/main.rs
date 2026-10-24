@@ -40,25 +40,27 @@ const BAJO: f32 = 72.0;                     // de la burbuja al borde de abajo (
 const BAJO: f32 = 24.0;
 const HOJA: Vec2 = vec2(1240.0, 780.0);     // la ventana del resumen ampliado
 const PIE: f32 = 104.0;                     // acciones rápidas y redactor, al pie del chat
+/// Cada cuánto se pinta durante una animación (sin vsync, ~60 por segundo).
+const FOTOGRAMA: std::time::Duration = std::time::Duration::from_millis(16);
 
 // la paleta de Medicci
-const VERDE: Color32 = Color32::from_rgb(0x1a, 0x5c, 0x44);
-const VERDE_OSC: Color32 = Color32::from_rgb(0x0e, 0x2d, 0x20);
-const VERDE_2: Color32 = Color32::from_rgb(0x1d, 0x5a, 0x44);
-const VERDE_CLARO: Color32 = Color32::from_rgb(0x9d, 0xc3, 0xb1);
-const CREMA: Color32 = Color32::from_rgb(0xf6, 0xf3, 0xec);
+const VERDE: Color32 = Color32::from_rgb(0x00, 0x9b, 0x6b);
+const VERDE_OSC: Color32 = Color32::from_rgb(0x00, 0x70, 0x4d);
+const VERDE_2: Color32 = Color32::from_rgb(0x0a, 0x6b, 0x4a);
+const VERDE_CLARO: Color32 = Color32::from_rgb(0xbf, 0xe6, 0xd3);
+const FONDO: Color32 = Color32::from_rgb(0xf5, 0xf5, 0xf5);
 const BLANCO: Color32 = Color32::from_rgb(0xff, 0xff, 0xff);
-const LINEA: Color32 = Color32::from_rgb(0xe3, 0xde, 0xd1);
-const LINEA_SUAVE: Color32 = Color32::from_rgb(0xef, 0xeb, 0xe1);
-const ORO: Color32 = Color32::from_rgb(0xd9, 0xa3, 0x2b);
-const ORO_SUAVE: Color32 = Color32::from_rgb(0xfb, 0xf0, 0xd5);
-const ROJO: Color32 = Color32::from_rgb(0x9c, 0x3b, 0x23);
-const GRIS: Color32 = Color32::from_rgb(0x6b, 0x7a, 0x72);
-const TINTA: Color32 = Color32::from_rgb(0x1d, 0x2a, 0x24);
-const TINTA_2: Color32 = Color32::from_rgb(0x3f, 0x4c, 0x45);
-const MIO: Color32 = Color32::from_rgb(0xe4, 0xee, 0xe8);
-const CITA_FONDO: Color32 = Color32::from_rgb(0xfb, 0xf7, 0xe8);
-const FICHA_FONDO: Color32 = Color32::from_rgb(0xf4, 0xf1, 0xe8);
+const LINEA: Color32 = Color32::from_rgb(0xd7, 0xd7, 0xd7);
+const LINEA_SUAVE: Color32 = Color32::from_rgb(0xec, 0xec, 0xec);
+const ORO: Color32 = Color32::from_rgb(0xf3, 0xc4, 0x18);
+const ORO_SUAVE: Color32 = Color32::from_rgb(0xff, 0xf8, 0xe1);
+const ROJO: Color32 = Color32::from_rgb(0xa0, 0x1b, 0x1b);
+const GRIS: Color32 = Color32::from_rgb(0x6e, 0x74, 0x77);
+const TINTA: Color32 = Color32::from_rgb(0x22, 0x22, 0x22);
+const TINTA_2: Color32 = Color32::from_rgb(0x44, 0x4a, 0x4d);
+const MIO: Color32 = Color32::from_rgb(0xe5, 0xf1, 0xe9);
+const CITA_FONDO: Color32 = Color32::from_rgb(0xff, 0xfb, 0xea);
+const FICHA_FONDO: Color32 = Color32::from_rgb(0xf3, 0xf3, 0xf3);
 
 // colores con significado: cada tipo de dato, el suyo, y siempre con título
 const ALERTA: Color32 = Color32::from_rgb(0x9b, 0x1c, 0x1c);
@@ -207,7 +209,14 @@ struct Medicci {
     usuario: String,
     abierto: bool,
     t: f32,                         // 0 = burbuja, 1 = chat desplegado
-    lista: bool,                    // la ventana ya tiene el tamaño que toca
+    marcos: u8,                     // fotogramas de la burbuja, hasta pedir «siempre encima»
+    chat_encima: u8,                // ver sube_un_momento
+    chat_visto: (bool, u8),         // última visibilidad del chat y fotogramas que faltan
+    resumen_visto: (bool, u8),      // lo mismo con el resumen
+    chat_subida: f64,
+    resumen_al_frente: bool,        // traer delante la ventana del resumen ya abierta
+    resumen_encima: u8,             // 0: por subir, 1: subida un momento, 2: ya en su nivel
+    resumen_subida: f64,            // cuándo subió
     pedido: Option<(Vec2, Pos2)>,
     intentos: u8,
     espera: u8,
@@ -287,21 +296,93 @@ fn nuevos(hechos: Vec<Hecho>, vistos: &mut Vec<String>) -> Vec<Hecho> {
 
 fn fuente_hecho(h: &Hecho, total: usize) -> String {
     match (&h.documento, &h.fecha_doc) {
-        (Some(d), Some(f)) => match &h.servicio {
-            Some(s) if !s.is_empty() => format!("¹ {} · {} · {}", d, f, s),
-            _ => format!("¹ {} · {}", d, f),
+        (Some(_), Some(f)) => match &h.servicio {
+            Some(s) if !s.is_empty() => format!("{} · {}", s, fecha_es(f)),
+            _ => fecha_es(f),
         },
-        _ => format!("¹ comprobado: no aparece en ninguno de los {} documentos", total),
+        _ => format!("comprobado: no aparece en ninguno de los {} documentos", total),
     }
 }
 
-/// Tamaño de la ventana principal: solo la burbuja, o el chat encima de ella.
-fn ventana(desplegada: bool) -> Vec2 {
-    if desplegada {
-        vec2(PANEL.x + 2.0 * AIRE, PANEL.y + HUECO + BOLA + 2.0 * AIRE)
-    } else {
-        vec2(BOLA + 2.0 * AIRE, BOLA + 2.0 * AIRE)
+/// Las letras que se escriben en dos pulsaciones (´ + a = «á», ¨ + u = «ü») llegan
+/// del método de entrada (IBus en Linux) como `Ime::Commit`, y egui 0.29 las
+/// tira si no le avisó antes de que empezaba a componer. Aquí se convierten en
+/// texto normal, que el cuadro siempre acepta. La composición a medias («´») no
+/// se enseña: para el castellano no hace falta.
+fn letras_compuestas(ctx: &egui::Context) {
+    ctx.input_mut(|i| {
+        i.events.retain_mut(|e| match e {
+            egui::Event::Ime(egui::ImeEvent::Commit(t)) if t != "\n" && t != "\r" && !t.is_empty() => {
+                *e = egui::Event::Text(std::mem::take(t));
+                true
+            }
+            egui::Event::Ime(_) => false,
+            _ => true,
+        })
+    });
+}
+
+/// En Linux, egui-winit tira todo lo que llega del método de entrada (egui#5008)
+/// y, si un cuadro de texto lo pide, Xlib manda por ahí las letras con tilde:
+/// «´» + «e» se perdía. Sin método de entrada, winit compone él mismo las
+/// teclas muertas y la «é» llega como texto. Va al final de cada fotograma.
+fn sin_metodo_de_entrada(ctx: &egui::Context) {
+    if cfg!(target_os = "linux") {
+        ctx.output_mut(|o| o.ime = None);
     }
+}
+
+/// Pone una ventana delante de las demás, también de HCIS o SELENE. El gestor
+/// de ventanas no deja que una ventana se dé el foco a sí misma si lo último
+/// que se usó es otro programa, así que sube un momento a «siempre encima» y,
+/// al poco, vuelve a su nivel: queda delante y otra ventana puede taparla
+/// después. `fase`: 0 por subir, 1 subida, 2 ya en su nivel.
+fn sube_un_momento(ctx: &egui::Context, fase: &mut u8, desde: &mut f64, otra_vez: bool) {
+    let ahora = ctx.input(|i| i.time);
+    if otra_vez || *fase == 0 {
+        ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
+        // en Linux, pedir el teclado sin que GNOME lo conceda deja la ventana
+        // «pidiendo atención» y GNOME avisa con «“Medicci · Chat” is ready»;
+        // allí el teclado llega al pulsar en la ventana
+        if !cfg!(target_os = "linux") {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        }
+        *fase = 1;
+        *desde = ahora;
+    }
+    if *fase == 1 {
+        if ahora - *desde > 0.4 {
+            ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::Normal));
+            *fase = 2;
+        } else {
+            ctx.request_repaint();
+        }
+    }
+}
+
+/// egui aplica «dejar pasar los clics» un fotograma después de pedirlo: al
+/// plegar o abrir una ventana se pintan un par de fotogramas más para que no se
+/// quede tapando HCIS sin verse.
+fn otro_par_de_fotogramas(ctx: &egui::Context, visto: &mut (bool, u8), visible: bool) {
+    if visto.0 != visible {
+        *visto = (visible, 3);
+    }
+    if visto.1 > 0 {
+        visto.1 -= 1;
+        ctx.request_repaint();
+    }
+}
+
+/// La ventana de la burbuja: siempre del mismo tamaño. El chat va en otra
+/// ventana encima; si la burbuja creciera para hacerle sitio, la parte nueva
+/// saldría negra un fotograma y la burbuja daría un salto.
+fn ventana() -> Vec2 {
+    Vec2::splat(BOLA + 2.0 * AIRE)
+}
+
+/// La ventana del chat, con su borde para la sombra.
+fn ventana_del_chat() -> Vec2 {
+    PANEL + Vec2::splat(2.0 * AIRE)
 }
 
 impl Medicci {
@@ -312,7 +393,14 @@ impl Medicci {
             datos,
             abierto: false,
             t: 0.0,
-            lista: false,
+            marcos: 0,
+            chat_encima: 0,
+            chat_visto: (false, 0),
+            resumen_visto: (false, 0),
+            chat_subida: 0.0,
+            resumen_al_frente: false,
+            resumen_encima: 0,
+            resumen_subida: 0.0,
             pedido: None,
             intentos: 0,
             espera: 0,
@@ -419,8 +507,30 @@ impl Medicci {
         self.foco_ident = true;
     }
 
+    /// Resumen: directo a la ventana flotante, sin pasar por el chat. Conectada
+    /// y sin los datos aún, enseña la tarjeta «antes de que entre».
+    fn resumen_flotante(&mut self) {
+        if self.prepara_resumen() {
+            self.amplia();
+        }
+    }
+
+    /// Pone la tarjeta del resumen en el chat (los atajos Pruebas y Medicación).
     fn abre_resumen(&mut self) {
-        let Some(p) = self.paciente.clone() else { return };
+        if !self.prepara_resumen() {
+            return;
+        }
+        // una sola tarjeta en el hilo: la nueva sustituye a la anterior
+        self.hilo.retain(|m| !m.tarjeta);
+        self.hilo.push(Mensaje::mio("Resumen del paciente"));
+        self.hilo.push(Mensaje::tarjeta());
+        self.pestana = Pestana::Resumen;
+        self.bajar = true;
+    }
+
+    /// Deja listo `self.resumen`; dice si lo hay.
+    fn prepara_resumen(&mut self) -> bool {
+        let Some(p) = self.paciente.clone() else { return false };
         if self.red.is_some() {
             // conectada, el mismo resumen con los datos del servidor
             self.resumen = resumen_de_red(&p, &self.filas_red, &self.alertas_red);
@@ -432,23 +542,18 @@ impl Medicci {
                     self.pedidos.push(Pedido::Tarjeta);
                     self.bajar = true;
                 }
-                return;
+                return false;
             }
         } else {
             if self.lector.is_none() {
-                return;
+                return false;
             }
             self.datos.registra(&self.usuario, &p.id, "generar_resumen", None);
             if self.resumen.as_ref().map(|r| &r.paciente.id) != Some(&p.id) {
                 self.resumen = self.lee_resumen(&p);
             }
         }
-        // una sola tarjeta en el hilo: la nueva sustituye a la anterior
-        self.hilo.retain(|m| !m.tarjeta);
-        self.hilo.push(Mensaje::mio("Resumen del paciente"));
-        self.hilo.push(Mensaje::tarjeta());
-        self.pestana = Pestana::Resumen;
-        self.bajar = true;
+        self.resumen.is_some()
     }
 
     /// Lleva la tarjeta del chat a una pestaña; si no hay tarjeta, la saca antes.
@@ -471,6 +576,11 @@ impl Medicci {
             self.ampliado = true;
             self.resumen_t = 0.0;
             self.resumen_pos = None;
+            self.resumen_encima = 0;
+        } else if self.ampliado {
+            // ya abierta, quizá detrás de HCIS: delante
+            self.resumen_al_frente = true;
+            self.resumen_encima = 0;
         }
     }
 
@@ -546,6 +656,12 @@ impl Medicci {
         })
     }
 
+    /// Al registro de accesos y, con su texto, a las preguntas del paciente.
+    fn apunta_pregunta(&self, p: &Paciente, pregunta: &str, tipo: &str) {
+        self.datos.registra(&self.usuario, &p.id, "preguntar", Some(tipo));
+        self.datos.apunta_pregunta(&self.usuario, &p.id, p.id_cita.as_deref(), pregunta, tipo);
+    }
+
     fn preguntar(&mut self) {
         let pregunta = self.entrada.trim().to_string();
         if pregunta.is_empty() {
@@ -554,7 +670,7 @@ impl Medicci {
         self.entrada.clear();
         let baja = lector::sin_tildes(&pregunta);
         if baja.contains("resumen") || baja.contains("resume") || baja.contains("ficha") {
-            return self.abre_resumen();
+            return self.resumen_flotante();
         }
         self.hilo.push(Mensaje::mio(pregunta.clone()));
         self.bajar = true;
@@ -571,24 +687,24 @@ impl Medicci {
         let mut partes = Vec::new();
         match l.responde(&self.datos, &pregunta) {
             Respuesta::NoConsta => {
-                self.datos.registra(&self.usuario, &p.id, "preguntar", Some("no_consta"));
+                self.apunta_pregunta(&p, &pregunta, "no_consta");
                 partes.push(Parte::Aviso("No consta en la historia.".into()));
                 partes.push(Parte::Texto(format!(
                     "Ninguna frase de los {} documentos responde a eso, y no lo voy a deducir.",
                     total)));
             }
             Respuesta::Valores(valores) => {
-                self.datos.registra(&self.usuario, &p.id, "preguntar", Some("valor"));
+                self.apunta_pregunta(&p, &pregunta, "valor");
                 for v in valores {
                     partes.push(Parte::Valor(format!("{} {} {}", v.nombre, v.valor, v.unidad)
                         .trim().to_string()));
                     partes.push(Parte::Texto(format!("{} del {}", v.tipo, v.fecha)));
                     partes.push(Parte::Cita(v.linea));
-                    partes.push(Parte::Fuente(format!("¹ {} · {}", v.documento, v.servicio)));
+                    partes.push(Parte::Fuente(v.servicio.clone()));
                 }
             }
             Respuesta::Hechos(hechos) => {
-                self.datos.registra(&self.usuario, &p.id, "preguntar", Some("hechos"));
+                self.apunta_pregunta(&p, &pregunta, "hechos");
                 for h in hechos {
                     let t = h.afirmacion.clone();
                     partes.push(if h.categoria.contains("contradiccion") {
@@ -603,11 +719,11 @@ impl Medicci {
                 }
             }
             Respuesta::Literal(frases) => {
-                self.datos.registra(&self.usuario, &p.id, "preguntar", Some("literal"));
+                self.apunta_pregunta(&p, &pregunta, "literal");
                 partes.push(Parte::Rotulo("No lo tengo ordenado. Esto es lo que pone, tal cual:".into()));
                 for (doc, frase) in frases {
                     partes.push(Parte::Cita(frase));
-                    partes.push(Parte::Fuente(format!("¹ {} · {} · {}", doc.id, doc.fecha, doc.tipo)));
+                    partes.push(Parte::Fuente(format!("{} del {}", doc.tipo, fecha_es(&doc.fecha))));
                 }
             }
         }
@@ -690,7 +806,7 @@ impl Medicci {
                         Parte::Texto(a.texto)
                     });
                     for f in a.fuentes {
-                        partes.push(Parte::Fuente(format!("¹ {} · {}", f.referencia, recorta(&f.texto, 110))));
+                        partes.push(Parte::Fuente(recorta(&f.texto, 110)));
                     }
                 }
                 if mas > 0 {
@@ -711,7 +827,7 @@ impl Medicci {
                 let mut partes = vec![if consta { Parte::Texto(limpio) } else { Parte::Aviso(limpio) }];
                 let n = fuentes.len();
                 for f in fuentes {
-                    partes.push(Parte::Fuente(format!("¹ {} · {}", f.referencia, recorta(&f.texto, 110))));
+                    partes.push(Parte::Fuente(recorta(&f.texto, 110)));
                 }
                 partes.push(Parte::Rotulo(format!("{} · {:.1} s · IA local",
                     match n { 0 => "sin fuentes".into(), 1 => "1 fuente".into(), _ => format!("{} fuentes", n) },
@@ -751,11 +867,12 @@ fn fuentes(ctx: &egui::Context) {
         egui::FontData::from_static(include_bytes!("../fuentes/NotoSans-Bold.ttf")));
     f.font_data.insert("noto_mono".into(),
         egui::FontData::from_static(include_bytes!("../fuentes/NotoSansMono-Regular.ttf")));
-    // las de egui se quedan detrás, para los símbolos que Noto no tenga
+    // detrás, la Mono (tiene las flechas que a Noto Sans le faltan: «↑», «→»)
+    // y las de egui, para los demás símbolos
     let resto = f.families[&FontFamily::Proportional].clone();
-    f.families.get_mut(&FontFamily::Proportional).unwrap().insert(0, "noto".into());
+    f.families.get_mut(&FontFamily::Proportional).unwrap().splice(0..0, ["noto".into(), "noto_mono".into()]);
     f.families.get_mut(&FontFamily::Monospace).unwrap().insert(0, "noto_mono".into());
-    let mut gruesa = vec!["noto_negrita".to_string()];
+    let mut gruesa = vec!["noto_negrita".to_string(), "noto_mono".to_string()];
     gruesa.extend(resto);
     f.families.insert(negrita(), gruesa);
     ctx.set_fonts(f);
@@ -767,8 +884,8 @@ fn estilo(ctx: &egui::Context) {
     v.panel_fill = Color32::TRANSPARENT;
     v.window_fill = BLANCO;
     v.extreme_bg_color = BLANCO;
-    v.faint_bg_color = CREMA;
-    v.selection.bg_fill = Color32::from_rgb(0xcf, 0xe3, 0xd8);
+    v.faint_bg_color = FONDO;
+    v.selection.bg_fill = Color32::from_rgb(0xcd, 0xea, 0xdb);
     v.selection.stroke = trazo(1.0, VERDE);
     v.text_cursor.stroke = trazo(2.0, VERDE);
     v.hyperlink_color = VERDE_2;
@@ -869,14 +986,15 @@ fn cita(ui: &mut egui::Ui, t: &str) {
         .inner_margin(egui::Margin { left: 10.0, right: 8.0, top: 5.0, bottom: 5.0 })
         .show(ui, |ui| {
             ui.label(RichText::new(format!("«{}»", t)).monospace().size(11.0)
-                .color(Color32::from_rgb(0x33, 0x45, 0x4f)));
+                .color(Color32::from_rgb(0x3a, 0x3f, 0x42)));
         })
         .response;
     ui.painter().vline(r.rect.left() + 1.0, r.rect.y_range(), trazo(2.0, ORO));
 }
 
+/// De dónde sale un dato, en el chat: discreto y en palabras, sin códigos.
 fn fuente(ui: &mut egui::Ui, t: &str) {
-    ui.label(RichText::new(t).monospace().size(10.5).color(VERDE_2));
+    ui.label(texto(format!("Fuente: {}", t), 11.0, GRIS, false));
 }
 
 // =====================================================================
@@ -887,10 +1005,9 @@ impl Medicci {
     /// Mantiene la ventana anclada abajo a la derecha con el tamaño que toca.
     /// El gestor de ventanas puede tardar en hacer caso: se reintenta unas veces.
     fn coloca(&mut self, ctx: &egui::Context) {
-        let tam = ventana(self.abierto || self.t > 0.0);
+        let tam = ventana();
         let (monitor, real) = ctx.input(|i| (i.viewport().monitor_size, i.viewport().outer_rect));
         let Some(monitor) = monitor else {
-            self.lista = false;
             ctx.request_repaint();
             return;
         };
@@ -903,10 +1020,8 @@ impl Medicci {
         }
         let bien = real.is_some_and(|r| (r.min - pos).length() < 2.0 && (r.size() - tam).length() < 2.0);
         if bien || self.intentos >= 6 {
-            self.lista = true;
             return;
         }
-        self.lista = false;
         ctx.request_repaint();
         if self.espera > 0 {
             self.espera -= 1;
@@ -916,6 +1031,49 @@ impl Medicci {
         ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(pos));
         self.intentos += 1;
         self.espera = 10;
+    }
+
+    /// El chat, en su propia ventana justo encima de la burbuja. La ventana
+    /// existe desde el arranque: plegado no pinta nada y deja pasar los clics.
+    /// Si se creara al abrir, GNOME la tomaría por una ventana que roba el
+    /// foco (justo se ha pulsado la burbuja) y avisaría con «… is ready».
+    fn ventana_chat(&mut self, ctx: &egui::Context) {
+        let visible = self.abierto || self.t > 0.0;
+        otro_par_de_fotogramas(ctx, &mut self.chat_visto, visible);
+        if !visible {
+            self.chat_encima = 0;
+        }
+        // donde está la burbuja de verdad: el gestor de ventanas puede no
+        // dejarla del todo en la esquina (barras del escritorio)
+        let Some(bola) = ctx.input(|i| i.viewport().outer_rect) else { return };
+        let tam = ventana_del_chat();
+        // el borde derecho del chat, con el de la burbuja; abajo, el hueco
+        let pos = pos2((bola.right() - tam.x).round(),
+                       (bola.top() + 2.0 * AIRE - HUECO - tam.y).round());
+        let constructor = egui::ViewportBuilder::default()
+            .with_title("Medicci · Chat")
+            .with_mouse_passthrough(!visible)
+            .with_inner_size(tam)
+            .with_position(pos)
+            .with_decorations(false)
+            .with_transparent(true)
+            .with_resizable(false)
+            .with_taskbar(false);           // no siempre encima: HCIS o SELENE pueden taparlo
+        ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("medicci_chat"), constructor,
+                                    |ctx, _clase| {
+            if !visible {
+                return;                     // plegado: transparente y sin clics
+            }
+            if ctx.input(|i| i.viewport().close_requested() || i.key_pressed(egui::Key::Escape)) {
+                self.abierto = false;
+            }
+            // al abrirse, delante de HCIS o SELENE
+            sube_un_momento(ctx, &mut self.chat_encima, &mut self.chat_subida, false);
+            if self.t < 1.0 {
+                ctx.request_repaint_after(FOTOGRAMA);
+            }
+            self.panel(ctx);
+        });
     }
 
     fn burbuja(&mut self, ctx: &egui::Context) {
@@ -941,7 +1099,7 @@ impl Medicci {
                 p.line_segment([c + vec2(0.0, 4.0), c + vec2(d, -3.0)], s);
             }
             if r.clicked() {
-                self.abierto = !self.abierto;
+                self.abierto = !self.abierto;   // abierto, se pliega; plegado, se abre
                 if self.abierto {
                     if self.paciente.is_some() { self.foco_chat = true } else { self.foco_ident = true }
                 }
@@ -950,10 +1108,8 @@ impl Medicci {
     }
 
     fn panel(&mut self, ctx: &egui::Context) {
-        let pantalla = ctx.screen_rect();
-        let abajo = pantalla.bottom() - AIRE - BOLA - HUECO;
-        let caja = Rect::from_min_max(pos2(pantalla.right() - AIRE - PANEL.x, abajo - PANEL.y),
-                                      pos2(pantalla.right() - AIRE, abajo));
+        letras_compuestas(ctx);
+        let caja = Rect::from_min_size(pos2(AIRE, AIRE), PANEL);
         // crece desde la burbuja: escala desde la esquina de abajo a la derecha
         let e = easing::cubic_out(self.t);
         let s = 0.84 + 0.16 * e;
@@ -971,7 +1127,7 @@ impl Medicci {
                 p.add(egui::epaint::Shadow { offset: vec2(0.0, 6.0), blur: 20.0, spread: 0.0,
                                              color: Color32::from_black_alpha(55) }
                       .as_shape(caja, 16.0));
-                p.rect(caja, 16.0, CREMA, trazo(1.0, LINEA));
+                p.rect(caja, 16.0, FONDO, trazo(1.0, LINEA));
 
                 let cabeza = Rect::from_min_size(caja.min, vec2(caja.width(), 64.0));
                 let ficha = Rect::from_min_size(cabeza.left_bottom(), vec2(caja.width(), 52.0));
@@ -982,6 +1138,7 @@ impl Medicci {
                 self.conversacion(ui, hilo);
                 self.redactor(ui, pie);
             });
+        sin_metodo_de_entrada(ctx);
     }
 
     fn cabecera(&mut self, ui: &mut egui::Ui, caja: Rect) {
@@ -1029,7 +1186,7 @@ impl Medicci {
             }
         }
         if apagar {
-            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+            ui.ctx().send_viewport_cmd_to(egui::ViewportId::ROOT, egui::ViewportCommand::Close);
         }
         if reiniciar {
             self.reinicia(ui.ctx());
@@ -1053,7 +1210,7 @@ impl Medicci {
         }
         args.push("--reinicio".into());         // la nueva espera a que esta se cierre
         if std::process::Command::new(exe).args(&args).spawn().is_ok() {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            ctx.send_viewport_cmd_to(egui::ViewportId::ROOT, egui::ViewportCommand::Close);
         }
     }
 
@@ -1084,7 +1241,7 @@ impl Medicci {
                 ui.label(texto("Paciente", 12.0, GRIS, true));
                 ui.add_space(2.0);
                 egui::Frame::none()
-                    .fill(CREMA)
+                    .fill(FONDO)
                     .stroke(trazo(1.0, LINEA))
                     .rounding(8.0)
                     .inner_margin(egui::Margin::symmetric(10.0, 6.0))
@@ -1175,7 +1332,7 @@ impl Medicci {
         ui.allocate_new_ui(UiBuilder::new().max_rect(abajo.with_min_y(abajo.top() + 8.0))
                                .layout(Layout::left_to_right(Align::Center)), |ui| {
             egui::Frame::none()
-                .fill(CREMA)
+                .fill(FONDO)
                 .stroke(trazo(1.0, LINEA))
                 .rounding(17.0)
                 .inner_margin(egui::Margin { left: 12.0, right: 3.0, top: 3.0, bottom: 3.0 })
@@ -1213,7 +1370,7 @@ impl Medicci {
                 });
         });
         if resumen {
-            self.abre_resumen();
+            self.resumen_flotante();
         }
         if let Some(p) = ir {
             self.muestra(p);
@@ -1555,19 +1712,52 @@ fn mes_año(fecha: &str) -> String {
     }
 }
 
-/// La fuente de un dato: el documento en pequeño; encima del ratón, cuál es.
+/// El documento dicho como lo diría un médico: «Endoscopia», «Cardiología».
+fn nombre_doc(d: &Documento) -> String {
+    let tipo = d.tipo.to_lowercase();
+    let servicio = d.servicio.split(" · ").next().unwrap_or_default();
+    if tipo.contains("endoscopia") {
+        "Endoscopia".into()
+    } else if tipo.contains("urgencias") {
+        "Urgencias".into()
+    } else if tipo.contains("quirófano") {
+        "Quirófano".into()
+    } else if tipo.contains("radiología") {
+        "Radiología".into()
+    } else if tipo.starts_with("derivación") {
+        "Derivación".into()
+    } else if tipo.contains("consulta") && !servicio.is_empty() {
+        servicio.replace("Atención Primaria", "Primaria")
+    } else {
+        d.tipo.clone()
+    }
+}
+
+/// «2016-09-12» → «sep 2016».
+fn mes_y_año(fecha: &str) -> String {
+    const MESES: [&str; 12] = ["ene", "feb", "mar", "abr", "may", "jun",
+                               "jul", "ago", "sep", "oct", "nov", "dic"];
+    let mes: usize = fecha.get(5..7).and_then(|m| m.parse().ok()).unwrap_or(0);
+    match MESES.get(mes.wrapping_sub(1)) {
+        Some(m) => format!("{} {}", m, año(fecha)),
+        None => año(fecha),
+    }
+}
+
+/// El documento entero, para cuando se pasa el ratón por su fuente.
+fn doc_entero(r: &Resumen, id: &str) -> Option<String> {
+    r.documento(id).map(|d| format!("{} del {}\n{}", d.tipo, fecha_es(&d.fecha), d.servicio))
+}
+
+/// La fuente de un dato: en gris y en palabras («Endoscopia · sep 2016»);
+/// encima del ratón, el documento entero.
 fn chip(ui: &mut egui::Ui, r: &Resumen, id: &str) {
-    let resp = egui::Frame::none()
-        .fill(MIO)
-        .stroke(trazo(1.0, VERDE_CLARO))
-        .rounding(4.0)
-        .inner_margin(egui::Margin::symmetric(5.0, 1.0))
-        .show(ui, |ui| {
-            ui.label(RichText::new(id).monospace().size(10.5).color(VERDE_2));
-        })
-        .response;
-    if let Some(d) = r.documento(id) {
-        resp.on_hover_text(format!("{} · {} · {}", d.tipo, fecha_es(&d.fecha), d.servicio));
+    let Some(d) = r.documento(id) else { return };
+    let resp = ui.add(egui::Label::new(texto(format!("{} · {}", nombre_doc(d), mes_y_año(&d.fecha)),
+                                             10.5, GRIS, false))
+                      .sense(Sense::hover()));
+    if let Some(t) = doc_entero(r, id) {
+        resp.on_hover_text(t);
     }
 }
 
@@ -1601,13 +1791,13 @@ fn icono_reiniciar(p: &egui::Painter, c: Pos2) {
                                 BLANCO, Stroke::NONE));
 }
 
-/// Una fila: el contenido a la izquierda y, si la hay, la fuente a la derecha.
+/// Una fila: el contenido y, debajo, en pequeño, de qué documento sale.
 fn con_fuente(ui: &mut egui::Ui, r: &Resumen, doc: Option<&str>, dentro: impl FnOnce(&mut egui::Ui)) {
-    ui.horizontal_top(|ui| {
-        let ancho = ui.available_width() - if doc.is_some() { 46.0 } else { 0.0 };
-        columna(ui, ancho, Align::Min, dentro);
+    let ancho = ui.available_width();
+    columna(ui, ancho, Align::Min, |ui| {
+        dentro(ui);
         if let Some(d) = doc {
-            ui.with_layout(Layout::right_to_left(Align::Min), |ui| chip(ui, r, d));
+            chip(ui, r, d);
         }
     });
 }
@@ -1749,15 +1939,13 @@ fn bloque_claves(ui: &mut egui::Ui, r: &Resumen, por_fila: usize) {
                         ui.set_min_height(58.0);
                         ui.vertical(|ui| {
                             ui.spacing_mut().item_spacing.y = 1.0;
-                            ui.horizontal(|ui| {
-                                ui.label(texto(&c.etiqueta, 11.5, GRIS, false));
-                                if let Some(d) = &c.documento {
-                                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| chip(ui, r, d));
-                                }
-                            });
+                            ui.label(texto(&c.etiqueta, 11.5, GRIS, false));
                             ui.label(texto(&c.valor, 17.0, TINTA, true));
                             if let Some(d) = &c.detalle {
                                 ui.label(texto(d, 11.0, TINTA_2, false));
+                            }
+                            if let Some(d) = &c.documento {
+                                chip(ui, r, d);
                             }
                         });
                     });
@@ -1886,10 +2074,14 @@ fn tabla_labs(ui: &mut egui::Ui, r: &Resumen, id: &str) {
             ui.label(texto("Parámetro", 11.0, GRIS, false));
             for doc in [&r.labs_docs.0, &r.labs_docs.1] {
                 match doc {
-                    Some((d, f)) => ui.horizontal(|ui| {
-                        ui.label(texto(fecha_es(f), 11.0, GRIS, false));
-                        chip(ui, r, d);
-                    }).response,
+                    Some((d, f)) => {
+                        let fecha = ui.add(egui::Label::new(texto(fecha_es(f), 11.0, GRIS, false))
+                                           .sense(Sense::hover()));
+                        match doc_entero(r, d) {
+                            Some(t) => fecha.on_hover_text(t),
+                            None => fecha,
+                        }
+                    }
                     None => ui.label(texto("—", 11.0, GRIS, false)),
                 };
             }
@@ -2019,9 +2211,12 @@ fn grafica_hb(ui: &mut egui::Ui, r: &Resumen) {
     }
     ui.add_space(2.0);
     ui.horizontal_wrapped(|ui| {
-        ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
-        ui.label(texto("Fuentes", 11.0, GRIS, false));
-        for (_, h) in &puntos {
+        ui.spacing_mut().item_spacing = vec2(0.0, 4.0);
+        ui.label(texto("Fuentes: ", 10.5, GRIS, false));
+        for (i, (_, h)) in puntos.iter().enumerate() {
+            if i > 0 {
+                ui.label(texto(", ", 10.5, GRIS, false));
+            }
             chip(ui, r, &h.documento);
         }
     });
@@ -2069,7 +2264,7 @@ fn tarjeta(ui: &mut egui::Ui, r: &Resumen, pestana: Pestana) -> Option<Accion> {
                     ui.horizontal(|ui| {
                         rotulo(ui, "Por qué viene hoy", GRIS);
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                            let b = egui::Button::new(texto("Ampliar ↗", 11.5, TINTA, true))
+                            let b = egui::Button::new(texto("Ampliar", 11.5, TINTA, true))
                                 .fill(BLANCO)
                                 .stroke(trazo(1.0, LINEA))
                                 .rounding(8.0)
@@ -2282,14 +2477,14 @@ fn texto_nota(r: &Resumen) -> String {
 }
 
 impl Medicci {
+    /// La ventana del resumen ampliado. Como la del chat, existe desde el
+    /// arranque y, cerrada, es transparente y deja pasar los clics.
     fn ventana_resumen(&mut self, ctx: &egui::Context) {
-        if !self.ampliado {
-            return;
-        }
-        let Some(resumen) = self.resumen.take() else {
+        if self.resumen.is_none() {
             self.ampliado = false;
-            return;
-        };
+        }
+        let abierta = self.ampliado;
+        otro_par_de_fotogramas(ctx, &mut self.resumen_visto, abierta);
         let monitor = ctx.input(|i| i.viewport().monitor_size).unwrap_or(vec2(1440.0, 900.0));
         let hoja = vec2(HOJA.x.min(monitor.x - 80.0), HOJA.y.min(monitor.y - 80.0));
         let tam = hoja + Vec2::splat(2.0 * AIRE);
@@ -2298,13 +2493,18 @@ impl Medicci {
         });
         let constructor = egui::ViewportBuilder::default()
             .with_title("Medicci · Resumen")
+            .with_mouse_passthrough(!abierta)
             .with_inner_size(tam)
             .with_position(pos)
             .with_decorations(false)
             .with_transparent(true)
             .with_resizable(false)
-            .with_always_on_top()
             .with_taskbar(false);
+        let id = egui::ViewportId::from_hash_of("medicci_resumen");
+        let Some(resumen) = (if abierta { self.resumen.take() } else { None }) else {
+            ctx.show_viewport_immediate(id, constructor, |_, _| {});
+            return;
+        };
 
         let dt = ctx.input(|i| i.stable_dt).min(0.05);
         self.resumen_t = (self.resumen_t + dt / 0.22).min(1.0);
@@ -2315,13 +2515,15 @@ impl Medicci {
         let mut copiar = false;
         let mut accion = None;
 
-        ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("medicci_resumen"), constructor,
-                                    |ctx, _clase| {
+        ctx.show_viewport_immediate(id, constructor, |ctx, _clase| {
             if ctx.input(|i| i.viewport().close_requested() || i.key_pressed(egui::Key::Escape)) {
                 cerrar = true;
             }
+            // al abrirse, y al pedirla otra vez, delante de todo (también del chat)
+            sube_un_momento(ctx, &mut self.resumen_encima, &mut self.resumen_subida,
+                            std::mem::take(&mut self.resumen_al_frente));
             if e < 1.0 || recien_copiado {
-                ctx.request_repaint();
+                ctx.request_repaint_after(FOTOGRAMA);
             }
             let caja = Rect::from_min_size(pos2(AIRE, AIRE), hoja);
             let s = 0.96 + 0.04 * e;
@@ -2339,7 +2541,7 @@ impl Medicci {
                     p.add(egui::epaint::Shadow { offset: vec2(0.0, 6.0), blur: 22.0, spread: 0.0,
                                                  color: Color32::from_black_alpha(60) }
                           .as_shape(caja, 14.0));
-                    p.rect(caja, 14.0, CREMA, trazo(1.0, LINEA));
+                    p.rect(caja, 14.0, FONDO, trazo(1.0, LINEA));
 
                     // cabecera: se arrastra desde aquí
                     let cabeza = Rect::from_min_size(caja.min, vec2(caja.width(), 74.0));
@@ -2441,25 +2643,30 @@ impl eframe::App for Medicci {
         if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
             self.abierto = false;
         }
-        // el despliegue avanza cuando la ventana ya ha crecido
+        // el despliegue: la ventana del chat ya existe, así que empieza al pulsar
         let dt = ctx.input(|i| i.stable_dt).min(0.05);
         if self.abierto {
-            if self.lista {
-                self.t = (self.t + dt / 0.26).min(1.0);
-            }
+            self.t = (self.t + dt / 0.26).min(1.0);
         } else {
             self.t = (self.t - dt / 0.18).max(0.0);
         }
         if (self.abierto && self.t < 1.0) || (!self.abierto && self.t > 0.0) {
-            ctx.request_repaint();
+            ctx.request_repaint_after(FOTOGRAMA);
         }
 
+        // «siempre encima» se pide al crear la ventana, pero algunos gestores de
+        // ventanas (openbox) no hacen caso hasta que ya se ve: se vuelve a pedir
+        if self.marcos < 3 {
+            self.marcos += 1;
+            ctx.request_repaint();
+            if self.marcos == 3 {
+                ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
+            }
+        }
         self.red(ctx);
         self.coloca(ctx);
         self.burbuja(ctx);
-        if self.t > 0.0 {
-            self.panel(ctx);
-        }
+        self.ventana_chat(ctx);
         self.ventana_resumen(ctx);
 
         if let Some(tema) = self.pendiente.take() {
@@ -2551,12 +2758,16 @@ fn main() -> eframe::Result<()> {
     let opciones = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("Medicci")
-            .with_inner_size(ventana(false))
+            .with_inner_size(ventana())
             .with_decorations(false)
             .with_transparent(true)
             .with_resizable(false)
             .with_always_on_top()
             .with_taskbar(false),
+        // sin esperar al refresco de pantalla: el chat y el resumen plegados son
+        // ventanas que no se ven, y XWayland solo les da un refresco por segundo;
+        // con vsync, cada fotograma de la animación esperaba ese segundo
+        vsync: false,
         ..Default::default()
     };
 
@@ -2610,6 +2821,65 @@ mod pruebas {
         assert!(r.pruebas[0].afirmacion.starts_with("Radiografía · pendiente"));
         assert!(r.para_la_consulta().iter().any(|c| c.valor == "Movilidad reducida"));
         assert!(resumen_de_red(&p, &[], &alertas).is_none(), "sin datos no hay resumen");
+    }
+
+    /// Sin glifo, egui pinta un cuadro: todo símbolo que escriba la burbuja,
+    /// el servidor o la base tiene que estar en las fuentes.
+    #[test]
+    fn los_simbolos_tienen_glifo() {
+        let ctx = egui::Context::default();
+        fuentes(&ctx);
+        let _ = ctx.run(Default::default(), |_| {});
+        let simbolos = "←↑→↓−·—…•«»¿¡áéíóúñÁÉÍÓÚÑüº";
+        for familia in [FontFamily::Proportional, negrita()] {
+            for c in simbolos.chars() {
+                assert!(ctx.fonts(|f| f.has_glyph(&FontId::new(12.0, familia.clone()), c)),
+                        "falta «{}» en {:?}", c, familia);
+            }
+        }
+    }
+
+    #[test]
+    fn las_letras_compuestas_se_escriben() {
+        let ctx = egui::Context::default();
+        let mut texto = String::from("cami");
+        let mut entrada = egui::RawInput::default();
+        entrada.events = vec![
+            egui::Event::Ime(egui::ImeEvent::Commit("ó".into())),
+            egui::Event::Text("n ".into()),
+            egui::Event::Ime(egui::ImeEvent::Preedit("¨".into())),
+            egui::Event::Ime(egui::ImeEvent::Commit("ü".into())),
+            egui::Event::Text("ñÁ".into()),
+        ];
+        for eventos in [Vec::new(), std::mem::take(&mut entrada.events)] {
+            let _ = ctx.run(egui::RawInput { events: eventos, ..Default::default() }, |ctx| {
+                letras_compuestas(ctx);
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    let r = ui.add(egui::TextEdit::singleline(&mut texto).id(egui::Id::new("t")));
+                    r.request_focus();
+                });
+            });
+        }
+        assert_eq!(texto, "camión üñÁ");
+    }
+
+    #[test]
+    fn la_pregunta_se_guarda_tal_cual() {
+        let mut app = Medicci::nuevo(datos::base_de_prueba("preguntas"), Some("2856".into()), None);
+        app.entrada = "¿Tiene alergias? Pingüino, ÑANDÚ".into();
+        app.preguntar();
+        let p = app.datos.preguntas("PAC-02856");
+        assert_eq!(p, vec![("¿Tiene alergias? Pingüino, ÑANDÚ".to_string(), "hechos".to_string())]);
+    }
+
+    #[test]
+    fn resumen_abre_la_ventana_sin_tocar_el_chat() {
+        let datos = datos::base_de_prueba("flotante");
+        let mut app = Medicci::nuevo(datos, Some("417".into()), None);
+        let antes = app.hilo.len();
+        app.resumen_flotante();
+        assert!(app.ampliado);
+        assert_eq!(app.hilo.len(), antes, "el chat no cambia");
     }
 
     #[test]

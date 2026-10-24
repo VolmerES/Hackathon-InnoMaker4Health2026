@@ -94,9 +94,9 @@
 @media (max-width:560px){#chat{right:8px;left:8px;width:auto;bottom:84px}#modal .fila{grid-template-columns:1fr}}
 
 /* ---------- ficha de primera consulta (formato Medicci) ---------- */
-.med{--crema:#f7f4ec;--verde-m:#12402f;--verde-2:#1d5a44;--oro:#d9a32b;--menta:#cfe3d8;
-  --tinta-m:#1d2a24;--gris-m:#6b7a72;--rojo-m:#9c3b23;--linea-m:#e3ded1;
-  background:var(--crema);margin:-14px -16px -18px;padding:16px 18px 22px;
+.med{--fondo:#f5f5f5;--verde-m:#00704d;--verde-2:#0a6b4a;--oro:#f3c418;--menta:#cdeadb;
+  --tinta-m:#222222;--gris-m:#6e7477;--rojo-m:#a01b1b;--linea-m:#d7d7d7;
+  background:var(--fondo);margin:-14px -16px -18px;padding:16px 18px 22px;
   font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;color:var(--tinta-m)}
 .med .med-eyebrow{font-family:Verdana,sans-serif;font-size:9.5px;letter-spacing:.09em;
   text-transform:uppercase;color:#8a6a22;font-weight:bold;margin-bottom:3px}
@@ -123,7 +123,7 @@
 .med .val{font-size:19px;font-weight:600;line-height:1.2}
 .med .tarjeta.roja .val{color:var(--rojo-m)}
 .med .val.sin{color:var(--gris-m);font-weight:500}
-.med .tarjeta p{font-family:Verdana,sans-serif;font-size:11px;line-height:1.45;color:#3f4c45;margin:6px 0 0}
+.med .tarjeta p{font-family:Verdana,sans-serif;font-size:11px;line-height:1.45;color:#444a4d;margin:6px 0 0}
 .med .tarjeta.oscura p{color:#cfe0d6}
 .med h4{font-family:"Iowan Old Style",Georgia,serif;font-size:15.5px;margin:0 0 7px;font-weight:600}
 .med .fuente-m{font-family:"Courier New",monospace;font-size:10px;color:var(--gris-m);margin-top:7px}

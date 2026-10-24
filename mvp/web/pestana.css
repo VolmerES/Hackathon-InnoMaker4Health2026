@@ -1,13 +1,13 @@
 /* Medicci en la web, con el mismo aspecto que la burbuja de escritorio de
-   medicci-rs: burbuja verde con el médico abajo a la derecha, panel crema,
-   cabecera verde oscuro, oro para lo importante y Noto Sans. */
+   medicci-rs: burbuja verde SERMAS con el médico abajo a la derecha, panel gris claro,
+   cabecera verde oscuro, amarillo de aviso para lo importante y Noto Sans. */
 @font-face{font-family:"Noto Sans";src:url("/fuentes/NotoSans-Regular.ttf") format("truetype");font-weight:400}
 @font-face{font-family:"Noto Sans";src:url("/fuentes/NotoSans-Bold.ttf") format("truetype");font-weight:700}
 @font-face{font-family:"Noto Sans Mono";src:url("/fuentes/NotoSansMono-Regular.ttf") format("truetype")}
 
-#medicci{--verde:#1a5c44;--verde-osc:#0e2d20;--verde-2:#1d5a44;--verde-claro:#9dc3b1;--crema:#f6f3ec;
-  --linea:#e3ded1;--linea-suave:#efebe1;--oro:#d9a32b;--oro-suave:#fbf0d5;--rojo:#9c3b23;--gris:#6b7a72;
-  --tinta:#1d2a24;--tinta-2:#3f4c45;--mio:#e4eee8;--cita:#fbf7e8;
+#medicci{--verde:#009b6b;--verde-osc:#00704d;--verde-2:#0a6b4a;--verde-claro:#bfe6d3;--fondo:#f5f5f5;
+  --linea:#d7d7d7;--linea-suave:#ececec;--oro:#f3c418;--oro-suave:#fff8e1;--rojo:#a01b1b;--gris:#6e7477;
+  --tinta:#222222;--tinta-2:#444a4d;--mio:#e5f1e9;--cita:#fffbea;
   font-family:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--tinta);font-size:13px;line-height:1.45}
 #medicci *{box-sizing:border-box}
 
@@ -28,7 +28,7 @@
 /* ---------- el panel ---------- */
 #medicci .panel{position:fixed;right:24px;bottom:92px;width:380px;max-width:calc(100vw - 32px);
   height:min(620px,calc(100vh - 116px));z-index:60;display:flex;flex-direction:column;overflow:hidden;
-  background:var(--crema);border:1px solid var(--linea);border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.22);
+  background:var(--fondo);border:1px solid var(--linea);border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.22);
   transform-origin:100% 100%;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s}
 #medicci:not(.abierto) .panel{transform:translateY(10px) scale(.86);opacity:0;pointer-events:none}
 
@@ -68,7 +68,7 @@
 #medicci .ref{border:0;background:none;padding:0 2px;font:11px/1.4 "Noto Sans Mono",ui-monospace,monospace;color:var(--verde-2);cursor:pointer;border-bottom:1px dotted var(--verde-claro)}
 #medicci .ref:hover{color:var(--verde);border-bottom-style:solid}
 #medicci .origen{margin:5px 0 2px;padding:5px 8px 5px 10px;background:var(--cita);border-left:2px solid var(--oro);border-radius:4px;
-  font:11px/1.45 "Noto Sans Mono",ui-monospace,monospace;color:#33454f;white-space:pre-wrap}
+  font:11px/1.45 "Noto Sans Mono",ui-monospace,monospace;color:#3a3f42;white-space:pre-wrap}
 
 /* conversación */
 #medicci .yo{align-self:flex-end;max-width:84%;background:var(--mio);border-radius:14px 4px 14px 14px;padding:8px 12px;font-weight:700;color:var(--tinta)}
@@ -83,8 +83,8 @@
 #medicci .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
 #medicci .chips:empty{display:none}
 #medicci .chips button{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:3px 10px;font:inherit;font-size:11.5px;color:var(--verde-2);cursor:pointer}
-#medicci .chips button:hover{border-color:var(--verde-claro);background:var(--crema)}
-#medicci form{display:flex;align-items:center;gap:6px;background:var(--crema);border:1px solid var(--linea);border-radius:18px;padding:3px 3px 3px 13px}
+#medicci .chips button:hover{border-color:var(--verde-claro);background:var(--fondo)}
+#medicci form{display:flex;align-items:center;gap:6px;background:var(--fondo);border:1px solid var(--linea);border-radius:18px;padding:3px 3px 3px 13px}
 #medicci form input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:13px;color:var(--tinta);padding:5px 0}
 #medicci form input::placeholder{color:var(--gris)}
 #medicci form button{width:28px;height:28px;border-radius:50%;border:0;background:var(--linea);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
