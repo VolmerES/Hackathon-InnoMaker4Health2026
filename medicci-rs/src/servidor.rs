@@ -37,6 +37,7 @@ pub enum Llega {
     Filas { sesion: String, filas: Vec<FilaRed> },
     Tarjeta { sesion: String, alertas: Vec<Alerta>, mas: i64 },
     Respuesta { texto: String, consta: bool, fuentes: Vec<Fuente>, segundos: f64 },
+    Paso { n: i64, accion: String, texto: String },   // la simulación (mvp/simular.py)
     Fallo(String),
 }
 
@@ -201,6 +202,18 @@ impl Servidor {
     /// Vuelve a traer los datos: ha llegado algo nuevo por HL7.
     pub fn filas(&self, ctx: &egui::Context, sesion: String) {
         self.en_hilo(ctx, move |base| vec![filas(base, &sesion)]);
+    }
+
+    /// El paso en el que va la simulación del día del médico.
+    pub fn paso(&self, ctx: &egui::Context) {
+        self.en_hilo(ctx, move |base| match leer(agente(3).get(&format!("{base}/api/simulacion")).call()) {
+            Ok(v) => vec![Llega::Paso {
+                n: v["n"].as_i64().unwrap_or(0),
+                accion: v["accion"].as_str().unwrap_or_default().to_string(),
+                texto: v["texto"].as_str().unwrap_or_default().to_string(),
+            }],
+            Err(_) => Vec::new(),
+        });
     }
 
     /// Apunta en el registro de accesos lo que el médico hace en pantalla.

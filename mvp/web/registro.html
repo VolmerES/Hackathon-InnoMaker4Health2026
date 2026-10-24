@@ -97,9 +97,12 @@ function vio(l) {
 }
 
 let vistas = new Set(), primera = true;
+// ?medico=… abre el panel filtrado por ese médico
+let medicoInicial = new URLSearchParams(location.search).get("medico") || "";
 async function pinta() {
   const q = new URLSearchParams();
-  if ($("#f-medico").value) q.set("medico", $("#f-medico").value);
+  const medico = $("#f-medico").value || medicoInicial;
+  if (medico) q.set("medico", medico);
   if ($("#f-paciente").value.trim()) q.set("paciente", $("#f-paciente").value.trim().toUpperCase());
   const d = await fetch("/api/registro?" + q).then(r => r.json()).catch(() => null);
   if (!d) return;
@@ -112,7 +115,7 @@ async function pinta() {
   $("#n-medicos").textContent = d.medicos.length;
   $("#n-pacientes").textContent = d.pacientes;
   $("#n-preguntas").textContent = d.lineas.filter(l => l.accion === "pregunta").length;
-  const sel = $("#f-medico"), elegido = sel.value;
+  const sel = $("#f-medico"), elegido = sel.value || medicoInicial;
   sel.innerHTML = `<option value="">Todos los médicos</option>` + d.medicos.map(([m, n]) =>
     `<option value="${esc(m)}"${m === elegido ? " selected" : ""}>${esc(m)} · ${n}</option>`).join("");
   $("#f-aviso").textContent = d.total > d.lineas.length ? `Se ven las ${d.lineas.length} más recientes de ${d.total}.` : "";
@@ -137,7 +140,11 @@ $("#filas").onclick = e => { const a = e.target.closest(".pac"); if (a) { $("#f-
 $("#f-medico").onchange = pinta;
 $("#f-paciente").oninput = pinta;
 $("#f-limpiar").onclick = () => { $("#f-medico").value = ""; $("#f-paciente").value = ""; pinta(); };
+$("#f-limpiar").addEventListener("click", () => { medicoInicial = ""; });
+$("#f-medico").addEventListener("change", () => { medicoInicial = ""; });
 pinta(); setInterval(pinta, 2000);
+if (new URLSearchParams(location.search).has("simulacion"))
+  document.body.append(Object.assign(document.createElement("script"), {src: "simulacion.js"}));
 </script>
 </body>
 </html>

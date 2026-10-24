@@ -16,6 +16,7 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
 mod datos;
+mod hcis;
 mod lector;
 mod servidor;
 
@@ -247,6 +248,14 @@ struct Medicci {
     alertas_red: Vec<(String, Vec<String>)>, // la tarjeta del servidor: texto y sus fuentes
     resumen_auto: bool,             // al abrir el paciente, el resumen sale solo
     subir: bool,                    // el chat se enseña desde arriba (el resumen recién abierto)
+    hcis_patron: Option<regex::Regex>, // cómo sale el NHC en el título de HCIS
+    hcis_visto: Option<String>,     // el último paciente visto abierto en HCIS
+    hcis_mirado: f64,
+    // --simulacion: la burbuja hace lo que dice la simulación (mvp/simular.py)
+    simulacion: bool,
+    paso_n: Option<i64>,
+    paso_mirado: f64,
+    escribiendo: Option<(String, f64)>, // una pregunta que se va escribiendo sola
 }
 
 /// Lo que la burbuja le pide al servidor.
@@ -256,6 +265,7 @@ enum Pedido {
     Tarjeta,
     Filas,
     Registro(&'static str),         // lo que hace el médico en pantalla, para el registro
+    Paso,                           // simulación: qué toca ahora
 }
 
 /// Quita las referencias del texto («[C3]»): ya van debajo, como fuentes.
@@ -432,6 +442,15 @@ impl Medicci {
             alertas_red: Vec::new(),
             resumen_auto: false,
             subir: false,
+            hcis_patron: regex::Regex::new(&std::env::var("MEDICCI_TITULO").ok()
+                .or_else(|| servidor::de_la_configuracion("MEDICCI_TITULO"))
+                .unwrap_or_else(|| hcis::PATRON.into())).ok(),
+            hcis_visto: None,
+            hcis_mirado: f64::NEG_INFINITY,
+            simulacion: false,
+            paso_n: None,
+            paso_mirado: f64::NEG_INFINITY,
+            escribiendo: None,
         };
         app.saludo();
         if let Some(id) = inicial {
@@ -443,10 +462,81 @@ impl Medicci {
     fn saludo(&mut self) {
         self.hilo.clear();
         self.hilo.push(Mensaje::suyo(vec![Parte::Texto(if self.red.is_some() {
-            "Escriba arriba el NHC del paciente y le digo lo que hay que saber antes de que entre."
+            "Abra al paciente en HCIS y le digo lo que hay que saber antes de que entre.              También puede escribir su NHC arriba."
         } else {
             "Escriba arriba el número o el ID del paciente y leo su historia antes de que entre."
         }.into())]));
+    }
+
+    /// Simulación: lo que haría el médico con la burbuja en este paso.
+    fn haz_paso(&mut self, accion: &str, texto: String) {
+        match accion {
+            "abrir" => self.abierto = true,
+            "plegar" => {
+                self.ampliado = false;
+                self.abierto = false;
+            }
+            "preguntar" => {
+                self.abierto = true;
+                self.escribiendo = Some((texto, f64::NAN));     // empieza en el siguiente fotograma
+            }
+            "resumen" => self.abre_resumen(),
+            "ampliar" => self.amplia(),
+            "cerrar_ampliar" => self.ampliado = false,
+            "pestana" => self.muestra(match texto.as_str() {
+                "Historial" => Pestana::Historial,
+                "Pruebas" => Pestana::Pruebas,
+                "Medicacion" => Pestana::Medicacion,
+                _ => Pestana::Resumen,
+            }),
+            _ => {}
+        }
+    }
+
+    /// Simulación: pide el paso cada medio segundo y escribe la pregunta letra a letra.
+    fn simula(&mut self, ctx: &egui::Context) {
+        if !self.simulacion || self.red.is_none() {
+            return;
+        }
+        let ahora = ctx.input(|i| i.time);
+        if ahora - self.paso_mirado > 0.5 {
+            self.paso_mirado = ahora;
+            self.pedidos.push(Pedido::Paso);
+        }
+        ctx.request_repaint_after(std::time::Duration::from_millis(500));
+        if let Some((texto, inicio)) = self.escribiendo.take() {
+            let inicio = if inicio.is_nan() { ahora } else { inicio };
+            let letras = ((ahora - inicio) * 16.0) as usize;
+            let total = texto.chars().count();
+            self.entrada = texto.chars().take(letras).collect();
+            ctx.request_repaint_after(std::time::Duration::from_millis(30));
+            if letras >= total + 10 {
+                self.entrada = texto;
+                self.preguntar();
+            } else {
+                self.escribiendo = Some((texto, inicio));
+            }
+        }
+    }
+
+    /// Conectada, cambia sola al paciente que el médico abre en HCIS (hcis.rs).
+    /// Solo cuando HCIS cambia: si el médico escribe otro NHC, se respeta.
+    fn sigue_hcis(&mut self, ctx: &egui::Context) {
+        let (Some(patron), Some(_)) = (self.hcis_patron.clone(), &self.red) else { return };
+        let ahora = ctx.input(|i| i.time);
+        ctx.request_repaint_after(std::time::Duration::from_secs(1));
+        if ahora - self.hcis_mirado < 1.0 {
+            return;
+        }
+        self.hcis_mirado = ahora;
+        let Some(nhc) = hcis::paciente_abierto(&patron) else { return };
+        if self.hcis_visto.as_deref() == Some(nhc.as_str()) {
+            return;
+        }
+        self.hcis_visto = Some(nhc.clone());
+        if self.paciente.as_ref().map(|p| p.id.as_str()) != Some(nhc.as_str()) {
+            self.abre_paciente(&nhc);
+        }
     }
 
     fn abre_paciente(&mut self, ident: &str) {
@@ -747,6 +837,7 @@ impl Medicci {
                     (Pedido::Tarjeta, Some(s)) => red.tarjeta(ctx, s.clone()),
                     (Pedido::Filas, Some(s)) => red.filas(ctx, s.clone()),
                     (Pedido::Registro(a), Some(s)) => red.registra(ctx, s.clone(), a),
+                    (Pedido::Paso, _) => red.paso(ctx),
                     _ => {}
                 }
             }
@@ -864,6 +955,12 @@ impl Medicci {
                     }
                 } else if let (Some(_), Some(p)) = (&self.resumen, &self.paciente) {
                     self.resumen = resumen_de_red(p, &self.filas_red, &self.alertas_red);
+                }
+            }
+            Llega::Paso { n, accion, texto } => {
+                // el primer paso que se ve es de antes de arrancar: no se hace
+                if self.paso_n.replace(n).is_some_and(|antes| antes != n) {
+                    self.haz_paso(&accion, texto);
                 }
             }
             Llega::Fallo(e) => {
@@ -2691,6 +2788,8 @@ impl eframe::App for Medicci {
             }
         }
         self.red(ctx);
+        self.sigue_hcis(ctx);
+        self.simula(ctx);
         self.coloca(ctx);
         if std::env::var_os("MEDICCI_DEPURA").is_some() {
             let (monitor, real) = ctx.input(|i| (i.viewport().monitor_size, i.viewport().outer_rect));
@@ -2756,11 +2855,13 @@ fn main() -> eframe::Result<()> {
     let mut url = std::env::var("MEDICCI_SERVIDOR").ok().or_else(|| servidor::de_la_configuracion("MEDICCI_SERVIDOR"));
     let mut reinicio = false;
     let mut abierta = false;
+    let mut simulacion = false;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
             "--reinicio" => reinicio = true,
             "--abierta" => abierta = true,        // con el chat ya desplegado: para la demo
+            "--simulacion" => simulacion = true,  // hace lo que dice mvp/simular.py
             "--db" => ruta = args.next().map(PathBuf::from),
             "--paciente" => paciente = args.next(),
             "--servidor" => url = args.next(),
@@ -2831,6 +2932,7 @@ fn main() -> eframe::Result<()> {
             estilo(&cc.egui_ctx);
             let mut app = Medicci::nuevo(datos, paciente, red);
             app.abierto = abierta;
+            app.simulacion = simulacion;
             Ok(Box::new(app))
         }),
     )

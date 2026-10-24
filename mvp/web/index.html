@@ -128,6 +128,8 @@ async function abrePaciente(p){
   abierto = p; pintado = "";
   document.querySelectorAll(".cita").forEach(b => b.setAttribute("aria-current", String(b.dataset.nhc === p.nhc)));
   $("#c-nhc").textContent = p.nhc;
+  // como HCIS: el paciente abierto, en el título de la ventana (la burbuja lo lee de ahí)
+  document.title = `HCIS · ${p.nhc} · ${p.nombre.toUpperCase()}`;
   $("#c-nombre").textContent = p.nombre.toUpperCase();
   $("#c-datos").textContent = `${p.sexo === "F" ? "Mujer" : "Varón"}, ${p.edad} años`;
   $("#hoja").innerHTML = `<p class="vacia">Cargando…</p>`;
@@ -169,6 +171,11 @@ pintaAgenda().then(() => {
   if (p) abrePaciente(p);
 });
 setInterval(pintaAgenda, 3000);   // con HL7 la agenda se va llenando
+</script>
+<script>
+// ?simulacion=1: la mañana de un médico, para el vídeo (mvp/simular.py)
+if (new URLSearchParams(location.search).has("simulacion"))
+  document.body.append(Object.assign(document.createElement("script"), {src: "simulacion.js"}));
 </script>
 
 </body>

@@ -30,9 +30,12 @@ de 20 pacientes con nombres inventados: 14 de los CSV del reto y los 6
 crónicos generados con más historia (hasta 1.649 citas en 15 años; se quitan
 con `MEDICCI_GENERADOS=no`). La réplica no lleva Medicci dentro: el agente es
 la burbuja de escritorio de [`medicci-rs/`](../medicci-rs/README.md), encima de
-la ventana. Al darle el NHC abre una sesión atada a ese paciente y a ese médico,
-enseña la tarjeta «antes de que entre» y deja preguntar. Si el modelo no
-responde, la tarjeta sigue funcionando.
+la ventana. **Sigue sola al paciente que el médico abre en HCIS**: HCIS pone el
+NHC en el título de su ventana («HCIS · P0129798 · MARÍA ALONSO») y la burbuja
+lo lee cada segundo (`medicci-rs/src/hcis.rs`; el patrón se cambia con
+`MEDICCI_TITULO`). Así vale igual con un HCIS de Windows y no hay que tocarlo.
+Abre una sesión atada a ese paciente y a ese médico, enseña el resumen y deja
+preguntar. Si el modelo no responde, la tarjeta sigue funcionando.
 
 ```text
 servidor.py       API (sesión, tarjeta, pregunta) y la réplica de HCIS; solo biblioteca estándar
@@ -41,6 +44,22 @@ web/index.html    la réplica de HCIS: no sabe nada de Medicci
 
 **María Alonso**, la primera de la agenda, es la del guion. Tiene movilidad
 reducida, una radiografía pendiente y una derivación preferente de Primaria.
+
+## La mañana de un médico, en vídeo
+
+```bash
+python mvp/simular.py              # con la demo en marcha; deja un .mp4 en el Escritorio
+python mvp/simular.py --sin-video  # para ensayar
+```
+
+Enseña a pantalla completa lo que vería el médico, unos 3 minutos: enciende el
+ordenador, entra en Windows, Medicci arranca sola, entra en HCIS, abre a María
+y la burbuja ya tiene su resumen, pregunta por las pruebas pendientes, amplía,
+llega un resultado por HL7, pasa a un crónico de 15 años y acaba en el registro
+de accesos a su nombre. Los rótulos y el arranque los pone `web/simulacion.js`
+(HCIS con `?simulacion=1`); la burbuja (`medicci.exe --simulacion`) hace lo que
+toca en cada paso, que le llega por `/api/simulacion`. Graba con ffmpeg
+(`winget install Gyan.FFmpeg`).
 
 ## El registro de accesos
 

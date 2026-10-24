@@ -64,6 +64,8 @@ class Medicci:
         self.sesiones: dict[str, dict] = {}    # sesión → paciente, médico y lo último que vio
         self.registro = Registro()
         self.hl7_recibidos: list[dict] = []   # los últimos mensajes, para enseñarlos en la demo
+        self.simulacion = {"n": 0, "accion": "", "texto": ""}   # el paso de la simulación (simular.py)
+        self.hl7_puerto = 2575
         self._agenda: list[dict] = []
         self._agenda_fija = datos == "csv"
         self._version = 0                     # sube con cada mensaje HL7
@@ -88,6 +90,19 @@ class Medicci:
         if len(self._agenda) >= 8 and time.monotonic() - self._ultimo_hl7 > 3:
             self._agenda_fija = True
         return self._agenda
+
+    def evento_hl7(self, nhc: str, cual: str) -> str:
+        """Simulación: HCIS manda ahora un mensaje nuevo (un resultado, una
+        anulación). Entra por el receptor MLLP, como en el hospital."""
+        from hl7 import Emisor, Mensaje
+        from hl7_emisor import evento
+        with self.cerrojo:
+            texto = evento(self.con, nhc, cual)
+        emisor = Emisor("127.0.0.1", self.hl7_puerto)
+        try:
+            return emisor.mandar(texto).campo("MSA", 1)
+        finally:
+            emisor.cerrar()
 
     def recibir_hl7(self, m):
         """Lo que hace el receptor con cada mensaje: guardarlo en la copia y contestar ACK."""
@@ -174,6 +189,8 @@ class Peticion(SimpleHTTPRequestHandler):
             return self._json(200, m.agenda)
         if partes[1:] == ["hl7", "ultimos"]:
             return self._json(200, m.hl7_recibidos)
+        if partes[1:] == ["simulacion"]:
+            return self._json(200, m.simulacion)
         if partes[1:] == ["registro"]:
             # Para el panel de la demo. En el hospital solo lo abre quien audita
             # (el delegado de protección de datos), con su propio usuario.
@@ -222,6 +239,20 @@ class Peticion(SimpleHTTPRequestHandler):
     def do_POST(self):
         partes = self.path.strip("/").split("/")
         m = self.medicci
+        # La simulación del día del médico (mvp/simular.py): la página de HCIS
+        # dice en qué paso va, y la burbuja (--simulacion) hace lo que toca.
+        if partes == ["api", "simulacion", "paso"]:
+            cuerpo = self._cuerpo()
+            m.simulacion = {"n": m.simulacion["n"] + 1, "accion": str(cuerpo.get("accion", ""))[:40],
+                            "texto": str(cuerpo.get("texto", ""))[:300]}
+            return self._json(200, m.simulacion)
+        if partes == ["api", "simulacion", "evento"]:
+            cuerpo = self._cuerpo()
+            try:
+                ack = m.evento_hl7(str(cuerpo.get("nhc", "")), str(cuerpo.get("tipo", "resultado")))
+            except (SystemExit, OSError) as e:
+                return self._json(400, {"error": str(e)})
+            return self._json(200, {"ack": ack})
         if partes[:2] == ["api", "sesion"] and len(partes) == 2:
             cuerpo = self._cuerpo()
             nhc = str(cuerpo.get("nhc", "")).strip()
@@ -286,6 +317,7 @@ def main() -> None:
     Peticion.medicci = Medicci(args.datos)
     if args.datos == "hl7":
         from hl7 import escuchar
+        Peticion.medicci.hl7_puerto = args.hl7_puerto
         receptor = escuchar(args.host, args.hl7_puerto, Peticion.medicci.recibir_hl7)
         threading.Thread(target=receptor.serve_forever, daemon=True).start()
         print(f"Receptor HL7 (MLLP) escuchando en el puerto {args.hl7_puerto}", flush=True)
