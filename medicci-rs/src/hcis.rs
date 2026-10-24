@@ -19,7 +19,34 @@ pub fn nhc_en(patron: &Regex, titulo: &str) -> Option<String> {
 /// El paciente de la ventana de HCIS que está más arriba: la última que ha
 /// usado el médico (Windows las da de la de encima a la de abajo).
 pub fn paciente_abierto(patron: &Regex) -> Option<String> {
-    titulos().iter().find_map(|t| nhc_en(patron, t))
+    ventanas().iter().find_map(|(_, t)| nhc_en(patron, t))
+}
+
+/// Dónde va la burbuja: la zona útil (sin la barra de tareas) del monitor en
+/// el que está HCIS, en píxeles de verdad [izquierda, arriba, derecha, abajo].
+/// Sin HCIS abierto, la del monitor principal. Con dos pantallas, así la
+/// burbuja está siempre junto a HCIS.
+#[cfg(windows)]
+pub fn zona(patron: Option<&Regex>) -> Option<[i32; 4]> {
+    let hcis = patron.and_then(|p| ventanas().into_iter().find(|(_, t)| p.is_match(t)));
+    let mut info = win::InfoMonitor { tam: std::mem::size_of::<win::InfoMonitor>() as u32,
+                                      ..Default::default() };
+    unsafe {
+        let monitor = match hcis {
+            Some((h, _)) => win::MonitorFromWindow(h as win::Hwnd, win::AL_PRINCIPAL),
+            None => win::MonitorFromPoint(win::Punto { x: 0, y: 0 }, win::AL_PRINCIPAL),
+        };
+        if monitor.is_null() || win::GetMonitorInfoW(monitor, &mut info) == 0 {
+            return None;
+        }
+    }
+    let r = info.trabajo;
+    Some([r.izq, r.arr, r.der, r.aba])
+}
+
+#[cfg(not(windows))]
+pub fn zona(_patron: Option<&Regex>) -> Option<[i32; 4]> {
+    None
 }
 
 #[cfg(windows)]
@@ -31,33 +58,58 @@ mod win {
         pub fn EnumWindows(cb: unsafe extern "system" fn(Hwnd, isize) -> i32, l: isize) -> i32;
         pub fn GetWindowTextW(h: Hwnd, texto: *mut u16, n: i32) -> i32;
         pub fn IsWindowVisible(h: Hwnd) -> i32;
+        pub fn MonitorFromWindow(h: Hwnd, si_no: u32) -> *mut c_void;
+        pub fn MonitorFromPoint(p: Punto, si_no: u32) -> *mut c_void;
+        pub fn GetMonitorInfoW(m: *mut c_void, info: *mut InfoMonitor) -> i32;
+    }
+    pub const AL_PRINCIPAL: u32 = 1;            // MONITOR_DEFAULTTOPRIMARY
+    #[repr(C)]
+    pub struct Punto {
+        pub x: i32,
+        pub y: i32,
+    }
+    #[repr(C)]
+    #[derive(Default, Clone, Copy)]
+    pub struct Rect {
+        pub izq: i32,
+        pub arr: i32,
+        pub der: i32,
+        pub aba: i32,
+    }
+    #[repr(C)]
+    #[derive(Default)]
+    pub struct InfoMonitor {
+        pub tam: u32,
+        pub monitor: Rect,
+        pub trabajo: Rect,
+        pub banderas: u32,
     }
 }
 
-/// Los títulos de las ventanas visibles, de la de encima a la de abajo.
+/// Las ventanas visibles con título, de la de encima a la de abajo.
 #[cfg(windows)]
-fn titulos() -> Vec<String> {
+fn ventanas() -> Vec<(isize, String)> {
     unsafe extern "system" fn una(h: win::Hwnd, lista: isize) -> i32 {
-        let lista = &mut *(lista as *mut Vec<String>);
+        let lista = &mut *(lista as *mut Vec<(isize, String)>);
         if win::IsWindowVisible(h) != 0 {
             let mut texto = [0u16; 512];
             let n = win::GetWindowTextW(h, texto.as_mut_ptr(), texto.len() as i32);
             if n > 0 {
-                lista.push(String::from_utf16_lossy(&texto[..n as usize]));
+                lista.push((h as isize, String::from_utf16_lossy(&texto[..n as usize])));
             }
         }
         1
     }
-    let mut lista: Vec<String> = Vec::new();
+    let mut lista: Vec<(isize, String)> = Vec::new();
     unsafe {
-        win::EnumWindows(una, &mut lista as *mut Vec<String> as isize);
+        win::EnumWindows(una, &mut lista as *mut Vec<(isize, String)> as isize);
     }
     lista
 }
 
 /// Fuera de Windows no se mira: el médico escribe el NHC.
 #[cfg(not(windows))]
-fn titulos() -> Vec<String> {
+fn ventanas() -> Vec<(isize, String)> {
     Vec::new()
 }
 
@@ -76,7 +128,9 @@ mod pruebas {
 
     #[test]
     #[cfg(windows)]
-    fn windows_da_titulos() {
-        assert!(!titulos().is_empty());
+    fn windows_da_titulos_y_la_zona_del_monitor() {
+        assert!(!ventanas().is_empty());
+        let [izq, arr, der, aba] = zona(None).expect("hay monitor principal");
+        assert!(der > izq && aba > arr);
     }
 }

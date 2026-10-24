@@ -62,6 +62,30 @@ def aparta_ventana() -> int:
     return h
 
 
+def al_frente(prefijo: str) -> bool:
+    """Pone delante la ventana cuyo título empieza por `prefijo` (HCIS a
+    pantalla completa), para que tape también la barra de tareas. Windows solo
+    deja hacerlo si parece que se ha pulsado una tecla: se pulsa y suelta Alt."""
+    u = ctypes.windll.user32
+    encontrada = []
+
+    @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+    def una(h, _):
+        texto = ctypes.create_unicode_buffer(256)
+        u.GetWindowTextW(ctypes.c_void_p(h), texto, 256)
+        if u.IsWindowVisible(ctypes.c_void_p(h)) and texto.value.startswith(prefijo):
+            encontrada.append(h)
+            return False
+        return True
+
+    u.EnumWindows(una, None)
+    if not encontrada:
+        return False
+    u.keybd_event(0x12, 0, 0, 0)                     # Alt
+    u.keybd_event(0x12, 0, 2, 0)
+    return bool(u.SetForegroundWindow(ctypes.c_void_p(encontrada[0])))
+
+
 def ffmpeg() -> str | None:
     enlaces = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft/WinGet/Links/ffmpeg.exe"
     return shutil.which("ffmpeg") or (str(enlaces) if enlaces.exists() else None)
@@ -105,6 +129,9 @@ def main() -> None:
     ap.add_argument("--sin-limpiar", action="store_true")
     args = ap.parse_args()
 
+    # que Windows no apague la pantalla ni se bloquee mientras graba: pasó, y
+    # el vídeo salió con la pantalla de bloqueo (ES_CONTINUOUS | SYSTEM | DISPLAY)
+    ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x1 | 0x2)
     if not args.sin_limpiar:
         limpia()
     cierra_burbuja()
@@ -116,6 +143,9 @@ def main() -> None:
                                "--window-position=0,0", f"{API}/?simulacion=1"])
     time.sleep(4)
     consola = aparta_ventana()
+    time.sleep(1)
+    if not al_frente("HCIS"):
+        print("   (no he podido poner HCIS delante: puede verse la barra de tareas)", flush=True)
     time.sleep(1)
 
     grabando = None

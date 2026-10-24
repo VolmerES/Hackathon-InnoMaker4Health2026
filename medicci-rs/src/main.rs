@@ -34,6 +34,9 @@ const BOLA: f32 = 56.0;                     // diámetro de la burbuja
 const PANEL: Vec2 = vec2(420.0, 640.0);     // el chat desplegado
 const HUECO: f32 = 12.0;                    // entre el chat y la burbuja
 const AIRE: f32 = 16.0;                     // borde transparente donde cabe la sombra
+// Las ventanas del chat y del resumen, cerradas, se apartan de la pantalla:
+// transparentes en su sitio, al grabar la pantalla salían como un recuadro negro.
+const FUERA: Pos2 = pos2(-30000.0, -30000.0);
 const MARGEN: f32 = 24.0;                   // de la burbuja al borde derecho
 #[cfg(windows)]
 const BAJO: f32 = 72.0;                     // de la burbuja al borde de abajo (barra de tareas)
@@ -251,6 +254,8 @@ struct Medicci {
     hcis_patron: Option<regex::Regex>, // cómo sale el NHC en el título de HCIS
     hcis_visto: Option<String>,     // el último paciente visto abierto en HCIS
     hcis_mirado: f64,
+    zona: Option<[i32; 4]>,         // el monitor de HCIS, sin la barra de tareas (hcis::zona)
+    zona_mirada: f64,
     // --simulacion: la burbuja hace lo que dice la simulación (mvp/simular.py)
     simulacion: bool,
     paso_n: Option<i64>,
@@ -447,6 +452,8 @@ impl Medicci {
                 .unwrap_or_else(|| hcis::PATRON.into())).ok(),
             hcis_visto: None,
             hcis_mirado: f64::NEG_INFINITY,
+            zona: None,
+            zona_mirada: f64::NEG_INFINITY,
             simulacion: false,
             paso_n: None,
             paso_mirado: f64::NEG_INFINITY,
@@ -1126,13 +1133,26 @@ impl Medicci {
     /// El gestor de ventanas puede tardar en hacer caso: se reintenta unas veces.
     fn coloca(&mut self, ctx: &egui::Context) {
         let tam = ventana();
-        let (monitor, real) = ctx.input(|i| (i.viewport().monitor_size, i.viewport().outer_rect));
-        let Some(monitor) = monitor else {
-            ctx.request_repaint();
-            return;
+        let (monitor, real, ppp) = ctx.input(|i| (i.viewport().monitor_size, i.viewport().outer_rect,
+                                                  i.viewport().native_pixels_per_point.unwrap_or(1.0)));
+        let ahora = ctx.input(|i| i.time);
+        if ahora - self.zona_mirada > 1.0 {
+            self.zona_mirada = ahora;
+            self.zona = hcis::zona(self.hcis_patron.as_ref());
+        }
+        ctx.request_repaint_after(std::time::Duration::from_secs(1));
+        let pos = match (self.zona, monitor) {
+            // abajo a la derecha del monitor de HCIS, encima de la barra de tareas.
+            // La zona va en píxeles de verdad; egui, en puntos de este monitor.
+            (Some([_, _, der, aba]), _) => pos2((der as f32 / ppp - MARGEN + AIRE - tam.x).round(),
+                                               (aba as f32 / ppp - MARGEN + AIRE - tam.y).round()),
+            (None, Some(monitor)) => pos2((monitor.x - MARGEN + AIRE - tam.x).round(),
+                                          (monitor.y - BAJO + AIRE - tam.y).round()),
+            (None, None) => {
+                ctx.request_repaint();
+                return;
+            }
         };
-        let pos = pos2((monitor.x - MARGEN + AIRE - tam.x).round(),
-                       (monitor.y - BAJO + AIRE - tam.y).round());
         if self.pedido != Some((tam, pos)) {
             self.pedido = Some((tam, pos));
             self.intentos = 0;
@@ -1174,7 +1194,7 @@ impl Medicci {
             .with_title("Medicci · Chat")
             .with_mouse_passthrough(!visible)
             .with_inner_size(tam)
-            .with_position(pos)
+            .with_position(if visible { pos } else { FUERA })
             .with_decorations(false)
             .with_transparent(true)
             .with_resizable(false)
@@ -2609,17 +2629,23 @@ impl Medicci {
         }
         let abierta = self.ampliado;
         otro_par_de_fotogramas(ctx, &mut self.resumen_visto, abierta);
-        let monitor = ctx.input(|i| i.viewport().monitor_size).unwrap_or(vec2(1440.0, 900.0));
+        // centrada en el monitor de HCIS (el de la burbuja)
+        let ppp = ctx.input(|i| i.viewport().native_pixels_per_point.unwrap_or(1.0));
+        let (origen, monitor) = match self.zona {
+            Some([izq, arr, der, aba]) => (vec2(izq as f32, arr as f32) / ppp,
+                                           vec2((der - izq) as f32, (aba - arr) as f32) / ppp),
+            None => (Vec2::ZERO, ctx.input(|i| i.viewport().monitor_size).unwrap_or(vec2(1440.0, 900.0))),
+        };
         let hoja = vec2(HOJA.x.min(monitor.x - 80.0), HOJA.y.min(monitor.y - 80.0));
         let tam = hoja + Vec2::splat(2.0 * AIRE);
         let pos = *self.resumen_pos.get_or_insert_with(|| {
-            pos2(((monitor.x - tam.x) / 2.0).round(), ((monitor.y - tam.y) / 2.0).round())
+            (origen + (monitor - tam) / 2.0).to_pos2().round()
         });
         let constructor = egui::ViewportBuilder::default()
             .with_title("Medicci · Resumen")
             .with_mouse_passthrough(!abierta)
             .with_inner_size(tam)
-            .with_position(pos)
+            .with_position(if abierta { pos } else { FUERA })
             .with_decorations(false)
             .with_transparent(true)
             .with_resizable(false)
