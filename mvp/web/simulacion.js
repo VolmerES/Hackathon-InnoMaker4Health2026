@@ -151,6 +151,29 @@
     }
   }
 
-  if (enRegistro) registro();
+  // ?simulacion=libre: sin guion propio. Hace lo que le mandan por
+  // /api/simulacion (mvp/gifs.py): rótulos, abrir un paciente, ir a otra página
+  async function libre() {
+    tapa.classList.add("fuera");
+    let visto = null;
+    for (;;) {
+      const s = await fetch("/api/simulacion").then(r => r.json()).catch(() => null);
+      if (s && visto !== null && s.n !== visto) {
+        const [hora, texto] = s.texto.includes("|") ? s.texto.split("|") : ["", s.texto];
+        if (s.accion === "rotulo") rotulo(hora, texto);
+        if (s.accion === "sin_rotulo") document.getElementById("sim-rotulo").classList.add("oculto");
+        if (s.accion === "paciente" && typeof abrePaciente === "function") {
+          const p = agenda.find(x => x.nhc === s.texto);
+          if (p) abrePaciente(p);
+        }
+        if (s.accion === "ir") location.href = s.texto;
+      }
+      if (s) visto = s.n;
+      await espera(250);
+    }
+  }
+
+  if (params.get("simulacion") === "libre") libre();
+  else if (enRegistro) registro();
   else if (params.has("simulacion")) senal().then(arranque).then(manana);
 })();

@@ -60,8 +60,8 @@ def pantalla() -> tuple[int, int]:
     return ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)
 
 
-def paso(accion: str) -> int:
-    return pide("/api/simulacion/paso", {"accion": accion})["n"]
+def paso(accion: str, texto: str = "") -> int:
+    return pide("/api/simulacion/paso", {"accion": accion, "texto": texto})["n"]
 
 
 def aparta_ventana() -> int:
