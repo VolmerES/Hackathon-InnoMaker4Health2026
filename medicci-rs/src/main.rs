@@ -19,6 +19,7 @@ mod datos;
 mod hcis;
 mod lector;
 mod servidor;
+mod transparencia;
 mod voz;
 
 use datos::{CampoFicha, Datos, Documento, Hecho, Paciente};
@@ -2969,6 +2970,8 @@ impl eframe::App for Medicci {
         self.burbuja(ctx);
         self.ventana_chat(ctx);
         self.ventana_resumen(ctx);
+        // en Windows, lo que no se pinta en esas dos ventanas sale negro (transparencia.rs)
+        transparencia::negro_transparente(&["Medicci · Chat", "Medicci · Resumen"]);
 
         if let Some(tema) = self.pendiente.take() {
             self.abierto = true;
