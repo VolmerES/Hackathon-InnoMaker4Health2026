@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HCIS · Pantalla historia clínica de Digestivo</title>
-<link rel="stylesheet" href="agente.css">
 <style>
 /* Recreación de la pantalla de consulta de HCIS a partir de una captura real:
    cinta de paciente, columna verde (Alertas · Historia Clínica · Relevante),
@@ -263,15 +262,12 @@ select.campo{color:#000;background:#fff;border-radius:3px;border-color:#8a8a8a;p
 
 <script src="historial-datos.js"></script>
 <script src="historial-datos-2.js"></script>
-<script src="ficha-medicci.js"></script>
-<script src="agente.js"></script>
 <script>
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $ = s => document.querySelector(s);
 
 const PACIENTES = [
   {id:"P1", episodio:"1288035412", informe:"24286143", ...window.PACIENTE, docs:window.DOCS,
-   hechos:window.HECHOS, preguntas:window.PREGUNTAS, ficha:window.FICHAS.P1,
    bio:"P: 68 Kg, T: 162 cm, IMC: 25,9",
    alergias:[{t:"METAMIZOL (NOLOTIL)", d:"Exantema y edema palpebral, enero de 2021", doc:"D06"}],
    problemas:[["HIPERTENSIÓN ARTERIAL ESENCIAL","09/02/2016","D02"],
@@ -283,7 +279,6 @@ const PACIENTES = [
    relevante:[["Toma ibuprofeno 3-4 días al mes","D11"],["Omeprazol sin suspender desde julio","D17"],
               ["Control de colonoscopia vencido (2020)","D01"],["Celiaquía descartada","D15"]]},
   {id:"P2", episodio:"1288035479", informe:"24286207", ...window.P2.paciente, docs:window.P2.docs,
-   hechos:window.P2.hechos, preguntas:window.P2.preguntas, ficha:window.FICHAS.P2,
    bio:"P: 72 Kg, T: 171 cm, IMC: 24,6",
    alergias:[{t:"CONTRASTES YODADOS", d:"Urticaria y opresión faríngea en TAC, 2016", doc:"E03"}],
    problemas:[["FIBRILACIÓN AURICULAR PERMANENTE","03/03/2018","E04"],
@@ -305,7 +300,6 @@ function cargaPaciente(id){
   porId = Object.fromEntries(docs.map(d => [d.id, d]));
   seleccionado = docs[0].id;
   pintaCinta(); pintaAlertas(); pintaArbol(); pintaRelevante(); pinta();
-  if (window.Agente) window.Agente.cambioDePaciente();
 }
 function pintaCinta(){
   const ap = P.nombre.split(" ");
@@ -477,15 +471,7 @@ $("#sel-pac").onchange = e => cargaPaciente(e.target.value);
 document.querySelectorAll(".pest button").forEach(t => t.onclick = () => { vista = t.dataset.v; pinta(); });
 $("#c-alerta").onclick = () => iraDoc(P.alergias[0].doc);
 
-window.HCE = {
-  paciente: () => P,
-  docs: () => docs,
-  porId: () => porId,
-  iraDoc: (id, cita) => iraDoc(id, cita)
-};
-
 cargaPaciente("P1");
-window.Agente.montar();
 </script>
 </body>
 </html>

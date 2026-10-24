@@ -1,4 +1,4 @@
-"""Servidor de la demo: la réplica de HCIS, la pestaña Medicci y su API.
+"""Servidor de la demo: la réplica de HCIS y la API de Medicci.
 
     python mvp/servidor.py                 # http://localhost:8000
     python mvp/servidor.py --puerto 8080
@@ -6,7 +6,7 @@
 Solo usa la biblioteca estándar (y duckdb). En producción sería FastAPI detrás
 de Caddy; la API es la misma.
 
-API de Medicci (lo que llamaría la pestaña desde HCIS):
+API de Medicci (la que llama la burbuja):
     POST /api/sesion                    {nhc, medico}  → abre sesión atada a ese paciente y a ese médico
     GET  /api/sesion/<id>/tarjeta                      → «3 cosas antes de que entre»
     GET  /api/sesion/<id>/filas                        → sus datos, para el resumen de la burbuja
@@ -219,7 +219,7 @@ class Peticion(SimpleHTTPRequestHandler):
         if partes[:2] == ["api", "sesion"] and len(partes) == 2:
             cuerpo = self._cuerpo()
             nhc = str(cuerpo.get("nhc", "")).strip()
-            # El médico lo pone HCIS (la pestaña) o la sesión de Windows (la burbuja).
+            # El médico lo pone la sesión de Windows (la burbuja).
             # En el hospital vendría firmado por el inicio de sesión único, no escrito.
             medico = str(cuerpo.get("medico") or self.headers.get("X-Medicci-Medico") or "").strip()[:80]
             if not medico:
