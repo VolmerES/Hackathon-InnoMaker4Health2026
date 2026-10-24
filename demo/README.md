@@ -9,10 +9,9 @@ fichas/         reservado para las fichas en JSON si se generan con la IA local
 web/
   historial.html       la historia en un HCE tipo SELENE
   hcis.html            la misma historia en una pantalla tipo HCIS
-  agente.js/.css       el agente flotante, compartido por las dos pantallas
   historial-datos.js   paciente 1 (María Alonso): 18 documentos, 2015-2026
   historial-datos-2.js paciente 2 (Ramón Esteve): 14 documentos, 2012-2026, y los hallazgos clave
-  historial-ficha.js   la ficha de contexto de 3 capas que muestra el agente
+  ficha-medicci.js     la ficha de contexto de 3 capas (de aquí sale la base local de la burbuja)
   index.html           la bandeja de validación de derivaciones (la otra pantalla)
   datos.js             los 10 casos de la bandeja
 ```
@@ -24,9 +23,10 @@ herramientas, **carpeta del paciente** en árbol, cintillo azul con NHC, CIPA,
 cita de hoy y alergias, pestañas de Evolutivo / Documentos / Resultados y barra
 de estado.
 
-Abajo a la derecha, **el agente**, como el chat de cualquier web: botón redondo
-con el icono del médico y, al abrirlo, el lector. El HCE queda intacto detrás:
-es la idea, que Medicci se acople al sistema que ya usan, no que lo sustituya.
+La pantalla no lleva Medicci dentro: el agente es la burbuja de escritorio de
+[`medicci-rs/`](../medicci-rs/README.md), que se pone encima de esta ventana. El
+HCE queda intacto detrás: es la idea, que Medicci se acople al sistema que ya
+usan, no que lo sustituya.
 
 Dos pacientes en el desplegable de arriba, los dos citados hoy en Digestivo:
 
@@ -40,21 +40,10 @@ al más antiguo), **Documentos** (rejilla arriba, documento debajo) y
 **Resultados** (analíticas, endoscopias y radiología). El árbol filtra por tipo,
 por año y por episodio, y el buscador resalta la palabra dentro del texto.
 
-### El agente (botón de abajo a la derecha)
-
-- **Resumen de entrada**: al abrirlo da el motivo de hoy, lo que le pasa, las
-  contradicciones con la derivación y lo que falta, cada línea con la frase
-  literal y un botón que salta al documento y lo resalta.
-- **Preguntas**: las sugeridas o escritas a mano. Si la respuesta no está en la
-  historia contesta «no consta» en vez de deducir.
-- **Generar ficha de contexto**: produce la ficha de 3 capas (control crítico y
-  contexto de vida · contexto clínico dinámico · historial profundo) con la
-  fuente de cada campo y «no consta» donde la historia no lo tiene.
-
 La ficha completa de cada paciente, en markdown, está en
 [`fichas/`](fichas/): `ficha-contexto-P1.md` (114 campos revisados, 64 con dato)
-y `ficha-contexto-P2.md` (92 revisados, 59 con dato). En pantalla se muestra la
-versión resumida de `web/historial-ficha.js`.
+y `ficha-contexto-P2.md` (92 revisados, 59 con dato). La versión resumida está
+en `web/ficha-medicci.js`.
 
 Los hallazgos clave de cada paciente están en `historial-datos-2.js`
 (`window.HALLAZGOS`): la lista contra la que comparar lo que saca un médico

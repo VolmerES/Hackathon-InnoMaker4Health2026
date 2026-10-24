@@ -16,36 +16,28 @@ resultados/       el detalle de cada prueba (no se sube: lleva filas de los CSV)
 Solo usa la biblioteca estándar y `duckdb`. Los CSV tienen que estar en `data/`.
 Los datos se leen con SQL sobre los CSV; HL7 todavía no se usa.
 
-## La demo: HCIS con la pestaña Medicci
+## La demo: HCIS con la burbuja Medicci
 
 ```bash
 docker compose -f mvp/docker-compose.yml up -d            # modelo + servidor
 # o sin Docker, con Ollama en marcha:
 .venv/Scripts/python mvp/servidor.py
+just conectada                                             # la burbuja, conectada
 ```
 
 Abrir **http://localhost:8000**. Es una réplica de HCIS con la agenda del día
 de 20 pacientes con nombres inventados: 14 de los CSV del reto y los 6
 crónicos generados con más historia (hasta 1.649 citas en 15 años; se quitan
-con `MEDICCI_GENERADOS=no`). Al abrir un paciente, la pestaña Medicci de la
-derecha:
-
-1. lee el NHC de la cinta del paciente y el usuario de HCIS (`#c-medico`),
-   como haría la extensión del navegador;
-2. abre una sesión atada a ese paciente y a ese médico;
-3. enseña la tarjeta «antes de que entre» y deja preguntar.
-
-Cada dato lleva un botón con su fuente (`P1`, `M2`…). Al pulsarlo se ve la
-fila tal cual. Si el modelo no responde, la tarjeta sigue funcionando.
+con `MEDICCI_GENERADOS=no`). La réplica no lleva Medicci dentro: el agente es
+la burbuja de escritorio de [`medicci-rs/`](../medicci-rs/README.md), encima de
+la ventana. Al darle el NHC abre una sesión atada a ese paciente y a ese médico,
+enseña la tarjeta «antes de que entre» y deja preguntar. Si el modelo no
+responde, la tarjeta sigue funcionando.
 
 ```text
 servidor.py       API (sesión, tarjeta, pregunta) y la réplica de HCIS; solo biblioteca estándar
 web/index.html    la réplica de HCIS: no sabe nada de Medicci
-web/pestana.js    la pestaña: solo lee el NHC de la cinta (#c-nhc) y habla con la API
 ```
-
-**La misma API la usa la burbuja de escritorio** de `medicci-rs/` (`just
-conectada`), para cuando HCIS no va en el navegador.
 
 **María Alonso**, la primera de la agenda, es la del guion. Tiene movilidad
 reducida, una radiografía pendiente y una derivación preferente de Primaria.
@@ -55,8 +47,8 @@ reducida, una radiografía pendiente y una derivación preferente de Primaria.
 **Sin médico no se abre ningún paciente** (la API contesta 401), y todo lo que
 ve queda apuntado a su nombre en `resultados/registro.jsonl`: qué paciente
 abrió, qué tarjeta vio, qué preguntó, qué le contestó la IA con qué fuentes, y
-si amplió el resumen o lo copió a la nota clínica. La pestaña toma el usuario
-de HCIS; la burbuja, el de Windows.
+si amplió el resumen o lo copió a la nota clínica. La burbuja toma el usuario
+de Windows.
 
 Solo se añaden líneas, y cada una lleva la huella (SHA-256) de la anterior: si
 alguien borra o cambia una, la cadena se rompe y se ve.

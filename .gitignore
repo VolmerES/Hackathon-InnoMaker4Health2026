@@ -19,7 +19,7 @@ mvp/resultados/
 
 # Medicci: la base se crea sola desde bd/sql, y las capturas son de prueba
 .capturas/
-bd/medicci.db
+bd/*.db
 medicci-rs/medicci.db
 
 # Dónde está cada cosa en cada instalación: se copia de medicci.conf.ejemplo

@@ -46,9 +46,8 @@ por su cuenta.
 
 ## Conectada al servidor de Medicci
 
-La burbuja es la otra cara del servidor de `mvp/`. La pestaña web va encima de
-HCIS cuando HCIS está en el navegador; la burbuja, cuando no lo está, porque se
-pone encima de cualquier ventana. Las dos hablan con la misma API.
+La burbuja es la cara del servidor de `mvp/`: se pone encima de cualquier
+ventana (HCIS, SELENE, en el navegador o no) y habla con su API.
 
 ```
 docker compose -f mvp/docker-compose.yml up -d     # el servidor (o python mvp/servidor.py)

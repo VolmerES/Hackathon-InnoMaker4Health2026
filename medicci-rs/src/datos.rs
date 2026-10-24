@@ -205,6 +205,33 @@ impl Datos {
         );
     }
 
+    /// Guarda la pregunta tal cual la escribió el médico y qué tipo de respuesta
+    /// tuvo: sirve para saber qué se pregunta y si el lector contesta.
+    pub fn apunta_pregunta(&self, usuario: &str, id_paciente: &str, id_cita: Option<&str>,
+                           pregunta: &str, tipo: &str) {
+        let id = format!("PRE-{}", std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0));
+        let _ = self.cx.execute(
+            "INSERT INTO preguntas_agente (id_pregunta, id_cita, id_paciente, usuario, pregunta,
+                                           tipo_respuesta, fecha_hora)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, datetime('now'))",
+            rusqlite::params![id, id_cita, id_paciente, usuario, pregunta, tipo],
+        );
+    }
+
+    /// Las preguntas de un paciente, de la primera a la última.
+    #[cfg(test)]
+    pub fn preguntas(&self, id_paciente: &str) -> Vec<(String, String)> {
+        self.consulta(
+            "SELECT pregunta, tipo_respuesta FROM preguntas_agente
+             WHERE id_paciente = ?1 ORDER BY fecha_hora, id_pregunta",
+            [id_paciente],
+            |f| Ok((f.get(0)?, f.get(1)?)),
+        )
+    }
+
     fn consulta<T, P, F>(&self, sql: &str, parametros: P, convierte: F) -> Vec<T>
     where
         P: rusqlite::Params,
@@ -239,8 +266,13 @@ mod pruebas {
     use super::*;
 
     /// Una base nueva en el directorio temporal, creada con el SQL incrustado.
+    /// Cada llamada tiene la suya: las pruebas corren a la vez y dos pueden
+    /// pedir el mismo nombre.
     pub fn base_de_prueba(nombre: &str) -> Datos {
-        let ruta = std::env::temp_dir().join(format!("medicci-prueba-{}-{}.db", nombre, std::process::id()));
+        static CUENTA: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let n = CUENTA.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let ruta = std::env::temp_dir()
+            .join(format!("medicci-prueba-{}-{}-{}.db", nombre, std::process::id(), n));
         let _ = std::fs::remove_file(&ruta);
         Datos::abrir(&ruta).expect("la base se crea con el SQL incrustado")
     }

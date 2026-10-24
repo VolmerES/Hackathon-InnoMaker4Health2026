@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medicci en dos Spark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --papel: #f3f5f2;
+  --hoja: #ffffff;
+  --tinta: #14231b;
+  --tinta-2: #44544b;
+  --tenue: #6d7c73;
+  --linea: #d9e0da;
+  --verde: #1a5c44;
+  --verde-osc: #0e2d20;
+  --verde-claro: #e3eee8;
+  --oro: #b8861a;
+  --oro-claro: #fbf1d8;
+  --rojo: #9c3b23;
+  --rojo-claro: #f8e6e0;
+  --codigo: #0f1f17;
+  --codigo-tinta: #d7e7dd;
+  --sombra: 0 1px 2px rgba(10, 30, 20, .06), 0 6px 20px rgba(10, 30, 20, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel: #0d1511;
+    --hoja: #141f19;
+    --tinta: #e4ece6;
+    --tinta-2: #b4c2b9;
+    --tenue: #8a9a90;
+    --linea: #2a3a31;
+    --verde: #5fb58f;
+    --verde-osc: #0a1d14;
+    --verde-claro: #183026;
+    --oro: #e2b44a;
+    --oro-claro: #2e2614;
+    --rojo: #e08a72;
+    --rojo-claro: #33201a;
+    --codigo: #08100c;
+    --codigo-tinta: #cfe1d6;
+    --sombra: none;
+  }
+}
+:root[data-theme="dark"] {
+  --papel: #0d1511;
+  --hoja: #141f19;
+  --tinta: #e4ece6;
+  --tinta-2: #b4c2b9;
+  --tenue: #8a9a90;
+  --linea: #2a3a31;
+  --verde: #5fb58f;
+  --verde-osc: #0a1d14;
+  --verde-claro: #183026;
+  --oro: #e2b44a;
+  --oro-claro: #2e2614;
+  --rojo: #e08a72;
+  --rojo-claro: #33201a;
+  --codigo: #08100c;
+  --codigo-tinta: #cfe1d6;
+  --sombra: none;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font: 400 16px/1.6 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+code, pre, .mono { font-family: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace; }
+a { color: var(--verde); }
+
+.marco { max-width: 1060px; margin: 0 auto; padding: 0 16px; }
+.lectura { max-width: 72ch; }
+
+/* ---------- cabecera ---------- */
+header.portada { background: var(--verde-osc); color: #eef5f0; padding: 56px 0 40px; }
+header.portada h1 {
+  margin: 0 0 14px;
+  font-size: clamp(30px, 5vw, 50px);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  max-width: 20ch;
+}
+header.portada p { margin: 0; max-width: 62ch; color: #b9d2c4; font-size: 18px; }
+.cifras { display: flex; flex-wrap: wrap; gap: 10px 36px; margin-top: 28px; }
+.cifras div { font-size: 14px; color: #9dc3b1; }
+.cifras b { display: block; font-size: 22px; color: #fff; font-weight: 600; }
+
+/* ---------- índice ---------- */
+nav.indice { position: sticky; top: 0; z-index: 5; background: var(--hoja); border-bottom: 1px solid var(--linea); }
+nav.indice ol { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.indice a {
+  display: block; padding: 12px 12px; white-space: nowrap; text-decoration: none;
+  color: var(--tinta-2); font-size: 14px; font-weight: 500; border-bottom: 2px solid transparent;
+}
+nav.indice a:hover, nav.indice a:focus-visible { color: var(--tinta); border-bottom-color: var(--oro); outline: none; }
+
+/* ---------- secciones ---------- */
+section { padding: 56px 0 8px; scroll-margin-top: 48px; }
+h2 { font-size: clamp(24px, 3.2vw, 32px); line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em; }
+h3 { font-size: 19px; margin: 28px 0 8px; }
+p { margin: 0 0 14px; }
+.entrada { font-size: 18px; color: var(--tinta-2); }
+
+.hoja {
+  background: var(--hoja); border: 1px solid var(--linea); border-radius: 12px;
+  padding: 20px; box-shadow: var(--sombra);
+}
+.diagrama { overflow-x: auto; }
+.diagrama svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.pie-figura { font-size: 14px; color: var(--tenue); margin-top: 10px; }
+
+/* pasos numerados: solo donde hay una secuencia de verdad */
+ol.pasos { list-style: none; counter-reset: paso; margin: 18px 0 0; padding: 0; display: grid; gap: 12px; }
+ol.pasos > li { counter-increment: paso; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+ol.pasos > li::before {
+  content: counter(paso); width: 30px; height: 30px; border-radius: 50%;
+  background: var(--verde); color: var(--hoja); display: grid; place-items: center;
+  font-weight: 600; font-size: 14px; margin-top: 1px;
+}
+ol.pasos b { color: var(--tinta); }
+
+/* tablas */
+.tabla { overflow-x: auto; border: 1px solid var(--linea); border-radius: 12px; background: var(--hoja); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 11px 14px; vertical-align: top; border-bottom: 1px solid var(--linea); }
+th { font-weight: 600; font-size: 14px; color: var(--tinta-2); background: var(--verde-claro); }
+tr:last-child td { border-bottom: 0; }
+td code, p code, li code, .archivo code { font-size: 0.88em; background: var(--verde-claro); padding: 1px 5px; border-radius: 4px; }
+tr.elegida td { background: var(--oro-claro); }
+
+/* dos columnas que se apilan */
+.dos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 760px) { .dos { grid-template-columns: 1fr; } }
+
+.opcion { border-radius: 12px; padding: 18px 20px; border: 1px solid var(--linea); background: var(--hoja); }
+.opcion.si { border: 2px solid var(--oro); }
+.opcion h3 { margin-top: 0; }
+.sello { display: inline-block; font-size: 13px; font-weight: 600; padding: 2px 9px; border-radius: 10px; margin-bottom: 8px; }
+.sello.oro { background: var(--oro-claro); color: var(--oro); }
+.sello.gris { background: var(--verde-claro); color: var(--tinta-2); }
+
+ul.ventajas { margin: 8px 0 0; padding-left: 20px; }
+ul.ventajas li { margin-bottom: 4px; }
+
+/* avisos */
+.aviso { border-left: 3px solid var(--oro); background: var(--oro-claro); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+.aviso.rojo { border-left-color: var(--rojo); background: var(--rojo-claro); }
+.aviso p:last-child { margin-bottom: 0; }
+
+/* código */
+pre {
+  background: var(--codigo); color: var(--codigo-tinta); border-radius: 10px; padding: 16px 18px;
+  overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 10px 0 16px;
+}
+pre .c { color: #7fa892; }
+
+/* calculadora */
+.calc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 760px) { .calc { grid-template-columns: 1fr; } }
+.campo { display: grid; grid-template-columns: 1fr 120px; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px dashed var(--linea); }
+.campo label { font-size: 15px; color: var(--tinta-2); }
+.campo label small { display: block; color: var(--tenue); font-size: 13px; }
+.campo input {
+  width: 100%; font: 500 15px "IBM Plex Mono", monospace; padding: 6px 8px; text-align: right;
+  border: 1px solid var(--linea); border-radius: 6px; background: var(--papel); color: var(--tinta);
+}
+.campo input:focus-visible { outline: 2px solid var(--verde); outline-offset: 1px; }
+.resultado { display: grid; gap: 10px; align-content: start; }
+.dato { background: var(--verde-claro); border-radius: 10px; padding: 12px 14px; }
+.dato span { display: block; font-size: 14px; color: var(--tinta-2); }
+.dato b { font-size: 24px; font-weight: 600; }
+.dato.veredicto { background: var(--oro-claro); }
+.dato.veredicto b { font-size: 18px; line-height: 1.35; }
+
+/* lista de archivos */
+.archivo { display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 6px 18px; padding: 14px 0; border-bottom: 1px solid var(--linea); }
+.archivo:last-child { border-bottom: 0; }
+.archivo .ruta { font: 500 14px "IBM Plex Mono", monospace; color: var(--verde); word-break: break-word; }
+.archivo .rutas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.marca { font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 8px; background: var(--verde-claro); color: var(--tinta-2); }
+.marca.siempre { background: var(--oro-claro); color: var(--oro); }
+@media (max-width: 640px) { .archivo { grid-template-columns: 1fr; } }
+
+footer { padding: 48px 0 64px; color: var(--tenue); font-size: 14px; }
+
+/* svg */
+.svg-caja { fill: var(--hoja); stroke: var(--linea); stroke-width: 1.5; }
+.svg-zona { fill: var(--papel); stroke: var(--linea); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.svg-verde { fill: var(--verde-osc); }
+.svg-spark { fill: var(--verde); }
+.svg-oro { fill: var(--oro-claro); stroke: var(--oro); stroke-width: 1.5; }
+.svg-t { fill: var(--tinta); font: 600 14px "IBM Plex Sans", sans-serif; }
+.svg-t2 { fill: var(--tinta-2); font: 400 12.5px "IBM Plex Sans", sans-serif; }
+.svg-tb { fill: #ffffff; font: 600 14px "IBM Plex Sans", sans-serif; }
+.svg-tb2 { fill: #cfe3d8; font: 400 12.5px "IBM Plex Sans", sans-serif; }
+.svg-m { fill: var(--tenue); font: 500 11.5px "IBM Plex Mono", monospace; }
+.svg-zt { fill: var(--tenue); font: 600 12px "IBM Plex Sans", sans-serif; letter-spacing: .02em; }
+.svg-flecha { stroke: var(--verde); stroke-width: 2; fill: none; }
+.svg-flecha-oro { stroke: var(--oro); stroke-width: 2.5; fill: none; }
+.svg-qsfp { stroke: var(--oro); stroke-width: 3; fill: none; stroke-dasharray: 7 5; }
+.svg-num { fill: var(--oro); }
+.svg-numt { fill: #1b1405; font: 700 12px "IBM Plex Sans", sans-serif; }
+.svg-capa { stroke: var(--linea); stroke-width: 1.2; }
+</style>
+</head>
+<body>
+
+<header class="portada">
+  <div class="marco">
+    <h1>Un modelo, dos Spark y 3.000 médicos</h1>
+    <p>Qué hace falta para que todos los ordenadores del hospital pregunten al mismo
+       modelo de IA local: cómo trabajan las dos gráficas, cómo se habla cada equipo con
+       ellas, cómo se instala en un puesto y qué se toca cuando llegue el esquema de la base.</p>
+    <div class="cifras">
+      <div><b>2 × DGX Spark</b>128 GB de memoria cada uno</div>
+      <div><b>Qwen3‑8B</b>29/30 medido en un portátil</div>
+      <div><b>1 dirección</b>todo sale de <span class="mono">medicci.conf</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="indice" aria-label="Secciones">
+  <div class="marco">
+    <ol>
+      <li><a href="#recorrido">El recorrido</a></li>
+      <li><a href="#spark">Cómo corre la IA</a></li>
+      <li><a href="#union">Cómo se unen</a></li>
+      <li><a href="#cuentas">¿Llega para 3.000?</a></li>
+      <li><a href="#red">La red</a></li>
+      <li><a href="#instalar">Instalarlo</a></li>
+      <li><a href="#base">Cuando llegue la base</a></li>
+      <li><a href="#pendiente">Lo que falta</a></li>
+    </ol>
+  </div>
+</nav>
+
+<main class="marco">
+
+<!-- =============================================================== -->
+<section id="recorrido">
+  <h2>El recorrido de una pregunta</h2>
+  <p class="entrada lectura">Ningún ordenador de consulta habla con las gráficas. Habla con el
+     servidor de Medicci, y solo ese servidor pregunta al modelo. Así las gráficas quedan
+     escondidas en el CPD y se pueden cambiar sin tocar los 3.000 puestos.</p>
+
+  <div class="hoja diagrama">
+    <svg viewBox="0 0 1000 470" role="img" aria-labelledby="t-recorrido">
+      <title id="t-recorrido">De la burbuja del médico a los dos Spark y vuelta</title>
+      <defs>
+        <marker id="pv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--verde)"/>
+        </marker>
+        <marker id="po" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--oro)"/>
+        </marker>
+      </defs>
+
+      <!-- zonas -->
+      <rect class="svg-zona" x="10" y="20" width="230" height="300" rx="14"/>
+      <text class="svg-zt" x="26" y="44">CONSULTAS · 3.000 PUESTOS</text>
+      <rect class="svg-zona" x="270" y="20" width="720" height="300" rx="14"/>
+      <text class="svg-zt" x="286" y="44">CPD DEL HOSPITAL</text>
+
+      <!-- puestos -->
+      <rect class="svg-caja" x="36" y="70" width="180" height="70" rx="10"/>
+      <text class="svg-t" x="50" y="98">PC con HCIS</text>
+      <text class="svg-t2" x="50" y="120">burbuja medicci.exe</text>
+      <rect class="svg-caja" x="36" y="152" width="180" height="70" rx="10"/>
+      <text class="svg-t" x="50" y="180">PC con HCIS</text>
+      <text class="svg-t2" x="50" y="202">pestaña Medicci en HCIS</text>
+      <rect class="svg-caja" x="36" y="234" width="180" height="56" rx="10"/>
+      <text class="svg-t2" x="50" y="267">… y así hasta 3.000</text>
+
+      <!-- nginx -->
+      <rect class="svg-caja" x="300" y="110" width="150" height="110" rx="10"/>
+      <text class="svg-t" x="314" y="140">nginx</text>
+      <text class="svg-t2" x="314" y="162">la puerta: HTTPS</text>
+      <text class="svg-t2" x="314" y="180">y el reparto</text>
+      <text class="svg-m" x="314" y="204">:443 · :8100</text>
+
+      <!-- servidores medicci -->
+      <rect class="svg-verde" x="490" y="70" width="190" height="64" rx="10"/>
+      <text class="svg-tb" x="506" y="98">Servidor Medicci</text>
+      <text class="svg-tb2" x="506" y="118">mvp/servidor.py · copia 1</text>
+      <rect class="svg-verde" x="490" y="146" width="190" height="64" rx="10"/>
+      <text class="svg-tb" x="506" y="174">Servidor Medicci</text>
+      <text class="svg-tb2" x="506" y="194">copia 2 (y las que hagan falta)</text>
+
+      <!-- sparks -->
+      <rect class="svg-spark" x="800" y="64" width="176" height="80" rx="12"/>
+      <text class="svg-tb" x="816" y="94">Spark A</text>
+      <text class="svg-tb2" x="816" y="116">vLLM · Qwen3‑8B</text>
+      <text class="svg-tb2" x="816" y="134">:8000</text>
+      <rect class="svg-spark" x="800" y="196" width="176" height="80" rx="12"/>
+      <text class="svg-tb" x="816" y="226">Spark B</text>
+      <text class="svg-tb2" x="816" y="248">vLLM · Qwen3‑8B</text>
+      <text class="svg-tb2" x="816" y="266">:8000</text>
+      <path class="svg-qsfp" d="M888 144 L888 196"/>
+      <text class="svg-m" x="898" y="174">QSFP</text>
+
+      <!-- flechas -->
+      <path class="svg-flecha" d="M216 105 C255 105 262 150 298 150" marker-end="url(#pv)"/>
+      <path class="svg-flecha" d="M216 187 C255 187 262 170 298 170" marker-end="url(#pv)"/>
+      <path class="svg-flecha" d="M450 140 C470 140 470 102 488 102" marker-end="url(#pv)"/>
+      <path class="svg-flecha" d="M450 170 C470 170 470 178 488 178" marker-end="url(#pv)"/>
+      <path class="svg-flecha-oro" d="M680 120 C740 120 740 104 798 104" marker-end="url(#po)"/>
+      <path class="svg-flecha-oro" d="M680 180 C740 180 740 236 798 236" marker-end="url(#po)"/>
+      <text class="svg-m" x="690" y="146">vía nginx</text>
+      <text class="svg-m" x="690" y="162">:8100</text>
+
+      <!-- fuentes de datos -->
+      <rect class="svg-zona" x="270" y="345" width="720" height="110" rx="14"/>
+      <text class="svg-zt" x="286" y="369">DATOS DEL PACIENTE · UNA DE LAS TRES VÍAS</text>
+      <rect class="svg-oro" x="300" y="385" width="200" height="54" rx="10"/>
+      <text class="svg-t" x="314" y="408">Base de HCIS</text>
+      <text class="svg-t2" x="314" y="428">consulta en solo lectura</text>
+      <rect class="svg-oro" x="520" y="385" width="200" height="54" rx="10"/>
+      <text class="svg-t" x="534" y="408">Motor HL7</text>
+      <text class="svg-t2" x="534" y="428">mensajes al puerto 2575</text>
+      <rect class="svg-oro" x="740" y="385" width="200" height="54" rx="10"/>
+      <text class="svg-t" x="754" y="408">Exportación CSV</text>
+      <text class="svg-t2" x="754" y="428">volcado periódico</text>
+      <path class="svg-flecha" d="M640 385 L640 212" marker-end="url(#pv)"/>
+
+      <!-- números del recorrido -->
+      <circle class="svg-num" cx="257" cy="128" r="11"/><text class="svg-numt" x="253" y="132">1</text>
+      <circle class="svg-num" cx="470" cy="122" r="11"/><text class="svg-numt" x="466" y="126">2</text>
+      <circle class="svg-num" cx="660" cy="300" r="11"/><text class="svg-numt" x="656" y="304">3</text>
+      <circle class="svg-num" cx="770" cy="170" r="11"/><text class="svg-numt" x="766" y="174">4</text>
+    </svg>
+  </div>
+
+  <ol class="pasos lectura">
+    <li><div><b>El médico pregunta</b> en la burbuja o en la pestaña de HCIS. Su PC solo conoce
+        una dirección, <code>https://medicci.hospital.local</code>, que lee de <code>medicci.conf</code>.</div></li>
+    <li><div><b>nginx recibe la pregunta</b> con HTTPS y la manda siempre a la misma copia del
+        servidor de Medicci para ese PC, porque la sesión del paciente vive en la memoria de esa copia.</div></li>
+    <li><div><b>El servidor de Medicci saca las filas del paciente</b> con sus 6 consultas fijas
+        (<code>mvp/paciente.py</code>) y prepara una sola llamada al modelo.</div></li>
+    <li><div><b>nginx elige el Spark menos ocupado</b> y le pasa la llamada. Si uno no contesta,
+        reintenta en el otro. El modelo responde citando filas y el servidor comprueba que cada
+        fuente existe antes de devolverla.</div></li>
+  </ol>
+</section>
+
+<!-- =============================================================== -->
+<section id="spark">
+  <h2>Cómo corre la IA dentro de un Spark</h2>
+  <p class="entrada lectura">El Spark no trae un programa propio como Ollama. Trae
+     <b>DGX OS</b>, un Ubuntu con los controladores de NVIDIA, CUDA y Docker listos para la
+     gráfica. Encima se elige un servidor de inferencia, que corre en un contenedor y habla
+     la misma API que OpenAI. Medicci ya habla esa API, así que cambiar de uno a otro es
+     cambiar <code>MEDICCI_URL</code>.</p>
+
+  <div class="dos">
+    <div class="hoja diagrama">
+      <svg viewBox="0 0 420 330" role="img" aria-labelledby="t-capas" style="min-width:380px">
+        <title id="t-capas">Las capas de software de un Spark</title>
+        <rect x="20" y="20" width="380" height="54" rx="10" class="svg-oro"/>
+        <text class="svg-t" x="38" y="44">Qwen3‑8B</text>
+        <text class="svg-t2" x="38" y="62">el modelo: unos 9 GB en FP8, se baja una vez</text>
+        <rect x="20" y="84" width="380" height="54" rx="10" class="svg-spark"/>
+        <text class="svg-tb" x="38" y="108">vLLM en un contenedor</text>
+        <text class="svg-tb2" x="38" y="126">contesta en :8000 con la API de OpenAI</text>
+        <rect x="20" y="148" width="380" height="54" rx="10" class="svg-caja"/>
+        <text class="svg-t" x="38" y="172">Docker + NVIDIA Container Toolkit</text>
+        <text class="svg-t2" x="38" y="190">viene instalado</text>
+        <rect x="20" y="212" width="380" height="54" rx="10" class="svg-caja"/>
+        <text class="svg-t" x="38" y="236">Controladores, CUDA</text>
+        <text class="svg-t2" x="38" y="254">viene instalado</text>
+        <rect x="20" y="276" width="380" height="44" rx="10" class="svg-verde"/>
+        <text class="svg-tb" x="38" y="303">DGX OS (Ubuntu) · GB10 · 128 GB unificados</text>
+      </svg>
+    </div>
+    <div>
+      <div class="tabla">
+        <table>
+          <thead><tr><th>Servidor</th><th>Para qué sirve aquí</th></tr></thead>
+          <tbody>
+            <tr><td><b>Ollama</b></td><td>El del portátil. Lo más sencillo, pero atiende peor a muchos a la vez.</td></tr>
+            <tr class="elegida"><td><b>vLLM</b></td><td><b>El elegido.</b> Junta las preguntas que llegan a la vez en un mismo paso de la gráfica (batching continuo). NVIDIA tiene receta para uno y para dos Spark.</td></tr>
+            <tr><td><b>NIM / TensorRT‑LLM</b></td><td>Los contenedores de NVIDIA, los más optimizados. Piden una clave de NGC.</td></tr>
+            <tr><td><b>SGLang, llama.cpp</b></td><td>Alternativas; no hacen falta para un 8B.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="aviso">
+        <p><b>Un cambio en el código al pasar a vLLM.</b> Para que Qwen3 no razone en voz alta,
+           <code>mvp/responder.py</code> manda <code>reasoning_effort: "none"</code>, que es
+           cosa de Ollama. En vLLM se apaga con
+           <code>chat_template_kwargs: {"enable_thinking": false}</code>. Hay que añadirlo y pasar
+           <code>mvp/prueba_acierto.py</code> contra el Spark antes de abrirlo a nadie.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="union">
+  <h2>Cómo se unen las dos gráficas</h2>
+  <p class="entrada lectura">Hay dos maneras de trabajar con dos Spark. Con un modelo de 8B,
+     que cabe de sobra en uno solo, la buena es la primera: cada Spark lleva su copia entera
+     y nginx reparte. El cable QSFP entre los dos solo hace falta para la segunda.</p>
+
+  <div class="dos">
+    <div class="opcion si">
+      <span class="sello oro">La que se propone</span>
+      <h3>Dos copias y un balanceador</h3>
+      <div class="diagrama">
+        <svg viewBox="0 0 440 210" role="img" aria-labelledby="t-replicas" style="min-width:360px">
+          <title id="t-replicas">Cada Spark con una copia del modelo; nginx reparte</title>
+          <defs>
+            <marker id="pv2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--verde)"/>
+            </marker>
+          </defs>
+          <rect class="svg-caja" x="20" y="80" width="120" height="54" rx="10"/>
+          <text class="svg-t" x="36" y="104">nginx</text>
+          <text class="svg-t2" x="36" y="122">least_conn</text>
+          <rect class="svg-spark" x="250" y="20" width="170" height="70" rx="10"/>
+          <text class="svg-tb" x="266" y="46">Spark A</text>
+          <text class="svg-tb2" x="266" y="66">Qwen3‑8B entero</text>
+          <rect class="svg-spark" x="250" y="124" width="170" height="70" rx="10"/>
+          <text class="svg-tb" x="266" y="150">Spark B</text>
+          <text class="svg-tb2" x="266" y="170">Qwen3‑8B entero</text>
+          <path class="svg-flecha" d="M140 100 C190 100 200 55 248 55" marker-end="url(#pv2)"/>
+          <path class="svg-flecha" d="M140 114 C190 114 200 159 248 159" marker-end="url(#pv2)"/>
+          <text class="svg-m" x="160" y="70">1, 3, 5…</text>
+          <text class="svg-m" x="160" y="152">2, 4, 6…</text>
+        </svg>
+      </div>
+      <ul class="ventajas">
+        <li>El doble de preguntas a la vez.</li>
+        <li>Si un Spark se apaga, el otro sigue: solo va más lento.</li>
+        <li>Basta la red normal del CPD (10 GbE). No hace falta el cable QSFP.</li>
+        <li>Se actualiza uno mientras el otro atiende.</li>
+      </ul>
+    </div>
+
+    <div class="opcion">
+      <span class="sello gris">Solo para un modelo grande</span>
+      <h3>Un modelo partido entre los dos</h3>
+      <div class="diagrama">
+        <svg viewBox="0 0 440 210" role="img" aria-labelledby="t-partido" style="min-width:360px">
+          <title id="t-partido">Un modelo grande repartido entre los dos Spark</title>
+          <rect class="svg-spark" x="30" y="60" width="170" height="90" rx="10"/>
+          <text class="svg-tb" x="46" y="90">Spark A</text>
+          <text class="svg-tb2" x="46" y="110">mitad de cada capa</text>
+          <text class="svg-tb2" x="46" y="128">(Ray, cabeza)</text>
+          <rect class="svg-spark" x="240" y="60" width="170" height="90" rx="10"/>
+          <text class="svg-tb" x="256" y="90">Spark B</text>
+          <text class="svg-tb2" x="256" y="110">la otra mitad</text>
+          <text class="svg-tb2" x="256" y="128">(Ray, trabajador)</text>
+          <path class="svg-qsfp" d="M200 105 L240 105"/>
+          <text class="svg-m" x="150" y="182">cable QSFP directo, NCCL</text>
+          <text class="svg-m" x="150" y="40">cada respuesta usa los dos</text>
+        </svg>
+      </div>
+      <ul class="ventajas">
+        <li>Sirve para modelos que no caben en uno: NVIDIA da unos 200 B en un Spark y hasta 405 B con dos (en FP4).</li>
+        <li>Cada palabra viaja por el cable entre los dos: necesita el QSFP.</li>
+        <li>Si uno cae, cae todo. Cada nodo guarda el modelo entero en disco.</li>
+        <li>Receta de NVIDIA: vLLM multinodo con Ray.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="aviso">
+    <p><b>El cable QSFP no se tira.</b> Conviene dejarlo puesto aunque se use la primera manera:
+       si un día se quiere probar un modelo mayor, el cambio es de configuración, no de compra.
+       NVIDIA cita cables QSFP de 200 GbE en una guía y QSFP28 de 100 Gb/s en otra: comprobar
+       el modelo exacto antes de pedirlo.</p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="cuentas">
+  <h2>¿Llegan dos Spark para 3.000 médicos?</h2>
+  <p class="entrada lectura">No los 3.000 preguntan a la vez. Lo que importa es la hora punta:
+     cuántas preguntas por segundo llegan y cuántas palabras por segundo tiene que escribir el
+     modelo. Los números de partida salen del reto; los marcados con ⚠ son supuestos que hay
+     que medir. Cámbialos y se recalcula todo.</p>
+
+  <div class="hoja calc">
+    <div>
+      <div class="campo"><label for="c-medicos">Médicos<small>los que usarían Medicci</small></label><input id="c-medicos" type="number" value="3000" min="1"></div>
+      <div class="campo"><label for="c-consultas">Consultas por médico al año<small>La Princesa: 473.257 / 558</small></label><input id="c-consultas" type="number" value="848" min="1"></div>
+      <div class="campo"><label for="c-preguntas">Preguntas por consulta<small>la del pitch</small></label><input id="c-preguntas" type="number" value="3" min="0" step="0.5"></div>
+      <div class="campo"><label for="c-dias">Días de consulta al año</label><input id="c-dias" type="number" value="250" min="1"></div>
+      <div class="campo"><label for="c-punta">% del día en la hora punta ⚠<small>supuesto</small></label><input id="c-punta" type="number" value="20" min="1" max="100"></div>
+      <div class="campo"><label for="c-rafaga">Ráfaga dentro de la hora ⚠<small>el peor minuto frente a la media</small></label><input id="c-rafaga" type="number" value="2" min="1" step="0.5"></div>
+      <div class="campo"><label for="c-entrada">Tokens que lee por pregunta ⚠<small>las filas del paciente</small></label><input id="c-entrada" type="number" value="1500" min="1"></div>
+      <div class="campo"><label for="c-salida">Tokens que escribe por respuesta ⚠<small>el tope es 400</small></label><input id="c-salida" type="number" value="150" min="1"></div>
+      <div class="campo"><label for="c-tarda">Segundos por respuesta con carga ⚠</label><input id="c-tarda" type="number" value="3" min="0.1" step="0.1"></div>
+      <div class="campo"><label for="c-capacidad">Tokens/s que escribe un Spark ⚠<small>sumando todas las preguntas a la vez: medir</small></label><input id="c-capacidad" type="number" value="600" min="1"></div>
+    </div>
+    <div class="resultado" aria-live="polite">
+      <div class="dato"><span>Respuestas al día</span><b id="r-dia">–</b></div>
+      <div class="dato"><span>Preguntas por segundo en el peor momento</span><b id="r-rps">–</b></div>
+      <div class="dato"><span>Preguntas atendiéndose a la vez</span><b id="r-vez">–</b></div>
+      <div class="dato"><span>Tokens por segundo que hay que escribir</span><b id="r-tps">–</b></div>
+      <div class="dato"><span>Memoria para esas conversaciones (caché KV)</span><b id="r-kv">–</b></div>
+      <div class="dato veredicto"><span>Lo que sale</span><b id="r-veredicto">–</b></div>
+    </div>
+  </div>
+
+  <h3>De dónde salen los números fijos</h3>
+  <ul class="lectura">
+    <li><b>Memoria por conversación.</b> Qwen3‑8B tiene 36 capas y 8 cabezas de clave‑valor de
+        128 dimensiones: guarda unos 144 KiB por token (en 16 bits). Con 1.650 tokens son unos
+        240 MB por pregunta en curso.</li>
+    <li><b>Memoria libre en un Spark.</b> 128 GB, de los que vLLM usa el 85 %, menos unos 9 GB
+        del modelo en FP8: quedan unos 100 GB para conversaciones. La memoria no va a ser el
+        límite.</li>
+    <li><b>Velocidad de una sola respuesta.</b> El Spark mueve 273 GB/s de memoria, menos que una
+        RTX de sobremesa. Una pregunta sola puede tardar algo más que en el portátil de la demo
+        (0,7 s). Lo compensa atendiendo decenas a la vez. Con NVFP4 (cuantización a 4 bits del
+        propio Spark) va más deprisa.</li>
+  </ul>
+  <div class="aviso">
+    <p><b>Lo único que hay que medir de verdad</b> es la casilla «tokens/s que escribe un Spark».
+       Se mide con el propio vLLM en cuanto llegue el equipo: <code>vllm bench serve</code> con
+       preguntas de la longitud de las de Medicci y 10, 20 y 40 a la vez.</p>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="red">
+  <h2>Cómo se conecta cada ordenador</h2>
+  <p class="entrada lectura">Tres redes, y cada una solo ve lo que necesita. Los PC de consulta
+     solo llegan a nginx. Los Spark no se ven desde las consultas.</p>
+
+  <div class="tabla">
+    <table>
+      <thead><tr><th>Desde</th><th>Hasta</th><th>Puerto</th><th>Para qué</th></tr></thead>
+      <tbody>
+        <tr><td>PC de consulta (burbuja o pestaña)</td><td>nginx · <code>medicci.hospital.local</code></td><td><code>443</code> HTTPS</td><td><code>/api/sesion</code>, <code>/tarjeta</code>, <code>/pregunta</code></td></tr>
+        <tr><td>nginx</td><td>Copias del servidor de Medicci</td><td><code>8001</code>, <code>8002</code>…</td><td>Misma copia para el mismo PC (<code>ip_hash</code>)</td></tr>
+        <tr><td>Servidor de Medicci</td><td>nginx (reparto del modelo)</td><td><code>8100</code></td><td><code>/v1/chat/completions</code></td></tr>
+        <tr><td>nginx</td><td>Spark A y Spark B</td><td><code>8000</code> + clave</td><td>vLLM, con <code>--api-key</code></td></tr>
+        <tr><td>Motor de integración</td><td>Servidor de Medicci</td><td><code>2575</code> MLLP</td><td>Mensajes HL7 (si se va por HL7)</td></tr>
+        <tr><td>Servidor de Medicci</td><td>Base de HCIS</td><td>El de su motor (Oracle: <code>1521</code>)</td><td>Solo lectura (si se va directo a la base)</td></tr>
+        <tr><td>Spark A</td><td>Spark B</td><td>QSFP, subred privada</td><td>Solo con el modelo partido</td></tr>
+        <tr><td>Puesto de Sistemas</td><td>Spark y servidor</td><td><code>22</code> SSH</td><td>Mantenimiento</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Seguridad, en corto</h3>
+  <ul class="lectura">
+    <li><b>Nada sale del hospital.</b> Internet solo hace falta un rato, para bajar el modelo y
+        las actualizaciones. Si no se puede, se copian a mano.</li>
+    <li><b>Clave entre el servidor y los Spark.</b> <code>MEDICCI_CLAVE</code> en el servidor y
+        <code>--api-key</code> en vLLM: aunque alguien llegue a la red del CPD, no puede usar el modelo.</li>
+    <li><b>HTTPS hacia las consultas</b> con un certificado de la autoridad interna del hospital.</li>
+    <li><b>Registro.</b> Hoy cada copia escribe en su <code>mvp/resultados/registro.jsonl</code>.
+        Con varias copias hay que juntarlo en un solo sitio (el syslog del hospital o una tabla).</li>
+  </ul>
+</section>
+
+<!-- =============================================================== -->
+<section id="instalar">
+  <h2>Cómo se instala</h2>
+  <p class="entrada lectura">Tres sitios distintos. En los 3.000 puestos se instala lo mínimo, un
+     ejecutable y un fichero de texto, y lo pesado vive en el CPD.</p>
+
+  <h3>En un ordenador de consulta</h3>
+  <ol class="pasos lectura">
+    <li><div><b>Compilar una vez</b> en el equipo de Sistemas: <code>just compila</code>. Sale
+        <code>medicci.exe</code>, que no necesita instalar nada más. Conviene firmarlo con el
+        certificado del hospital para que Windows no lo bloquee.</div></li>
+    <li><div><b>Preparar la carpeta</b> <code>C:\Program Files\Medicci\</code> con
+        <code>medicci.exe</code> y un <code>medicci.conf</code> de una línea. La burbuja lo busca
+        al lado del ejecutable.</div></li>
+    <li><div><b>Repartirla</b> con la herramienta del hospital (SCCM, Intune o una directiva de
+        grupo). No hace falta ir puesto por puesto.</div></li>
+    <li><div><b>Que arranque sola</b>: un acceso directo en
+        <code>C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp</code>.</div></li>
+    <li><div><b>Abrir el cortafuegos</b> solo hacia <code>medicci.hospital.local:443</code>.</div></li>
+  </ol>
+<pre><span class="c"># C:\Program Files\Medicci\medicci.conf  (en cada PC de consulta)</span>
+MEDICCI_SERVIDOR=https://medicci.hospital.local</pre>
+  <div class="aviso rojo">
+    <p><b>Antes de llevarlo a un puesto real:</b> si la burbuja no encuentra el servidor, hoy
+       se pasa a su base local, que trae los dos pacientes inventados de la demo. En el hospital
+       eso no puede pasar. Hay que quitar esa vuelta atrás en
+       <code>medicci-rs/src/main.rs</code> (o activarla solo con una opción de demo) y que diga
+       «sin conexión con Medicci».</p>
+  </div>
+
+  <h3>En cada Spark</h3>
+  <ol class="pasos lectura">
+    <li><div><b>Primer arranque de DGX OS</b>, actualizar desde el DGX Dashboard, poner IP fija y
+        nombre (<code>spark-a</code>, <code>spark-b</code>).</div></li>
+    <li><div><b>Comprobar la gráfica</b>: <code>nvidia-smi</code> y que Docker la ve.</div></li>
+    <li><div><b>Bajar el modelo una vez</b> a <code>/srv/modelos</code> (con internet, o copiado).</div></li>
+    <li><div><b>Arrancar vLLM</b> con el contenedor de la receta de NVIDIA, para que se levante
+        solo tras un corte de luz.</div></li>
+    <li><div><b>Probar</b>: <code>curl -H "Authorization: Bearer $MEDICCI_CLAVE" http://spark-a:8000/v1/models</code>.</div></li>
+  </ol>
+<pre><span class="c"># En spark-a y en spark-b. La etiqueta del contenedor, la de la receta de NVIDIA para Spark.</span>
+docker run -d --name medicci-vllm --restart unless-stopped \
+  --gpus all --ipc=host -p 8000:8000 \
+  -v /srv/modelos:/root/.cache/huggingface \
+  nvcr.io/nvidia/vllm:&lt;etiqueta-de-la-receta&gt; \
+  vllm serve Qwen/Qwen3-8B \
+    --served-model-name qwen3:8b \
+    --api-key "$MEDICCI_CLAVE" \
+    --max-model-len 8192 \
+    --gpu-memory-utilization 0.85</pre>
+  <p class="lectura"><code>--served-model-name qwen3:8b</code> hace que el modelo se llame igual
+     que en Ollama, así <code>MEDICCI_MODELO</code> no cambia.</p>
+
+  <h3>En el servidor de Medicci (una máquina virtual del CPD)</h3>
+  <ol class="pasos lectura">
+    <li><div><b>Linux con Python</b> (o Docker) y el repositorio. Varias copias de
+        <code>mvp/servidor.py</code>, cada una en su puerto, como servicios que se reinician solos.</div></li>
+    <li><div><b>Su <code>medicci.conf</code></b> apunta al reparto de nginx, no a un Spark.</div></li>
+    <li><div><b>nginx</b> en la misma máquina, con el certificado del hospital y el nombre
+        <code>medicci.hospital.local</code> en el DNS interno.</div></li>
+    <li><div><b>Probar de punta a punta</b>:
+        <code>python mvp/prueba_acierto.py --url http://localhost:8100/v1</code> tiene que dar lo
+        mismo que en el portátil (29/30, ninguna fuente inventada).</div></li>
+  </ol>
+<pre><span class="c"># medicci.conf en el servidor de Medicci</span>
+MEDICCI_URL=http://localhost:8100/v1
+MEDICCI_MODELO=qwen3:8b
+MEDICCI_CLAVE=&lt;la misma que en vLLM&gt;
+MEDICCI_ESCUCHA=127.0.0.1
+MEDICCI_PUERTO=8001          <span class="c"># 8002 en la segunda copia…</span>
+MEDICCI_DATOS=hl7            <span class="c"># o csv, o la vía directa a la base cuando exista</span></pre>
+<pre><span class="c"># /etc/nginx/conf.d/medicci.conf</span>
+upstream medicci_modelo {                      <span class="c"># los dos Spark</span>
+    least_conn;
+    server spark-a.cpd.local:8000 max_fails=2 fail_timeout=10s;
+    server spark-b.cpd.local:8000 max_fails=2 fail_timeout=10s;
+}
+server {                               <span class="c"># solo lo usa el servidor de Medicci</span>
+    listen 127.0.0.1:8100;
+    location /v1/ {
+        proxy_pass http://medicci_modelo;
+        proxy_read_timeout 120s;
+        <span class="c"># la llamada al modelo no guarda estado: se puede repetir en el otro Spark</span>
+        proxy_next_upstream error timeout http_502 http_503 non_idempotent;
+    }
+}
+
+upstream medicci_servidor {                      <span class="c"># las copias del servidor de Medicci</span>
+    ip_hash;                           <span class="c"># mismo PC, misma copia: la sesión vive en su memoria</span>
+    server 127.0.0.1:8001;
+    server 127.0.0.1:8002;
+}
+server {                               <span class="c"># lo que ven las consultas</span>
+    listen 443 ssl;
+    server_name medicci.hospital.local;
+    ssl_certificate     /etc/ssl/medicci/medicci.crt;
+    ssl_certificate_key /etc/ssl/medicci/medicci.key;
+    location / { proxy_pass http://medicci_servidor; proxy_read_timeout 130s; }
+}</pre>
+</section>
+
+<!-- =============================================================== -->
+<section id="base">
+  <h2>Qué se toca cuando llegue el esquema de la base</h2>
+  <p class="entrada lectura">Medicci espera 8 tablas con nombres y columnas concretos:
+     <code>pacientes</code>, <code>derivaciones_ap</code>, <code>citas</code>,
+     <code>huecos_agenda</code>, <code>agendas</code>, <code>movimientos_citas</code>,
+     <code>pruebas</code> y <code>comunicaciones</code>. El atajo es no reescribir Medicci:
+     traducir el esquema del hospital a esas 8 tablas con vistas, en un solo sitio.</p>
+
+  <div class="hoja diagrama">
+    <svg viewBox="0 0 1000 200" role="img" aria-labelledby="t-vistas">
+      <title id="t-vistas">El esquema del hospital se traduce con vistas a las 8 tablas de Medicci</title>
+      <defs>
+        <marker id="pv3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--verde)"/>
+        </marker>
+      </defs>
+      <rect class="svg-caja" x="20" y="40" width="250" height="120" rx="12"/>
+      <text class="svg-t" x="38" y="70">Tablas del hospital</text>
+      <text class="svg-t2" x="38" y="94">los nombres que tenga HCIS:</text>
+      <text class="svg-m" x="38" y="118">PAC_MAESTRO, CIT_AGENDA,</text>
+      <text class="svg-m" x="38" y="138">HL7_SIU, ... (aún no se saben)</text>
+      <rect class="svg-oro" x="370" y="40" width="260" height="120" rx="12"/>
+      <text class="svg-t" x="388" y="70">La capa de vistas</text>
+      <text class="svg-t2" x="388" y="94">lo único que cambia de verdad:</text>
+      <text class="svg-t2" x="388" y="114">columna del hospital → columna</text>
+      <text class="svg-t2" x="388" y="134">de Medicci, y sus catálogos</text>
+      <rect class="svg-verde" x="730" y="40" width="250" height="120" rx="12"/>
+      <text class="svg-tb" x="748" y="70">Medicci, sin tocar</text>
+      <text class="svg-tb2" x="748" y="94">paciente.py, alertas.py,</text>
+      <text class="svg-tb2" x="748" y="114">responder.py ven las mismas</text>
+      <text class="svg-tb2" x="748" y="134">8 tablas de siempre</text>
+      <path class="svg-flecha" d="M270 100 L368 100" marker-end="url(#pv3)"/>
+      <path class="svg-flecha" d="M630 100 L728 100" marker-end="url(#pv3)"/>
+    </svg>
+  </div>
+  <p class="pie-figura">Si las vistas no se pueden crear (ni en la base del hospital ni en DuckDB),
+     entonces sí hay que cambiar las consultas de los archivos marcados abajo.</p>
+
+  <h3>Los archivos, uno a uno</h3>
+  <p class="lectura">Cada archivo dice para qué vía de datos hay que tocarlo:
+     <span class="marca siempre">siempre</span> <span class="marca">base directa</span>
+     <span class="marca">HL7</span> <span class="marca">CSV</span>.</p>
+
+  <div class="hoja">
+    <div class="archivo">
+      <div><div class="ruta">medicci.conf · medicci.conf.ejemplo</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div>Qué vía se usa (<code>MEDICCI_DATOS</code>). Para la base directa, un valor nuevo
+        (<code>bd</code>) y una clave nueva con la cadena de conexión, por ejemplo
+        <code>MEDICCI_BD</code>. La contraseña, fuera del repositorio.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">analisis/datos.py</div>
+        <div class="rutas"><span class="marca">base directa</span><span class="marca">CSV</span></div></div>
+      <div><code>conectar()</code> hoy crea vistas sobre <code>data/*.csv</code>. Aquí va la
+        capa de vistas: para la base directa, conectarse a la del hospital (DuckDB puede
+        enlazar PostgreSQL y MySQL; Oracle, por ODBC) y crear las 8 vistas. Para unos CSV con
+        otros nombres de columna, lo mismo sobre los ficheros.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">mvp/paciente.py</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div><code>TABLAS_MEDICI</code>, las 6 consultas fijas y los catálogos
+        (<code>ESPECIALIDADES</code>, <code>TIPO_VISITA</code>) con los códigos del hospital.
+        Con la base directa, <code>cargar()</code> no puede copiar el hospital entero a memoria:
+        tiene que consultar solo al paciente que se abre.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">mvp/alertas.py</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div>Las reglas de la tarjeta usan valores concretos (<code>NO_REALIZADA</code>,
+        <code>PROGRAMADA</code>, <code>FALLIDO</code>, <code>ORDINARIA</code>, <code>RECHAZADA</code>)
+        y los catálogos de accesibilidad y canal. Hay que cambiarlos por los códigos del hospital.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">mvp/agenda.py</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div><code>elegir_agenda()</code> monta una agenda de demo eligiendo pacientes al azar. En
+        el hospital tiene que leer la agenda real del médico que ha iniciado sesión.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">mvp/hl7.py</div>
+        <div class="rutas"><span class="marca">HL7</span></div></div>
+      <div><code>aplicar()</code> traduce cada mensaje a filas de las 8 tablas. Hay que
+        cuadrarlo con los tipos de mensaje y los campos que mande el motor de integración
+        (citas SIU, pacientes ADT, peticiones de pruebas).</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">mvp/servidor.py</div>
+        <div class="rutas"><span class="marca">base directa</span></div></div>
+      <div><code>--datos</code> solo admite <code>csv</code> y <code>hl7</code>: añadir
+        <code>bd</code>. Hoy hay una sola conexión con un cerrojo (una consulta cada vez); contra
+        la base del hospital, mejor un grupo de conexiones.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">mvp/responder.py</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div>No depende de la base, pero sí del servidor del modelo: el cambio para apagar el
+        razonamiento en vLLM.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">mvp/prueba_acierto.py · mvp/prueba_alertas.py</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div>Rehacer las preguntas de prueba con los campos nuevos y volver a pasarlas. Es lo que
+        demuestra que con los datos reales sigue sin inventar fuentes.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">medicci-rs/src/main.rs</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div>Quitar la vuelta a la base local de la demo cuando no hay servidor.
+        <code>bd/sql/</code> y <code>medicci-rs/src/datos.rs</code> solo sirven para la demo sin
+        servidor: no hace falta adaptarlos.</div>
+    </div>
+    <div class="archivo">
+      <div><div class="ruta">docs/CONTEXTO.md</div>
+        <div class="rutas"><span class="marca siempre">siempre</span></div></div>
+      <div>Dejar escrita la tabla de equivalencias: columna del hospital, columna de Medicci y de
+        dónde sale cada código.</div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<section id="pendiente">
+  <h2>Lo que falta por saber o decidir</h2>
+  <div class="tabla">
+    <table>
+      <thead><tr><th>Pregunta</th><th>Por qué importa</th><th>Quién lo sabe</th></tr></thead>
+      <tbody>
+        <tr><td>¿De dónde salen los datos: base de HCIS, HL7 o CSV?</td><td>Decide qué archivos de la lista se tocan</td><td>Sistemas / integración</td></tr>
+        <tr><td>El esquema de la base y sus catálogos</td><td>Es la capa de vistas</td><td>Sistemas</td></tr>
+        <tr><td>Cuántos tokens/s da un Spark con Medicci</td><td>Dice si basta uno y el otro es reserva</td><td>Medirlo con <code>vllm bench serve</code></td></tr>
+        <tr><td>¿Seguir con 8B o probar un modelo mayor?</td><td>Con uno mayor habría que partirlo entre los dos</td><td>El equipo, tras medir el acierto</td></tr>
+        <tr><td>¿Quién reparte el ejecutable a los puestos?</td><td>SCCM, Intune o directiva de grupo</td><td>Sistemas</td></tr>
+        <tr><td>Certificado y nombre interno</td><td>HTTPS sin avisos en los puestos</td><td>Sistemas</td></tr>
+        <tr><td>Un nginx es un punto único</td><td>Si cae, no hay Medicci: un segundo con IP flotante (keepalived)</td><td>Sistemas</td></tr>
+        <tr><td>Sesiones en memoria de cada copia</td><td>Con <code>ip_hash</code> vale; a la larga, guardarlas en un sitio común</td><td>El equipo</td></tr>
+        <tr><td>Registro de accesos centralizado</td><td>Lo exige el uso clínico (ENS, RGPD)</td><td>Seguridad del hospital</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer class="marco">
+  Fuentes de lo del Spark: recetas de NVIDIA en
+  <a href="https://build.nvidia.com/spark">build.nvidia.com/spark</a>
+  (vLLM, vLLM con dos Spark, conectar varios Spark, NIM). El resto sale del código del
+  repositorio: <code>mvp/servidor.py</code>, <code>mvp/responder.py</code>,
+  <code>mvp/paciente.py</code>, <code>medicci.conf.ejemplo</code> y <code>medicci-rs/src/servidor.rs</code>.
+  Lo marcado ⚠ es supuesto, no medido.
+</footer>
+
+<script>
+(function () {
+  var ids = ["medicos", "consultas", "preguntas", "dias", "punta", "rafaga", "entrada", "salida", "tarda", "capacidad"];
+  var num = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 });
+  var KV_POR_TOKEN = 147456;          // bytes: 36 capas × 8 cabezas kv × 128 × 2 (k y v) × 2 bytes
+  var KV_LIBRE_SPARK = 100e9;         // bytes que quedan tras el modelo, al 85 %
+
+  function v(id) {
+    var x = parseFloat(document.getElementById("c-" + id).value);
+    return isFinite(x) && x > 0 ? x : 0;
+  }
+  function pon(id, texto) { document.getElementById("r-" + id).textContent = texto; }
+
+  function calcula() {
+    var dia = v("medicos") * v("consultas") * v("preguntas") / Math.max(v("dias"), 1);
+    var rps = dia * v("punta") / 100 / 3600 * v("rafaga");
+    var vez = rps * v("tarda");
+    var tps = rps * v("salida");
+    var kv = Math.ceil(vez) * (v("entrada") + v("salida")) * KV_POR_TOKEN;
+    var sparks = v("capacidad") ? tps / v("capacidad") : Infinity;
+
+    pon("dia", num.format(Math.round(dia)));
+    pon("rps", num.format(rps));
+    pon("vez", num.format(Math.ceil(vez)));
+    pon("tps", num.format(Math.round(tps)) + " tok/s");
+    pon("kv", num.format(kv / 1e9) + " GB de " + num.format(KV_LIBRE_SPARK / 1e9) + " libres");
+
+    var texto;
+    if (!isFinite(sparks)) texto = "Falta la capacidad de un Spark.";
+    else if (sparks <= 0.7) texto = "Basta un Spark (" + Math.round(sparks * 100) + " % de su capacidad). El segundo queda de reserva.";
+    else if (sparks <= 1) texto = "Un Spark va justo (" + Math.round(sparks * 100) + " %). Con los dos, cada uno al " + Math.round(sparks * 50) + " %.";
+    else if (sparks <= 2) texto = "Hacen falta los dos (cada uno al " + Math.round(sparks * 50) + " %). Si cae uno, irá más lento.";
+    else texto = "No llegan: harían falta " + Math.ceil(sparks) + " Spark, o respuestas más cortas.";
+    pon("veredicto", texto);
+  }
+
+  ids.forEach(function (id) { document.getElementById("c-" + id).addEventListener("input", calcula); });
+  calcula();
+})();
+</script>
+</body>
+</html>

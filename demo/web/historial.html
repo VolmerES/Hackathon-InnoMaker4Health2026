@@ -123,7 +123,6 @@ table.rejilla tr.sel td{background:var(--sel);color:#fff}
   .cintillo .alergia{margin-left:0}
 }
 </style>
-<link rel="stylesheet" href="agente.css">
 </head>
 <body>
 <div class="app">
@@ -205,8 +204,6 @@ table.rejilla tr.sel td{background:var(--sel);color:#fff}
 
 <script src="historial-datos.js"></script>
 <script src="historial-datos-2.js"></script>
-<script src="ficha-medicci.js"></script>
-<script src="agente.js"></script>
 <script>
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const sinT = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
@@ -215,10 +212,8 @@ const RESULTADOS = ["Analítica","Resultado de pruebas","Informe de endoscopia",
 
 const PACIENTES = [
   {id:"P1", episodio:"CEX-2026-118442", ...window.PACIENTE, docs:window.DOCS,
-   hechos:window.HECHOS, preguntas:window.PREGUNTAS, ficha:window.FICHAS.P1,
    alergia:{t:"metamizol (Nolotil)", d:"Exantema y edema palpebral en el postoperatorio de enero de 2021."}},
   {id:"P2", episodio:"CEX-2026-118517", ...window.P2.paciente, docs:window.P2.docs,
-   hechos:window.P2.hechos, preguntas:window.P2.preguntas, ficha:window.FICHAS.P2,
    alergia:{t:"contrastes yodados", d:"Urticaria y opresión faríngea durante un TAC en 2016."}}
 ];
 
@@ -233,7 +228,6 @@ function cargaPaciente(id){
   filtro = null; busca = ""; vista = "evolutivo"; seleccionado = docs[0].id;
   $("#q-doc").value = "";
   pintaCintillo(); pintaArbol(); sincTabs(); pinta();
-  if (window.Agente) window.Agente.cambioDePaciente();
 }
 function pintaCintillo(){
   $("#t-paciente").textContent = `${P.nombre} (${P.nhc})`;
@@ -338,30 +332,7 @@ document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
   sincTabs(); pinta();
 });
 
-
-window.HCE = {
-  paciente: () => P,
-  docs: () => docs,
-  porId: () => porId,
-  iraDoc(id, cita){
-  if (vista === "documentos"){ seleccionado = id; pinta(); }
-  else {
-    if (filtro && !seleccion().some(d => d.id === id)){ filtro = null; vista = "evolutivo"; sincTabs(); }
-    if (busca){ busca = ""; $("#q-doc").value = ""; }
-    pinta(); pintaArbol();
-  }
-  const el = document.getElementById("doc-" + id);
-  if (!el) return;
-  if (cita){
-    const pre = el.querySelector("pre"), e = esc(cita), i = pre.innerHTML.indexOf(e);
-    if (i >= 0) pre.innerHTML = pre.innerHTML.slice(0,i) + '<mark class="cita">' + e + "</mark>" + pre.innerHTML.slice(i + e.length);
-  }
-  el.scrollIntoView({block:"center"});
-  }
-};
-
 cargaPaciente("P1");
-window.Agente.montar();
 </script>
 </body>
 </html>
