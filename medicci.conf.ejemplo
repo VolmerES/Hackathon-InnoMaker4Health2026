@@ -8,6 +8,10 @@ MEDICCI_URL=http://localhost:11434/v1
 MEDICCI_MODELO=qwen3:8b
 # Si ese servidor pide clave:
 # MEDICCI_CLAVE=
+# En un equipo sin GPU, para probar: el CLI de Claude (claude -p) con su sesión.
+# Las filas salen a Anthropic, así que solo con datos sintéticos.
+# MEDICCI_URL=claude
+# MEDICCI_MODELO=haiku
 
 # --- El servidor de Medicci -----------------------------------------------------
 # Dónde escucha (0.0.0.0 para que lleguen otros equipos) y en qué puerto.

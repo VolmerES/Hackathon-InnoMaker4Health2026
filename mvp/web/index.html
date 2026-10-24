@@ -144,6 +144,15 @@ tr:nth-child(even) td{background:#fafafa}
 td.r{color:#999;font-family:"Courier New",monospace;width:34px}
 td .obs{display:block;margin-top:2px;color:#444;font:11px/1.45 "Courier New",monospace}
 tr.sena td{background:#fff4c2}
+
+/* informes clínicos, como en demo/web/hcis.html */
+.doc{border:1px solid #d7d7d7;margin-bottom:9px;background:#fff}
+.doc .cab{background:#f1f6f4;border-bottom:1px solid #e0e0e0;padding:4px 8px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:11.5px}
+.doc .cab .t{font-weight:bold}
+.doc .cab .s,.doc .cab .a{color:#555}
+.doc .cab .a{margin-left:auto}
+.doc pre{margin:0;padding:7px 10px 10px;white-space:pre-wrap;font:11.5px/1.5 "Courier New",monospace}
+.doc.sena{box-shadow:inset 3px 0 0 var(--verde)}
 .agenda tr{cursor:pointer}
 .agenda tr:hover td{background:#eef7f3}
 .agenda td.h{color:#2a6ebb;font-weight:bold;width:52px}
@@ -402,7 +411,7 @@ function pintaConsulta(){
       <div class="campo">${esc(dc.motivo || "")}</div><span class="ic az"></span></div>
     <div class="bajo-motivo"><span class="lupa"></span><span class="ic flecha">◀</span><span class="ic vd"></span></div>`) +
   fs("Antecedentes:", caja(de("DERIVACIONES_AP").map(f => `${MAYUS(f.campos.motivo)} — ${fecha(f.campos.fecha)}`).join("\n"), 86)) +
-  fs("Historia actual:", caja(dc.observaciones || "", 150)) +
+  fs("Historia actual:", caja([dc.observaciones || "", ...notas().map(texto_doc)].filter(Boolean).join("\n\n"), 190)) +
   fs("Constantes", `<div class="btns">
       <button class="btn">Nuevas ctes.</button><button class="btn">Consulta ctes.</button>
       <button class="btn">Balance hídrico</button><button class="btn">Antropometría</button>
@@ -419,12 +428,27 @@ function pintaConsulta(){
     </div>
     <div class="favoritos">${FAVORITOS.map(f => `<span>${esc(f)}</span>`).join("")}</div>`) +
   fs("Pruebas complementarias:",
-    fs("Laboratorio:", caja(pruebas.filter(c => LABORATORIO.test(MAYUS(c.tipo))).map(linea).join("\n"), 80)) +
-    fs("Imagen:", caja(pruebas.filter(c => IMAGEN.test(MAYUS(c.tipo))).map(linea).join("\n"), 80)) +
+    fs("Laboratorio:", caja([ultimo_doc(/Analítica|Resultado de pruebas/), ...pruebas.filter(c => LABORATORIO.test(MAYUS(c.tipo))).map(linea)]
+      .filter(Boolean).join("\n\n"), 120)) +
+    fs("Imagen:", caja([ultimo_doc(/endoscopia|radiolog/i), ...pruebas.filter(c => IMAGEN.test(MAYUS(c.tipo)) || /ENDOSCOP/.test(MAYUS(c.tipo))).map(linea)]
+      .filter(Boolean).join("\n\n"), 110)) +
     fs("Otros:", caja(pruebas.filter(c => !LABORATORIO.test(MAYUS(c.tipo)) && !IMAGEN.test(MAYUS(c.tipo))).map(linea).join("\n"), 60)));
 }
+/* los informes (DOCUMENTOS_HCE), si el servidor los tiene: el más reciente primero */
+const docs = () => de("DOCUMENTOS_HCE").slice().sort((a, b) => String(b.campos.fecha).localeCompare(String(a.campos.fecha)));
+const texto_doc = f => `[${fecha(f.campos.fecha)} · ${f.campos.tipo} · ${f.campos.autor}]\n${String(f.campos.texto || "").trim()}`;
+const notas = () => docs().filter(f => /Nota de consulta|Nota de enfermería/.test(f.campos.tipo)).slice(0, 3);
+const ultimo_doc = patron => { const f = docs().find(f => patron.test(f.campos.tipo)); return f ? texto_doc(f) : ""; };
+function pintaDocs(){
+  const d = docs();
+  if (!d.length) return "";
+  return fs(`Documentos clínicos (${d.length}):`, d.map(f => `<article class="doc" id="fila-${f.ref}">
+      <div class="cab"><span>${fecha(f.campos.fecha)}</span><span class="t">${esc(f.campos.tipo)}</span>
+        <span class="s">${esc(f.campos.servicio)}</span><span class="a">${esc(f.campos.autor)}</span></div>
+      <pre>${esc(f.campos.texto)}</pre></article>`).join(""));
+}
 function pintaHistoria(){
-  return titulo(`HISTORIA CLÍNICA · ${filas.length} registros`) + SECCIONES.map(([t, nombre]) => {
+  return titulo(`HISTORIA CLÍNICA · ${filas.length} registros`) + pintaDocs() + SECCIONES.map(([t, nombre]) => {
     const fs_ = de(t);
     return fs(`${nombre}:`, fs_.length ? tabla(t, fs_) : `<div class="vacia">Sin registros</div>`);
   }).join("");
@@ -451,7 +475,7 @@ function pinta(){
 }
 function iraFila(ref){
   if (vista !== "historia") { vista = "historia"; pinta(); }
-  document.querySelectorAll("tr.sena").forEach(x => x.classList.remove("sena"));
+  document.querySelectorAll("tr.sena, .doc.sena").forEach(x => x.classList.remove("sena"));
   const el = document.getElementById("fila-" + ref);
   if (el) { el.classList.add("sena"); el.scrollIntoView({block: "center"}); }
 }
@@ -469,7 +493,15 @@ cargaAgenda().then(() => {
   if (p) abrePaciente(p);
 });
 setInterval(cargaAgenda, 3000);                                   // con HL7 la agenda se va llenando
-setInterval(() => { if (abierto) cargaHistoria(); }, 4000);       // y la historia cambia sola
+// y la historia cambia sola: se vuelve a pedir solo si ha llegado algo por HL7
+let version = null;
+setInterval(async () => {
+  const v = await fetch("/api/hcis/version").then(r => r.json()).then(r => r.version).catch(() => null);
+  if (v === null || v === version) return;
+  const primera = version === null;
+  version = v;
+  if (abierto && !primera) { pintado = ""; cargaHistoria(); }
+}, 2000);
 </script>
 <script>
 // ?simulacion=1: la mañana de un médico, para el vídeo (mvp/simular.py)

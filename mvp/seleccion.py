@@ -34,6 +34,12 @@ TEMAS = {
     "MOVIMIENTOS_CITAS": ["falt", "acud", "atend", "anul", "cambi", "reprogram", "cerr", "por que", "motivo"],
     "COMUNICACIONES": ["aviso", "sms", "llam", "email", "correo", "carta", "app", "contact", "notific", "llego"],
     "DERIVACIONES_AP": ["deriv", "cabecera", "primaria", "motivo", "por que", "manda", "envia"],
+    # los informes clínicos (solo en la base inventada): lo clínico se busca en ellos
+    "DOCUMENTOS_HCE": ["informe", "alerg", "antecedent", "diagnost", "medicac", "tratamiento", "toma", "farmac",
+                       "sangr", "endoscop", "colonosc", "gastrosc", "operad", "cirug", "interven", "quirof",
+                       "nota", "enfermer", "peso", "analit", "hemoglob", "hierro", "ferritin", "resultado",
+                       "urgencia", "ingres", "alta", "anticoag", "sintrom", "tension", "dolor", "por que",
+                       "que le pasa", "que tiene", "historia", "contradic", "fuma", "alcohol", "vive", "familia"],
 }
 
 
@@ -108,7 +114,8 @@ def seleccionar(filas: list[Fila], pregunta: str, contexto: int = CONTEXTO) -> l
     fuera.update(f.tabla for f in filas if f.tabla not in temas and f.tabla != "PACIENTES")
     if fuera:
         nombres = {"CITAS": "citas", "MOVIMIENTOS_CITAS": "cambios de cita", "PRUEBAS": "pruebas",
-                   "COMUNICACIONES": "avisos", "DERIVACIONES_AP": "derivaciones"}
+                   "COMUNICACIONES": "avisos", "DERIVACIONES_AP": "derivaciones",
+                   "DOCUMENTOS_HCE": "informes"}
         elegidas.append(Fila("R2", "RESUMEN", "",
             "Para que quepa, no van aquí: " + ", ".join(f"{n} filas de {nombres.get(t, t)}" for t, n in fuera.items())
             + ". Lo que va es lo pendiente y lo más reciente. Si preguntan por algo anterior o por otro tema, "

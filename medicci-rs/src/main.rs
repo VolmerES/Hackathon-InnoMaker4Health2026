@@ -103,6 +103,10 @@ enum Parte {
     Valor(String),
     Cita(String),
     Fuente(String),
+    /// De dónde sale una respuesta: qué es cada fila y su texto tal cual. Va
+    /// plegado tras un botón; HCIS no se puede abrir desde otro programa, así
+    /// que lo que se enseña es el texto citado.
+    Fuentes(Vec<(String, String)>),
     Aviso(String),
     Rotulo(String),
 }
@@ -183,9 +187,42 @@ impl Resumen {
     fn linea_de(&self, d: &Documento) -> String {
         self.hechos.iter()
             .find(|h| h.documento.as_deref() == Some(d.id.as_str()))
-            .map(|h| cabeza_y_resto(&h.afirmacion).0)
+            .map(|h| hasta(&reflujo(&h.afirmacion).replace("\n\n", " "), 200))
             .unwrap_or_else(|| d.tipo.clone())
     }
+}
+
+/// El texto de un informe, para leerlo: los informes vienen cortados a 80
+/// columnas, así que cada párrafo se une en una sola línea y solo se respetan
+/// las líneas en blanco entre párrafos.
+fn reflujo(t: &str) -> String {
+    t.split("\n\n")
+        .map(|p| p.split_whitespace().collect::<Vec<_>>().join(" "))
+        .filter(|p| !p.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n\n")
+}
+
+/// Como mucho `max` letras, cortando en una palabra entera.
+fn hasta(t: &str, max: usize) -> String {
+    if t.chars().count() <= max {
+        return t.to_string();
+    }
+    let corte: String = t.chars().take(max).collect();
+    let corte = corte.rsplit_once(' ').map(|(a, _)| a).unwrap_or(&corte);
+    format!("{}…", corte.trim_end_matches([',', ';', ':', '.']))
+}
+
+/// Un párrafo justificado, para los textos largos (informes, la historia).
+fn parrafo(ui: &mut egui::Ui, t: &str, tam: f32, color: Color32) {
+    let mut job = egui::text::LayoutJob::single_section(t.to_string(), egui::TextFormat {
+        font_id: FontId::proportional(tam),
+        color,
+        ..Default::default()
+    });
+    job.justify = true;
+    job.wrap.max_width = ui.available_width();
+    ui.label(job);
 }
 
 /// Parte una afirmación en lo principal, que va en negrita, y el resto.
@@ -931,33 +968,28 @@ impl Medicci {
                     } else {
                         Parte::Texto(a.texto)
                     });
-                    for f in a.fuentes {
-                        partes.push(Parte::Fuente(recorta(&f.texto, 110)));
+                    if !a.fuentes.is_empty() {
+                        partes.push(Parte::Fuentes(a.fuentes.into_iter().map(de_donde_es).collect()));
                     }
                 }
                 if mas > 0 {
                     partes.push(Parte::Rotulo(format!("y {} más: pregunte.", mas)));
                 }
-                if !novedad {
-                    partes.push(Parte::Texto("Pregunte lo que necesite: contesta solo con sus datos \
-                                              y cita la fila de la que sale. Resumen lo ordena todo.".into()));
-                }
                 self.hilo.push(Mensaje::suyo(partes));
                 self.bajar = true;
             }
-            Llega::Respuesta { texto, consta, fuentes, segundos } => {
+            Llega::Respuesta { texto, consta, fuentes, segundos, local } => {
                 if std::mem::take(&mut self.esperando) {
                     self.hilo.pop();
                 }
                 let limpio = sin_referencias(&texto);
                 let mut partes = vec![if consta { Parte::Texto(limpio) } else { Parte::Aviso(limpio) }];
                 let n = fuentes.len();
-                for f in fuentes {
-                    partes.push(Parte::Fuente(recorta(&f.texto, 110)));
+                if n > 0 {
+                    partes.push(Parte::Fuentes(fuentes.into_iter().map(de_donde_es).collect()));
                 }
-                partes.push(Parte::Rotulo(format!("{} · {:.1} s · IA local",
-                    match n { 0 => "sin fuentes".into(), 1 => "1 fuente".into(), _ => format!("{} fuentes", n) },
-                    segundos)));
+                partes.push(Parte::Rotulo(format!("{}{:.1} s · {}", if n == 0 { "sin fuentes · " } else { "" },
+                    segundos, if local { "IA local" } else { "IA de fuera (prueba)" })));
                 self.hilo.push(Mensaje::suyo(partes));
                 self.bajar = true;
             }
@@ -974,8 +1006,6 @@ impl Medicci {
                     if self.resumen.is_some() {
                         self.hilo.push(Mensaje::tarjeta());
                         self.pestana = Pestana::Resumen;
-                        self.hilo.push(Mensaje::suyo(vec![Parte::Texto(
-                            "Pregunte lo que necesite: contesta solo con sus datos y cita la fila                              de la que sale.".into())]));
                         self.subir = true;              // que se vea desde «Por qué viene hoy»
                     } else {
                         self.tarjeta_vista = None;      // sin datos: la tarjeta de siempre
@@ -1151,8 +1181,7 @@ fn cita(ui: &mut egui::Ui, t: &str) {
         .rounding(4.0)
         .inner_margin(egui::Margin { left: 10.0, right: 8.0, top: 5.0, bottom: 5.0 })
         .show(ui, |ui| {
-            ui.label(RichText::new(format!("«{}»", t)).monospace().size(11.0)
-                .color(Color32::from_rgb(0x3a, 0x3f, 0x42)));
+            parrafo(ui, &format!("«{}»", reflujo(t)), 11.5, Color32::from_rgb(0x3a, 0x3f, 0x42));
         })
         .response;
     ui.painter().vline(r.rect.left() + 1.0, r.rect.y_range(), trazo(2.0, ORO));
@@ -1161,6 +1190,53 @@ fn cita(ui: &mut egui::Ui, t: &str) {
 /// De dónde sale un dato, en el chat: discreto y en palabras, sin códigos.
 fn fuente(ui: &mut egui::Ui, t: &str) {
     ui.label(texto(format!("Fuente: {}", t), 11.0, GRIS, false));
+}
+
+/// Una fuente del servidor para el enlace: qué es y su texto tal cual.
+fn de_donde_es(f: servidor::Fuente) -> (String, String) {
+    (f.titulo.unwrap_or_else(|| que_es(&f.referencia)), f.texto)
+}
+
+/// Qué es una fila del servidor por su referencia (P1, C3…), en palabras.
+fn que_es(referencia: &str) -> String {
+    match referencia.chars().next() {
+        Some('F') => "Datos del paciente",
+        Some('D') => "Derivación de Primaria",
+        Some('C') => "Cita",
+        Some('M') => "Cambio de cita",
+        Some('P') => "Prueba",
+        Some('A') => "Aviso al paciente",
+        Some('R') => "Resumen de la historia",
+        Some('I') => "Informe",
+        _ => "Registro",
+    }.into()
+}
+
+/// El enlace «Ver el texto de donde sale»: al pulsarlo, cada fila citada con su
+/// texto tal cual está en la historia. Cerrado por defecto: la respuesta es una
+/// frase, y el texto solo sale cuando el médico duda.
+fn de_donde(ui: &mut egui::Ui, fuentes: &[(String, String)]) {
+    let id = ui.id().with("de_donde");
+    let abierto = ui.data(|d| d.get_temp::<bool>(id).unwrap_or(false));
+    let rotulo = match (abierto, fuentes.len()) {
+        (true, _) => "Ocultar el texto".to_string(),
+        (false, 1) => "Ver el texto de donde sale".to_string(),
+        (false, n) => format!("Ver el texto de donde sale ({} registros)", n),
+    };
+    let enlace = ui.add(egui::Label::new(texto(rotulo, 11.5, VERDE_2, true).underline()).sense(Sense::click()))
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    if enlace.clicked() {
+        ui.data_mut(|d| d.insert_temp(id, !abierto));
+    }
+    if abierto {
+        ui.spacing_mut().item_spacing.y = 3.0;
+        for (que, t) in fuentes {
+            ui.label(texto(que, 11.0, GRIS, true));
+            cita(ui, t);
+            ui.add_space(3.0);
+        }
+        ui.label(texto("Tal cual consta en la historia.", 10.5, GRIS, false));
+    }
 }
 
 // =====================================================================
@@ -1473,13 +1549,13 @@ impl Medicci {
             hilo.show(ui, |ui| {
                     ui.add_space(12.0);
                     let ancho = ui.available_width();
-                    for m in &self.hilo {
+                    for (i, m) in self.hilo.iter().enumerate() {
                         if m.tarjeta {
                             if let Some(r) = &self.resumen {
                                 accion = tarjeta(ui, r, self.pestana).or(accion.take());
                             }
                         } else {
-                            mensaje(ui, m, ancho);
+                            ui.push_id(i, |ui| mensaje(ui, m, ancho));
                         }
                         ui.add_space(8.0);
                     }
@@ -1685,6 +1761,7 @@ fn mensaje(ui: &mut egui::Ui, m: &Mensaje, ancho: f32) {
                                 fuente(ui, t);
                                 ui.add_space(4.0);
                             }
+                            Parte::Fuentes(fs) => de_donde(ui, fs),
                         }
                     }
                 });
@@ -1778,15 +1855,17 @@ fn resumen_de_red(p: &Paciente, filas: &[FilaRed], alertas: &[(String, Vec<Strin
             id: f.referencia.clone(),
             fecha: fecha_fila(f),
             tipo: match f.tabla.as_str() {
-                "DERIVACIONES_AP" => "Derivación de Primaria",
-                "CITAS" => "Cita",
-                "MOVIMIENTOS_CITAS" => "Cambio de cita",
-                "PRUEBAS" => "Prueba",
-                "COMUNICACIONES" => "Aviso al paciente",
-                otra => otra,
-            }.to_string(),
+                "DERIVACIONES_AP" => "Derivación de Primaria".to_string(),
+                "CITAS" => "Cita".into(),
+                "MOVIMIENTOS_CITAS" => "Cambio de cita".into(),
+                "PRUEBAS" => "Prueba".into(),
+                "COMUNICACIONES" => "Aviso al paciente".into(),
+                "DOCUMENTOS_HCE" => campo(f, "tipo"),           // un informe: el suyo
+                otra => otra.into(),
+            },
             servicio: campo(f, "servicio"),
-            texto: f.texto.clone(),
+            // de un informe, el texto tal cual; de una fila, su frase
+            texto: if f.tabla == "DOCUMENTOS_HCE" { hasta(&reflujo(&campo(f, "texto")), 240) } else { f.texto.clone() },
         })
         .collect();
     documentos.sort_by(|a, b| b.fecha.cmp(&a.fecha));
@@ -2279,7 +2358,7 @@ fn bloque_historia(ui: &mut egui::Ui, r: &Resumen) {
                 separador(ui, LINEA_SUAVE);
             }
             con_fuente(ui, r, h.documento.as_deref(), |ui| {
-                ui.label(texto(&h.afirmacion, 12.5, TINTA, false));
+                parrafo(ui, &reflujo(&h.afirmacion), 12.5, TINTA);
             });
         }
     });
@@ -2301,7 +2380,7 @@ fn linea_tiempo(ui: &mut egui::Ui, r: &Resumen) {
             columna(ui, ancho, Align::Min, |ui| {
                 con_fuente(ui, r, Some(&d.id), |ui| {
                     ui.label(texto(d.servicio.to_uppercase(), 10.0, GRIS, true));
-                    ui.label(texto(r.linea_de(d), 12.5, TINTA, false));
+                    parrafo(ui, &r.linea_de(d), 12.5, TINTA);
                 });
                 ui.add_space(10.0);
             });
@@ -3184,6 +3263,25 @@ mod pruebas {
         assert!(resumen_de_red(&p, &[], &alertas).is_none(), "sin datos no hay resumen");
     }
 
+    /// La respuesta del servidor lleva sus fuentes plegadas tras el botón: el
+    /// texto entero de cada fila, en palabras y sin el código (P1).
+    #[test]
+    fn la_respuesta_ensena_de_donde_sale() {
+        let datos = datos::base_de_prueba("de-donde");
+        let mut app = Medicci::nuevo(datos, None, None);
+        let largo = "Prueba RADIOGRAFIA: solicitada el 19/01/2023, programada el 08/02/2023, realizada no, \
+                     estado PENDIENTE, resultado disponible: no (el valor del resultado no está en estos datos).";
+        app.recibe(Llega::Respuesta {
+            texto: "Tiene una radiografía pendiente [P1].".into(), consta: true, segundos: 4.3, local: false,
+            fuentes: vec![servidor::Fuente { referencia: "P1".into(), texto: largo.into(), titulo: None }],
+        });
+        let partes = &app.hilo.last().expect("hay respuesta").partes;
+        assert!(matches!(&partes[0], Parte::Texto(t) if t == "Tiene una radiografía pendiente."));
+        let Some(Parte::Fuentes(fs)) = partes.get(1) else { panic!("faltan las fuentes") };
+        assert_eq!(fs, &[("Prueba".to_string(), largo.to_string())], "el texto entero, sin recortar");
+        assert!(matches!(partes.last(), Some(Parte::Rotulo(t)) if t.ends_with("IA de fuera (prueba)")));
+    }
+
     /// Sin glifo, egui pinta un cuadro: todo símbolo que escriba la burbuja,
     /// el servidor o la base tiene que estar en las fuentes.
     #[test]
@@ -3276,6 +3374,15 @@ mod pruebas {
         assert!(r.alertas.iter().any(|a| a.titulo.contains("Contrastes yodados")));
         let nota = texto_nota(r);
         assert!(nota.contains("[E03]") && nota.contains("No coincide con la derivación"));
+    }
+
+    #[test]
+    fn el_texto_de_un_informe_se_lee_seguido() {
+        let informe = "Control. TA 136/84, FC 70. Peso 68 kg, talla 162 cm, IMC 25.9.\nRefiere que las molestias\nde estomago siguen igual.\n\nToma: enalapril 10 mg/24h.";
+        assert_eq!(reflujo(informe), "Control. TA 136/84, FC 70. Peso 68 kg, talla 162 cm, IMC 25.9. Refiere que las \
+                                      molestias de estomago siguen igual.\n\nToma: enalapril 10 mg/24h.");
+        assert_eq!(hasta("Antigeno de Helicobacter pylori en heces: NEGATIVO.", 30), "Antigeno de Helicobacter…");
+        assert_eq!(hasta("corto", 30), "corto");
     }
 
     #[test]

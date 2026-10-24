@@ -21,6 +21,7 @@ accesos (mvp/registro.py), encadenado para que no se pueda tocar sin que se note
 Lo que hace de HCIS en la demo (en el hospital es el propio HCIS):
     GET  /api/hcis/agenda                        → la agenda del día
     GET  /api/hcis/paciente/<nhc>                → lo que HCIS enseña del paciente
+    GET  /api/hcis/version                       → sube con cada mensaje HL7 (la réplica lo mira para refrescar)
 
 Con --datos hl7 arranca con la copia vacía y un receptor MLLP (puerto 2575):
 los datos llegan como mensajes HL7 (mvp/hl7_emisor.py hace de HCIS).
@@ -32,6 +33,8 @@ Para el panel de la demo (web/registro.html):
 
 import argparse
 import json
+import re
+import shutil
 import sys
 import threading
 import time
@@ -48,7 +51,7 @@ from config import valor
 from alertas import tarjeta
 from paciente import cargar, cargar_vacia, datos_del_paciente
 from registro import Registro, comprobar as comprobar_registro, leer as leer_registro
-from responder import MODELO, URL, responder
+from responder import MODELO, URL, es_cli, responder
 import voz
 
 AQUI = Path(__file__).resolve().parent
@@ -73,11 +76,26 @@ class Medicci:
         self._agenda_fija = datos == "csv"
         self._version = 0                     # sube con cada mensaje HL7
         self._version_agenda = -1
+        # Las filas de cada paciente ya consultado, hasta que llegue otro mensaje
+        # HL7: al abrir un paciente las piden la página, la burbuja (sesión,
+        # tarjeta, resumen) y cada pregunta, y repetir las 6 consultas cada vez
+        # hacía esperar a todas en el cerrojo.
+        self._filas: dict[str, list] = {}
+        self._version_filas = 0
         self._ultimo_hl7 = 0.0
 
     def filas(self, nhc: str):
         with self.cerrojo:
-            return datos_del_paciente(self.con, nhc)
+            return list(self._filas_de(nhc))
+
+    def _filas_de(self, nhc: str) -> list:
+        """Con el cerrojo ya cogido."""
+        if self._version_filas != self._version:
+            self._filas.clear()
+            self._version_filas = self._version
+        if nhc not in self._filas:
+            self._filas[nhc] = datos_del_paciente(self.con, nhc)
+        return self._filas[nhc]
 
     @property
     def agenda(self) -> list[dict]:
@@ -86,10 +104,15 @@ class Medicci:
         # Así un evento en directo (anular una cita) no cambia la agenda.
         if self._agenda_fija and self._agenda:
             return self._agenda
+        # Mientras siguen llegando mensajes no se recalcula: cada vez son
+        # segundos con el cerrojo cogido, y el receptor y las historias esperan.
+        if time.monotonic() - self._ultimo_hl7 < 1:
+            return self._agenda
         if self._version != self._version_agenda or not self._agenda:
             with self.cerrojo:
                 self._version_agenda = self._version
-                self._agenda = elegir_agenda(self.con, lambda n: datos_del_paciente(self.con, n))
+                # lo que calcula para elegir la agenda se queda: abrir a esos pacientes ya no espera
+                self._agenda = elegir_agenda(self.con, self._filas_de)
         if len(self._agenda) >= 8 and time.monotonic() - self._ultimo_hl7 > 3:
             self._agenda_fija = True
         return self._agenda
@@ -121,12 +144,28 @@ class Medicci:
 
     def fuentes(self, filas, refs: list[str]) -> list[dict]:
         por_ref = {f.ref: f for f in filas}
-        return [{"ref": r, "texto": por_ref[r].texto} for r in refs if r in por_ref]
+        return [{"ref": r, "texto": por_ref[r].texto, **para_el_medico(por_ref[r])} for r in refs if r in por_ref]
 
     def registrar(self, sesion: str, accion: str, **datos):
         s = self.sesiones.get(sesion, {})
         self.registro.apunta(medico=s.get("medico"), paciente=s.get("nhc"), sesion=sesion,
                              origen=s.get("origen"), accion=accion, **datos)
+
+
+# Lo que se le aclara al modelo dentro del texto de una fila; al médico, sobra.
+PARA_EL_MODELO = re.compile(r" \((?:el valor del resultado no está en estos datos|PENDIENTE: aún no se ha hecho"
+                            r"|no se llegó a hacer y no está pendiente)\)")
+
+
+def para_el_medico(f) -> dict:
+    """De dónde sale un dato, para enseñarlo: qué es y el texto tal cual. De un
+    informe, el informe entero; de una fila, su texto sin las notas al modelo."""
+    c = f.campos
+    if f.tabla == "DOCUMENTOS_HCE":
+        fecha = c["fecha"].strftime("%d/%m/%Y") if hasattr(c.get("fecha"), "strftime") else str(c.get("fecha") or "")
+        return {"titulo": " · ".join(x for x in (c.get("tipo"), c.get("servicio"), fecha, c.get("autor")) if x),
+                "cita": c.get("texto") or ""}
+    return {"cita": PARA_EL_MODELO.sub("", f.texto)}
 
 
 class Peticion(SimpleHTTPRequestHandler):
@@ -151,9 +190,16 @@ class Peticion(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 
+    def parse_request(self):
+        self._inicio = time.perf_counter()
+        return super().parse_request()
+
     def log_message(self, formato, *args):
+        # con lo que tarda cada petición: si algo va lento, se ve aquí cuál
         if "/api/" in self.path:
-            sys.stderr.write(f"{self.command} {self.path}\n")
+            seg = time.perf_counter() - getattr(self, "_inicio", time.perf_counter())
+            lenta = seg > 0.5 and not self.path.endswith("/pregunta")     # la pregunta espera al modelo
+            sys.stderr.write(f"{self.command} {self.path}  {seg:.2f} s{'  ← lenta' if lenta else ''}\n")
 
     def _json(self, codigo: int, cuerpo) -> None:
         datos = json.dumps(cuerpo, ensure_ascii=False, default=str).encode()
@@ -185,13 +231,19 @@ class Peticion(SimpleHTTPRequestHandler):
         m = self.medicci
         if partes[1:] == ["estado"]:
             try:
-                urllib.request.urlopen(f"{self.url_modelo.rstrip('/')}/models", timeout=3).read()
-                ok = True
+                if es_cli(self.url_modelo):
+                    ok = shutil.which("claude") is not None
+                else:
+                    urllib.request.urlopen(f"{self.url_modelo.rstrip('/')}/models", timeout=3).read()
+                    ok = True
             except Exception:
                 ok = False
             return self._json(200, {"modelo": self.modelo, "responde": ok, "voz": voz.disponible()})
         if partes[1:] == ["hcis", "agenda"]:
             return self._json(200, m.agenda)
+        if partes[1:] == ["hcis", "version"]:
+            # sube con cada mensaje HL7: la réplica solo vuelve a pedir la historia si cambia
+            return self._json(200, {"version": m._version})
         if partes[1:] == ["hl7", "ultimos"]:
             return self._json(200, m.hl7_recibidos)
         if partes[1:] == ["simulacion"]:
@@ -294,7 +346,8 @@ class Peticion(SimpleHTTPRequestHandler):
             m.registrar(partes[2], "pregunta", pregunta=texto, respuesta=r.respuesta, consta=r.consta,
                         fuentes=r.fuentes, segundos=round(time.perf_counter() - inicio, 2))
             return self._json(200, {"respuesta": r.respuesta, "consta": r.consta,
-                                    "fuentes": m.fuentes(r.usadas, r.fuentes), "segundos": round(r.segundos, 1)})
+                                    "fuentes": m.fuentes(r.usadas, r.fuentes), "segundos": round(r.segundos, 1),
+                                    "local": not es_cli(self.url_modelo)})
         if partes[:2] == ["api", "sesion"] and partes[-1] == "voz":
             if not self._sesion(partes):
                 return
@@ -342,7 +395,13 @@ def main() -> None:
         receptor = escuchar(args.host, args.hl7_puerto, Peticion.medicci.recibir_hl7)
         threading.Thread(target=receptor.serve_forever, daemon=True).start()
         print(f"Receptor HL7 (MLLP) escuchando en el puerto {args.hl7_puerto}", flush=True)
+    else:
+        # la agenda cuesta segundos: se prepara ya, y no al abrir HCIS la primera vez
+        threading.Thread(target=lambda: Peticion.medicci.agenda, daemon=True).start()
     Peticion.url_modelo, Peticion.modelo = args.url, args.modelo
+    if es_cli(args.url):
+        print("Aviso: el modelo es el CLI de Claude (MEDICCI_URL=claude). Las filas de cada pregunta "
+              "salen a Anthropic: solo con datos sintéticos.", flush=True)
     servidor = ThreadingHTTPServer((args.host, args.puerto), Peticion)
     print(f"Medicci listo: http://localhost:{args.puerto}  (modelo {args.modelo} en {args.url})", flush=True)
     servidor.serve_forever()

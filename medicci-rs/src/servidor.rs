@@ -15,7 +15,10 @@ use std::time::Duration;
 
 pub struct Fuente {
     pub referencia: String,
+    /// el texto tal cual consta: el informe entero, o la fila sin las notas al modelo
     pub texto: String,
+    /// qué es, si el servidor lo dice («Informe de endoscopia · … · 18/03/2015 · Dr. …»)
+    pub titulo: Option<String>,
 }
 
 pub struct Alerta {
@@ -36,7 +39,7 @@ pub enum Llega {
     Sesion { sesion: String, nhc: String, edad: i64, filas: i64 },
     Filas { sesion: String, filas: Vec<FilaRed> },
     Tarjeta { sesion: String, alertas: Vec<Alerta>, mas: i64 },
-    Respuesta { texto: String, consta: bool, fuentes: Vec<Fuente>, segundos: f64 },
+    Respuesta { texto: String, consta: bool, fuentes: Vec<Fuente>, segundos: f64, local: bool },
     Paso { n: i64, accion: String, texto: String },   // la simulación (mvp/simular.py)
     Dictado(Result<String, String>),                 // el texto de lo dictado, o por qué no
     Fallo(String),
@@ -69,7 +72,8 @@ fn fuentes(v: &Value) -> Vec<Fuente> {
             a.iter()
                 .map(|f| Fuente {
                     referencia: f["ref"].as_str().unwrap_or_default().to_string(),
-                    texto: f["texto"].as_str().unwrap_or_default().to_string(),
+                    texto: f["cita"].as_str().or(f["texto"].as_str()).unwrap_or_default().to_string(),
+                    titulo: f["titulo"].as_str().map(str::to_string),
                 })
                 .collect()
         })
@@ -248,6 +252,8 @@ impl Servidor {
                     consta: v["consta"].as_bool().unwrap_or(false),
                     fuentes: fuentes(&v["fuentes"]),
                     segundos: v["segundos"].as_f64().unwrap_or(0.0),
+                    // false si el servidor usa un modelo de fuera (MEDICCI_URL=claude)
+                    local: v["local"].as_bool().unwrap_or(true),
                 },
                 Err(e) => Llega::Fallo(e),
             }]
