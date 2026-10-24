@@ -9,6 +9,13 @@
   const enRegistro = location.pathname.endsWith("registro.html");
   const MEDICO = "med.demo01";
 
+  // El título de esta ventana lleva «· simulación»: así simular.py y la
+  // burbuja de la simulación la distinguen de otro HCIS que esté abierto.
+  const MARCA = " · simulación";
+  const marca = () => { if (!document.title.includes(MARCA)) document.title += MARCA; };
+  marca();
+  new MutationObserver(marca).observe(document.querySelector("title"), {childList: true});
+
   document.head.insertAdjacentHTML("beforeend", `<style>
     #sim-tapa{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
       font-family:"Segoe UI",Verdana,sans-serif;transition:opacity .6s}
@@ -38,7 +45,7 @@
     .sim-login div{padding:16px;display:grid;gap:10px;font-size:13px}
     .sim-login span{border:1px solid #c6c6c6;border-radius:4px;padding:7px 9px;min-height:32px;background:#fafafa}
     .sim-login button{background:#009b6b;color:#fff;border:0;border-radius:4px;padding:9px;font-weight:bold}
-    #sim-rotulo{position:fixed;left:24px;bottom:24px;z-index:60;max-width:760px;background:#0e2d20ee;color:#fff;
+    #sim-rotulo{position:fixed;left:24px;bottom:84px;z-index:60;max-width:760px;background:#0e2d20ee;color:#fff;
       border-left:6px solid #f3c418;border-radius:10px;padding:14px 20px;font:17px/1.4 "Segoe UI",Verdana,sans-serif;
       box-shadow:0 8px 30px #0005;transition:opacity .4s,transform .4s}
     #sim-rotulo.oculto{opacity:0;transform:translateY(12px)}
@@ -78,8 +85,7 @@
     escena("escritorio", `<div class="sim-iconos">
         <div class="sim-icono" id="sim-hcis"><b>HCIS</b>HCIS</div>
         <div class="sim-icono"><b>@</b>Correo</div>
-        <div class="sim-icono"><b>▤</b>Intranet</div></div>
-      <div class="sim-barra"><span>⊞</span><span class="reloj">07:57<br>24/10/2026</span></div>`);
+        <div class="sim-icono"><b>▤</b>Intranet</div></div>`);
     await paso("windows");                       // simular.py abre aquí medicci.exe, como al iniciar Windows
     await rotulo("07:57", "Medicci arranca sola con Windows: es el círculo verde de abajo a la derecha. No hay que instalar ni abrir nada más.", 6500);
     document.getElementById("sim-hcis").classList.add("pulsado");

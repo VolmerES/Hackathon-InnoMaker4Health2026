@@ -36,22 +36,32 @@ CHROME = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files")) / "Google/Chr
 BURBUJA = RAIZ / "medicci-rs/target/release/medicci.exe"
 
 
-def pide(ruta: str) -> dict:
-    with urllib.request.urlopen(API + ruta, timeout=10) as r:
-        return json.load(r)
+def pide(ruta: str, cuerpo: dict | None = None) -> dict:
+    """Al servidor de Medicci; si la conexión se corta, lo intenta otra vez."""
+    for intento in range(5):
+        try:
+            peticion = urllib.request.Request(API + ruta, headers={"Content-Type": "application/json"},
+                                              data=None if cuerpo is None else json.dumps(cuerpo).encode())
+            with urllib.request.urlopen(peticion, timeout=10) as r:
+                return json.load(r)
+        except OSError:
+            if intento == 4:
+                raise
+            time.sleep(1)
 
 
 def pantalla() -> tuple[int, int]:
-    """El tamaño de verdad del monitor principal, en píxeles (sin el escalado)."""
+    """Lo que se graba: el monitor principal sin la barra de tareas, en píxeles
+    de verdad. Así no sale la barra, esté HCIS delante o no."""
     ctypes.windll.user32.SetProcessDPIAware()
+    zona = (ctypes.c_long * 4)()
+    if ctypes.windll.user32.SystemParametersInfoW(0x30, 0, zona, 0):     # SPI_GETWORKAREA
+        return zona[2] - zona[0], zona[3] - zona[1]
     return ctypes.windll.user32.GetSystemMetrics(0), ctypes.windll.user32.GetSystemMetrics(1)
 
 
 def paso(accion: str) -> int:
-    peticion = urllib.request.Request(API + "/api/simulacion/paso", data=json.dumps({"accion": accion}).encode(),
-                                      headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(peticion, timeout=10) as r:
-        return json.load(r)["n"]
+    return pide("/api/simulacion/paso", {"accion": accion})["n"]
 
 
 def aparta_ventana() -> int:
@@ -62,10 +72,11 @@ def aparta_ventana() -> int:
     return h
 
 
-def al_frente(prefijo: str) -> bool:
-    """Pone delante la ventana cuyo título empieza por `prefijo` (HCIS a
-    pantalla completa), para que tape también la barra de tareas. Windows solo
-    deja hacerlo si parece que se ha pulsado una tecla: se pulsa y suelta Alt."""
+def al_frente(marca: str) -> bool:
+    """Pone delante la ventana con `marca` en el título (el HCIS de la
+    simulación, que lleva «· simulación»), por si hay otro HCIS abierto.
+    Windows solo deja hacerlo si parece que se ha pulsado una tecla: se pulsa
+    y suelta Alt."""
     u = ctypes.windll.user32
     encontrada = []
 
@@ -73,7 +84,7 @@ def al_frente(prefijo: str) -> bool:
     def una(h, _):
         texto = ctypes.create_unicode_buffer(256)
         u.GetWindowTextW(ctypes.c_void_p(h), texto, 256)
-        if u.IsWindowVisible(ctypes.c_void_p(h)) and texto.value.startswith(prefijo):
+        if u.IsWindowVisible(ctypes.c_void_p(h)) and marca in texto.value:
             encontrada.append(h)
             return False
         return True
@@ -99,7 +110,9 @@ def cierra_burbuja() -> None:
 def abre_burbuja(*args: str, medico: str | None = None) -> subprocess.Popen:
     entorno = dict(os.environ)
     if medico:
-        entorno.update(USERNAME=medico, USER=medico)
+        # la de la simulación, a nombre del médico y siguiendo solo al HCIS de
+        # la simulación («· simulación» en el título), no a otro que esté abierto
+        entorno.update(USERNAME=medico, USER=medico, MEDICCI_TITULO=r"^HCIS · ([PG]\d{7}) · .*· simulación")
     return subprocess.Popen([str(BURBUJA), "--servidor", API, *args], cwd=BURBUJA.parent.parent.parent,
                             env=entorno)
 
@@ -136,38 +149,40 @@ def main() -> None:
         limpia()
     cierra_burbuja()
 
-    # HCIS a pantalla completa, delante de todo; la página espera a «empezar»
+    f = None if args.sin_video else ffmpeg()
+    if not args.sin_video and not f:
+        sys.exit("No encuentro ffmpeg (winget install Gyan.FFmpeg) o use --sin-video.")
+
+    # HCIS a pantalla completa, delante de todo; la página espera a «empezar».
+    # Desde aquí, pase lo que pase, al final se cierra todo y la consola vuelve.
     perfil = tempfile.mkdtemp(prefix="medicci-simulacion-")
     chrome = subprocess.Popen([str(CHROME), f"--user-data-dir={perfil}", "--kiosk", "--no-first-run",
                                "--no-default-browser-check", "--disable-features=Translate",
                                "--window-position=0,0", f"{API}/?simulacion=1"])
-    time.sleep(4)
-    consola = aparta_ventana()
-    time.sleep(1)
-    if not al_frente("HCIS"):
-        print("   (no he podido poner HCIS delante: puede verse la barra de tareas)", flush=True)
-    time.sleep(1)
-
-    grabando = None
-    if not args.sin_video:
-        if not (f := ffmpeg()):
-            sys.exit("No encuentro ffmpeg (winget install Gyan.FFmpeg) o use --sin-video.")
-        ancho, alto = pantalla()
-        args.salida.parent.mkdir(parents=True, exist_ok=True)
-        grabando = subprocess.Popen(
-            [f, "-y", "-loglevel", "error", "-f", "gdigrab", "-framerate", "30", "-offset_x", "0", "-offset_y", "0",
-             "-video_size", f"{ancho}x{alto}", "-draw_mouse", "0", "-i", "desktop",
-             "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
-             "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", str(args.salida)],
-            stdin=subprocess.PIPE)
-        print(f"Grabando {ancho}×{alto} en {args.salida}", flush=True)
+    consola = grabando = burbuja = None
+    try:
+        time.sleep(4)
+        consola = aparta_ventana()
+        time.sleep(1)
+        if not al_frente("· simulación"):
+            print("   (no he podido poner HCIS delante: puede verse la barra de tareas)", flush=True)
         time.sleep(1)
 
-    inicio_n = vistos = paso("empezar")
-    print("Simulación en marcha…", flush=True)
-    burbuja = None
-    limite = time.monotonic() + 600
-    try:
+        if f:
+            ancho, alto = pantalla()
+            args.salida.parent.mkdir(parents=True, exist_ok=True)
+            grabando = subprocess.Popen(
+                [f, "-y", "-loglevel", "error", "-f", "gdigrab", "-framerate", "30", "-offset_x", "0",
+                 "-offset_y", "0", "-video_size", f"{ancho}x{alto}", "-draw_mouse", "0", "-i", "desktop",
+                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+                 "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", str(args.salida)],
+                stdin=subprocess.PIPE)
+            print(f"Grabando {ancho}×{alto} en {args.salida}", flush=True)
+            time.sleep(1)
+
+        inicio_n = vistos = paso("empezar")
+        print("Simulación en marcha…", flush=True)
+        limite = time.monotonic() + 600
         while time.monotonic() < limite:
             s = pide("/api/simulacion")
             if s["n"] != vistos:
@@ -189,7 +204,8 @@ def main() -> None:
         if burbuja:
             burbuja.terminate()
         shutil.rmtree(perfil, ignore_errors=True)
-        ctypes.windll.user32.ShowWindow(consola, 9)      # SW_RESTORE: la consola, como estaba
+        if consola:
+            ctypes.windll.user32.ShowWindow(consola, 9)  # SW_RESTORE: la consola, como estaba
         abre_burbuja()                     # la de siempre, a nombre del usuario de Windows
 
 
