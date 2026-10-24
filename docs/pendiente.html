@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medicci: lo que falta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --papel: #f3f5f2;
+  --hoja: #ffffff;
+  --tinta: #14231b;
+  --tinta-2: #44544b;
+  --tenue: #77857c;
+  --linea: #dbe2dc;
+  --verde: #1a5c44;
+  --verde-osc: #0e2d20;
+  --verde-claro: #e3eee8;
+  --oro: #b8861a;
+  --oro-claro: #fbf1d8;
+  --gris-claro: #eef0ee;
+  --azul-claro: #e7eef6;
+  --azul: #2f5d8a;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--papel); color: var(--tinta);
+  font: 400 15.5px/1.55 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.mono, code { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; }
+.marco { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+button { font: inherit; color: inherit; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+
+header { background: var(--verde-osc); color: #eef5f0; padding: 40px 0 46px; }
+h1 { margin: 0 0 8px; font-size: clamp(28px, 4.4vw, 42px); line-height: 1.1; letter-spacing: -0.02em; }
+header p { margin: 0; color: #b9d2c4; max-width: 66ch; }
+.avance { margin-top: 24px; display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: center; }
+.barra { height: 12px; border-radius: 6px; background: rgba(255,255,255,.12); overflow: hidden; display: flex; }
+.barra i { display: block; height: 100%; transition: width .35s ease; }
+.barra .h { background: #5fb58f; }
+.barra .c { background: #e2b44a; }
+.avance .num { font-size: 15px; color: #d7e7dd; white-space: nowrap; }
+.avance .num b { font-size: 20px; color: #fff; }
+
+.contadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: -24px 0 0; position: relative; }
+@media (max-width: 720px) { .contadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.contador {
+  background: var(--hoja); border: 1px solid var(--linea); border-radius: 12px; padding: 12px 14px;
+  text-align: left; cursor: pointer; box-shadow: 0 1px 2px rgba(10,30,20,.06), 0 6px 18px rgba(10,30,20,.05);
+}
+.contador b { display: block; font-size: 26px; line-height: 1.1; }
+.contador span { font-size: 14px; color: var(--tinta-2); }
+.contador[aria-pressed="true"] { border: 2px solid var(--verde); padding: 11px 13px; }
+.contador.ya b { color: var(--verde); }
+.contador.bloq b { color: var(--tenue); }
+
+h2 { font-size: 22px; margin: 34px 0 6px; letter-spacing: -0.01em; }
+.sub { color: var(--tinta-2); margin: 0 0 12px; max-width: 74ch; }
+
+/* el mapa del sistema */
+.mapa { background: var(--hoja); border: 1px solid var(--linea); border-radius: 14px; padding: 14px; overflow-x: auto; }
+.mapa svg { display: block; width: 100%; min-width: 940px; height: auto; }
+.pieza { cursor: pointer; }
+.pieza .fondo { fill: #fff; stroke: var(--linea); stroke-width: 1.5; transition: stroke .2s, fill .2s; }
+.pieza.parte .fondo { stroke: var(--oro); }
+.pieza.completa .fondo { fill: var(--verde-claro); stroke: var(--verde); }
+.pieza.elegida .fondo { stroke: var(--oro); stroke-width: 3.5; }
+.pieza:hover .fondo { stroke: var(--verde); }
+.pieza .nom { font: 600 14.5px "IBM Plex Sans", sans-serif; fill: var(--tinta); }
+.pieza .det { font: 500 11.5px "IBM Plex Mono", monospace; fill: var(--tenue); }
+.pieza .cuenta { font: 500 12.5px "IBM Plex Sans", sans-serif; fill: var(--tinta-2); }
+.pieza .pista { fill: var(--gris-claro); }
+.pieza .lleno { fill: var(--verde); transition: width .35s ease; }
+.pieza .encurso { fill: #e2b44a; transition: width .35s ease; }
+.pieza .hosp { font: 600 11px "IBM Plex Sans", sans-serif; fill: var(--azul); }
+.flecha { stroke: #b9c6bd; stroke-width: 2; fill: none; }
+.zona { fill: none; stroke: var(--linea); stroke-dasharray: 5 4; }
+.zona-t { font: 600 11.5px "IBM Plex Sans", sans-serif; fill: var(--tenue); letter-spacing: .03em; }
+
+.filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0 6px; }
+.chip { border: 1px solid var(--linea); background: var(--hoja); border-radius: 16px; padding: 4px 12px; font-size: 14px; cursor: pointer; color: var(--tinta-2); }
+.chip[aria-pressed="true"] { background: var(--verde); border-color: var(--verde); color: #fff; }
+.filtros .der { margin-left: auto; display: flex; gap: 8px; }
+.accion { border: 1px solid var(--linea); background: var(--hoja); border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; }
+.accion:hover { border-color: var(--verde); }
+
+/* lista */
+.grupo { margin-top: 24px; }
+.grupo h3 { font-size: 16px; margin: 0 0 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.grupo h3 small { font-weight: 400; color: var(--tenue); font-size: 13.5px; }
+.tarjeta {
+  background: var(--hoja); border: 1px solid var(--linea); border-radius: 12px; margin-bottom: 8px;
+  display: grid; grid-template-columns: 40px 1fr; transition: border-color .2s, box-shadow .2s;
+}
+.tarjeta.elegida { border-color: var(--oro); box-shadow: 0 0 0 3px var(--oro-claro); }
+.tarjeta.hecho { background: #f7fbf8; }
+.tarjeta.hecho .titulo { color: var(--tenue); text-decoration: line-through; text-decoration-color: #9fcbb5; }
+.estado {
+  margin: 12px 0 0 12px; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--linea);
+  background: #fff; cursor: pointer; display: grid; place-items: center; padding: 0;
+}
+.estado svg { width: 14px; height: 14px; }
+.estado.curso { border-color: var(--oro); background: var(--oro-claro); }
+.estado.hecho { border-color: var(--verde); background: var(--verde); }
+.cuerpo { padding: 10px 14px 10px 6px; min-width: 0; }
+.fila { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.titulo { font-weight: 600; cursor: pointer; background: none; border: 0; padding: 0; text-align: left; font-size: 15.5px; }
+.titulo:hover { color: var(--verde); }
+.marca { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 9px; background: var(--gris-claro); color: var(--tinta-2); white-space: nowrap; }
+.marca.ya { background: var(--verde-claro); color: var(--verde); }
+.marca.bloq { color: var(--tenue); }
+.marca.hosp { background: var(--azul-claro); color: var(--azul); }
+.marca.opc { background: #fff; border: 1px solid var(--linea); font-weight: 500; }
+.idt { font-size: 12px; color: var(--tenue); }
+.detalle { display: none; margin-top: 8px; color: var(--tinta-2); font-size: 14.5px; }
+.tarjeta.abierta .detalle { display: block; }
+.detalle p { margin: 0 0 8px; max-width: 78ch; }
+.linea-d { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.linea-d > span:first-child { font-size: 13px; color: var(--tenue); min-width: 92px; }
+.ref { border: 1px solid var(--linea); background: #fff; border-radius: 8px; padding: 1px 8px; font-size: 13px; cursor: pointer; }
+.ref.ok { border-color: #9fcbb5; color: var(--verde); }
+.ref:hover { border-color: var(--oro); }
+.archivo { font: 500 12.5px "IBM Plex Mono", monospace; background: var(--verde-claro); color: var(--verde); padding: 1px 7px; border-radius: 5px; }
+.vacio { color: var(--tenue); padding: 18px; text-align: center; background: var(--hoja); border: 1px dashed var(--linea); border-radius: 12px; }
+footer { color: var(--tenue); font-size: 13.5px; padding: 36px 0 56px; }
+.aviso-copia { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--verde-osc); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.aviso-copia.ver { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="marco">
+    <h1>Lo que falta por montar de Medicci</h1>
+    <p>Las piezas de software que hay que hacer o configurar aquí, de la burbuja a los Spark.
+       Pulsa una pieza del mapa para ver solo sus tareas, y el círculo de cada tarea para
+       marcarla en curso o hecha: se guarda en este navegador.</p>
+    <div class="avance">
+      <div class="barra" aria-hidden="true"><i class="h" id="b-h"></i><i class="c" id="b-c"></i></div>
+      <div class="num"><b id="n-hecho">0</b> de <span id="n-total">0</span> hechas</div>
+    </div>
+  </div>
+</header>
+
+<main class="marco">
+  <div class="contadores" role="group" aria-label="Filtrar por situación">
+    <button class="contador" data-vista="todo" aria-pressed="true"><b id="k-todo">0</b><span>Todas</span></button>
+    <button class="contador ya" data-vista="ya" aria-pressed="false"><b id="k-ya">0</b><span>Se pueden empezar ya</span></button>
+    <button class="contador bloq" data-vista="bloq" aria-pressed="false"><b id="k-bloq">0</b><span>Esperando a otra cosa</span></button>
+    <button class="contador" data-vista="hecho" aria-pressed="false"><b id="k-hecho">0</b><span>Hechas</span></button>
+  </div>
+
+  <h2>Las piezas</h2>
+  <p class="sub">El camino de una pregunta, de izquierda a derecha. Debajo, de dónde salen los
+     datos y las pruebas que lo recorren entero. La barra de cada pieza dice cuánto le falta.</p>
+  <div class="mapa"><svg id="mapa" viewBox="0 0 1000 384" role="group" aria-label="Piezas del sistema"></svg></div>
+
+  <div class="filtros" role="group" aria-label="Filtrar por pieza">
+    <span id="chips"></span>
+    <div class="der">
+      <button class="accion" id="copiar">Copiar resumen</button>
+      <button class="accion" id="reiniciar">Empezar de cero</button>
+    </div>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<footer class="marco">
+  Las etiquetas azules dicen qué dato hay que pedir al hospital para esa tarea; no son tareas de
+  aquí. El detalle de cada pieza está en <code>docs/plan-graficas.html</code>.
+</footer>
+<div class="aviso-copia" id="aviso" role="status">Resumen copiado</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var PIEZAS = [
+    { id: "puesto", nombre: "Puesto de consulta", det: "burbuja medicci.exe", x: 20, y: 56, w: 160 },
+    { id: "entrada", nombre: "nginx · entrada", det: "HTTPS :443", x: 216, y: 56, w: 160 },
+    { id: "servidor", nombre: "Servidor Medicci", det: "mvp/servidor.py", x: 412, y: 56, w: 176 },
+    { id: "balanceador", nombre: "nginx · balanceador", det: "medicci_modelo :8100", x: 624, y: 56, w: 176 },
+    { id: "modelo", nombre: "vLLM en los Spark", det: "medicci-vllm :8000", x: 836, y: 56, w: 144 },
+    { id: "datos", nombre: "Datos del paciente", det: "bd · HL7 · CSV", x: 412, y: 232, w: 176 },
+    { id: "pruebas", nombre: "Pruebas", det: "de punta a punta", x: 624, y: 232, w: 356 }
+  ];
+
+  // hosp: lo que hay que pedir al hospital · bloquea: si sin eso no se puede empezar
+  var TAREAS = [
+    { id: "b1", pieza: "puesto", titulo: "Quitar la vuelta a la base de la demo",
+      porque: "Sin servidor, la burbuja enseña los dos pacientes inventados. Tiene que decir «sin conexión con Medicci». Como mucho, dejar la demo detrás de una opción.",
+      archivos: ["medicci-rs/src/main.rs"], espera: [] },
+    { id: "b2", pieza: "puesto", titulo: "Que la burbuja diga quién es el médico",
+      porque: "Mandar en cada llamada la credencial que pida el servidor (s1). Para empezar, una clave por puesto en medicci.conf.",
+      archivos: ["medicci-rs/src/servidor.rs"], espera: ["s1"] },
+    { id: "b3", pieza: "puesto", titulo: "Paquete para Windows",
+      porque: "medicci.exe firmado, su medicci.conf al lado (MEDICCI_SERVIDOR=https://medicci.hospital.local) y arranque automático al iniciar sesión. Una receta de just que lo deje listo en una carpeta.",
+      archivos: ["justfile", "medicci-rs/"], espera: ["b1"], hosp: "con qué reparten programas (SCCM, Intune…)" },
+
+    { id: "n1", pieza: "entrada", titulo: "nginx con HTTPS hacia los puestos",
+      porque: "Bloque server :443 con server_name medicci.hospital.local y el certificado. Aquí se prueba con uno autofirmado; en el hospital, su certificado. Si el hospital ya tiene proxy inverso, esta pieza la pone el suyo.",
+      archivos: ["despliegue/nginx/medicci.conf"], espera: [], hosp: "certificado o proxy inverso" },
+    { id: "n2", pieza: "entrada", titulo: "Reparto a las copias del servidor",
+      porque: "upstream medicci_servidor con ip_hash: el mismo PC va siempre a la misma copia, porque la sesión vive en su memoria. Con una sola copia no hace falta.",
+      archivos: ["despliegue/nginx/medicci.conf"], espera: ["n1"], opcional: true },
+
+    { id: "s1", pieza: "servidor", titulo: "Identificar al médico y limitar lo que ve",
+      porque: "Hoy cualquiera que llame a /api/sesion con un NHC ve ese paciente. Comprobar quién pregunta en cada llamada, dejarle abrir solo sus pacientes y apuntar el médico en el registro.",
+      archivos: ["mvp/servidor.py", "mvp/config.py"], espera: [], hosp: "cómo se identifica (Directorio Activo, inicio único)" },
+    { id: "s2", pieza: "servidor", titulo: "Servicio que se reinicia solo",
+      porque: "Una unidad de systemd (o el compose con restart) para que arranque con la máquina y vuelva si se cae.",
+      archivos: ["despliegue/medicci.service"], espera: [] },
+    { id: "s3", pieza: "servidor", titulo: "Registro de accesos en un solo sitio",
+      porque: "Cada copia escribe hoy su mvp/resultados/registro.jsonl. Mandarlo a syslog o a una tabla común, con el médico de s1.",
+      archivos: ["mvp/servidor.py"], espera: ["s1"] },
+    { id: "s4", pieza: "servidor", titulo: "/api/estado que diga qué Spark contesta",
+      porque: "Hoy dice si el modelo responde. Con dos, que diga cuál está vivo, para verlo de un vistazo y para avisar si cae uno.",
+      archivos: ["mvp/servidor.py"], espera: ["l1"] },
+
+    { id: "l1", pieza: "balanceador", titulo: "upstream medicci_modelo con los dos Spark",
+      porque: "least_conn, max_fails y proxy_next_upstream … non_idempotent: si un Spark no contesta, la misma pregunta va al otro. Escucha solo en 127.0.0.1:8100.",
+      archivos: ["despliegue/nginx/medicci.conf"], espera: [] },
+    { id: "l2", pieza: "balanceador", titulo: "La otra opción: repartir en responder.py",
+      porque: "Si no se quiere nginx: que MEDICCI_URL acepte dos direcciones separadas por coma y pruebe la siguiente si una falla. Hacer esta o l1, no las dos.",
+      archivos: ["mvp/responder.py", "medicci.conf.ejemplo"], espera: [], opcional: true },
+    { id: "l3", pieza: "balanceador", titulo: "MEDICCI_URL apuntando al balanceador",
+      porque: "En el medicci.conf del servidor: MEDICCI_URL=http://localhost:8100/v1. Y dejarlo en el ejemplo, comentado.",
+      archivos: ["medicci.conf.ejemplo"], espera: ["l1"] },
+
+    { id: "v1", pieza: "modelo", titulo: "responder.py compatible con vLLM",
+      porque: "Apagar el razonamiento de Qwen3 como lo entiende vLLM: chat_template_kwargs {\"enable_thinking\": false}. Sin romper Ollama, que sigue en el portátil.",
+      archivos: ["mvp/responder.py"], espera: [] },
+    { id: "v2", pieza: "modelo", titulo: "El arranque de vLLM en un fichero",
+      porque: "Un compose medicci-vllm con --served-model-name qwen3:8b, --api-key, --max-model-len 8192 y restart: unless-stopped. El mismo en los dos Spark.",
+      archivos: ["despliegue/vllm/docker-compose.yml"], espera: [] },
+    { id: "v3", pieza: "modelo", titulo: "Probar vLLM en el portátil",
+      porque: "Con la RTX de 8 GB y el mismo fichero de v2: que prueba_acierto.py dé lo mismo que con Ollama (29/30, ninguna fuente inventada).",
+      archivos: ["mvp/prueba_acierto.py"], espera: ["v1", "v2"] },
+
+    { id: "d1", pieza: "datos", titulo: "Vía directa a la base, con las 8 vistas",
+      porque: "MEDICCI_DATOS=bd: conectarse a la base del hospital y traducir sus tablas a las 8 de Medicci. Consultar solo al paciente que se abre y usar un grupo de conexiones.",
+      archivos: ["analisis/datos.py", "mvp/servidor.py", "mvp/paciente.py"], espera: [], hosp: "el esquema de la base", bloquea: true },
+    { id: "d2", pieza: "datos", titulo: "Los códigos del hospital en consultas y alertas",
+      porque: "ESPECIALIDADES, TIPO_VISITA y los valores de las reglas (NO_REALIZADA, PROGRAMADA, FALLIDO…).",
+      archivos: ["mvp/paciente.py", "mvp/alertas.py"], espera: [], hosp: "los catálogos", bloquea: true },
+    { id: "d3", pieza: "datos", titulo: "La agenda real del médico",
+      porque: "elegir_agenda() monta una de demo al azar. Leer la del médico que ha entrado.",
+      archivos: ["mvp/agenda.py"], espera: ["s1"], hosp: "de dónde sale la agenda", bloquea: true },
+    { id: "d4", pieza: "datos", titulo: "hl7.py con los mensajes reales",
+      porque: "Solo si se va por HL7: cuadrar aplicar() con los tipos de mensaje y campos del motor de integración.",
+      archivos: ["mvp/hl7.py"], espera: [], hosp: "qué mensajes manda el motor", bloquea: true, opcional: true },
+
+    { id: "t1", pieza: "pruebas", titulo: "Todo el camino en local con Docker",
+      porque: "Un compose que levante nginx (con certificado autofirmado), el servidor y vLLM, y que la burbuja pregunte por https://medicci.hospital.local. Es el ensayo del hospital en un portátil.",
+      archivos: ["despliegue/docker-compose.yml"], espera: ["n1", "l1", "s2", "v2"] },
+    { id: "t2", pieza: "pruebas", titulo: "Prueba de carga",
+      porque: "vllm bench serve contra el balanceador, con preguntas del tamaño de las de Medicci y 10, 20 y 40 a la vez. En el portátil da una primera cifra; en los Spark, la de verdad.",
+      archivos: [], espera: ["t1"] },
+    { id: "t3", pieza: "pruebas", titulo: "Que se caiga un Spark y siga funcionando",
+      porque: "Parar un vLLM a mitad de una pregunta y comprobar que contesta el otro y que /api/estado lo dice.",
+      archivos: [], espera: ["t1", "s4"] }
+  ];
+
+  var POR_ID = {}, POR_PIEZA = {};
+  TAREAS.forEach(function (t) { POR_ID[t.id] = t; t.desbloquea = []; });
+  TAREAS.forEach(function (t) { t.espera.forEach(function (e) { POR_ID[e].desbloquea.push(t.id); }); });
+  PIEZAS.forEach(function (p) { POR_PIEZA[p.id] = p; });
+
+  var CLAVE = "medicci-pendiente-v2";
+  var estado = {};
+  try { estado = JSON.parse(localStorage.getItem(CLAVE) || "{}") || {}; } catch (e) { estado = {}; }
+  function guarda() { try { localStorage.setItem(CLAVE, JSON.stringify(estado)); } catch (e) {} }
+  function est(id) { return estado[id] || "pendiente"; }
+  function faltan(t) { return t.espera.filter(function (e) { return est(e) !== "hecho"; }); }
+  function situacion(t) {
+    var s = est(t.id);
+    if (s === "hecho") return "hecho";
+    if (faltan(t).length || t.bloquea) return "bloq";
+    return s === "curso" ? "curso" : "ya";
+  }
+
+  var filtro = { vista: "todo", pieza: "todo" };
+  var abierta = null;
+
+  // ---------- chips de pieza ----------
+  var chips = document.getElementById("chips");
+  chips.style.display = "contents";
+  [{ id: "todo", nombre: "Todas las piezas" }].concat(PIEZAS).forEach(function (p) {
+    var b = document.createElement("button");
+    b.className = "chip"; b.dataset.pieza = p.id; b.textContent = p.nombre;
+    b.setAttribute("aria-pressed", p.id === "todo" ? "true" : "false");
+    chips.appendChild(b);
+  });
+
+  // ---------- el mapa ----------
+  var NS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById("mapa");
+  var ALTO = 128;
+  function el(nombre, attrs, padre) {
+    var n = document.createElementNS(NS, nombre);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    (padre || svg).appendChild(n);
+    return n;
+  }
+
+  function dibujaMapa() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var defs = el("defs", {});
+    var m = el("marker", { id: "pf", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" }, defs);
+    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "#b9c6bd" }, m);
+
+    el("rect", { x: 6, y: 18, width: 186, height: 182, rx: 14, class: "zona" });
+    el("text", { x: 20, y: 38, class: "zona-t" }).textContent = "EN CADA CONSULTA";
+    el("rect", { x: 202, y: 18, width: 792, height: 358, rx: 14, class: "zona" });
+    el("text", { x: 216, y: 38, class: "zona-t" }).textContent = "EN EL CPD";
+
+    // flechas del camino
+    for (var i = 0; i < 4; i++) {
+      var a = PIEZAS[i], b = PIEZAS[i + 1];
+      el("path", { d: "M" + (a.x + a.w) + " " + (a.y + ALTO / 2) + " L" + (b.x - 3) + " " + (b.y + ALTO / 2), class: "flecha", "marker-end": "url(#pf)" });
+    }
+    var srv = POR_PIEZA.servidor, dat = POR_PIEZA.datos;
+    el("path", { d: "M" + (dat.x + dat.w / 2) + " " + dat.y + " L" + (srv.x + srv.w / 2) + " " + (srv.y + ALTO + 3), class: "flecha", "marker-end": "url(#pf)" });
+
+    PIEZAS.forEach(function (p) {
+      var ts = TAREAS.filter(function (t) { return t.pieza === p.id; });
+      var hechas = ts.filter(function (t) { return est(t.id) === "hecho"; }).length;
+      var curso = ts.filter(function (t) { return est(t.id) === "curso"; }).length;
+      var hosp = ts.filter(function (t) { return t.hosp && est(t.id) !== "hecho"; }).length;
+      var clase = "pieza" + (hechas === ts.length ? " completa" : (hechas || curso) ? " parte" : "") + (filtro.pieza === p.id ? " elegida" : "");
+      var g = el("g", { class: clase, tabindex: 0, role: "button", "aria-pressed": filtro.pieza === p.id ? "true" : "false",
+                        "aria-label": p.nombre + ": " + hechas + " de " + ts.length + " hechas" });
+      el("rect", { x: p.x, y: p.y, width: p.w, height: ALTO, rx: 12, class: "fondo" }, g);
+      el("text", { x: p.x + 14, y: p.y + 28, class: "nom" }, g).textContent = p.nombre;
+      el("text", { x: p.x + 14, y: p.y + 48, class: "det" }, g).textContent = p.det;
+      var bw = p.w - 28, by = p.y + 66;
+      el("rect", { x: p.x + 14, y: by, width: bw, height: 7, rx: 3.5, class: "pista" }, g);
+      el("rect", { x: p.x + 14, y: by, width: bw * hechas / ts.length, height: 7, rx: 3.5, class: "lleno" }, g);
+      el("rect", { x: p.x + 14 + bw * hechas / ts.length, y: by, width: bw * curso / ts.length, height: 7, rx: 0, class: "encurso" }, g);
+      el("text", { x: p.x + 14, y: p.y + 96, class: "cuenta" }, g).textContent = hechas + " de " + ts.length + " hechas";
+      if (hosp) el("text", { x: p.x + 14, y: p.y + 115, class: "hosp" }, g).textContent = "pide " + hosp + " dato" + (hosp > 1 ? "s" : "") + " al hospital";
+      function pulsa() {
+        filtro.pieza = filtro.pieza === p.id ? "todo" : p.id;
+        marcaFiltros(); todo();
+      }
+      g.addEventListener("click", pulsa);
+      g.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pulsa(); } });
+    });
+  }
+
+  // ---------- la lista ----------
+  var lista = document.getElementById("lista");
+  var ICONO = {
+    curso: '<svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="3.2" fill="#b8861a"/></svg>',
+    hecho: '<svg viewBox="0 0 14 14"><path d="M2.5 7.4 5.6 10.3 11.5 3.8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    pendiente: ""
+  };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function corta(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+  function refs(ids) {
+    return ids.map(function (i) {
+      return '<button class="ref' + (est(i) === "hecho" ? " ok" : "") + '" data-ir="' + i + '" title="' + esc(POR_ID[i].titulo) + '">' +
+        i + " · " + esc(corta(POR_ID[i].titulo, 36)) + "</button>";
+    }).join("");
+  }
+  function pasa(t) {
+    var s = situacion(t);
+    var vista = filtro.vista === "todo" || (filtro.vista === "ya" ? (s === "ya" || s === "curso") : s === filtro.vista);
+    return vista && (filtro.pieza === "todo" || t.pieza === filtro.pieza);
+  }
+  function etiqueta(t) {
+    var s = situacion(t);
+    if (s === "hecho") return '<span class="marca">hecha</span>';
+    if (s === "curso") return '<span class="marca ya">en curso</span>';
+    if (s === "ya") return '<span class="marca ya">se puede empezar ya</span>';
+    var f = faltan(t);
+    return '<span class="marca bloq">' + (f.length ? "espera a " + f.join(", ") : "espera al hospital") + "</span>";
+  }
+
+  function dibujaLista() {
+    var html = "", alguna = false;
+    PIEZAS.forEach(function (p) {
+      var del = TAREAS.filter(function (t) { return t.pieza === p.id; });
+      var vis = del.filter(pasa);
+      if (!vis.length) return;
+      alguna = true;
+      var hechas = del.filter(function (t) { return est(t.id) === "hecho"; }).length;
+      html += '<div class="grupo"><h3>' + esc(p.nombre) + ' <small class="mono">' + esc(p.det) + "</small><small>" + hechas + " de " + del.length + " hechas</small></h3>";
+      vis.forEach(function (t) {
+        var e = est(t.id), ab = abierta === t.id;
+        html += '<div class="tarjeta ' + e + (ab ? " elegida abierta" : "") + '" id="t-' + t.id + '">' +
+          '<button class="estado ' + e + '" data-estado="' + t.id + '" aria-label="Estado: ' + e + '. Pulsa para cambiarlo">' + ICONO[e] + "</button>" +
+          '<div class="cuerpo"><div class="fila"><span class="idt mono">' + t.id + "</span>" +
+          '<button class="titulo" data-abrir="' + t.id + '" aria-expanded="' + ab + '">' + esc(t.titulo) + "</button>" +
+          etiqueta(t) +
+          (t.hosp ? '<span class="marca hosp">del hospital: ' + esc(t.hosp) + "</span>" : "") +
+          (t.opcional ? '<span class="marca opc">opcional</span>' : "") +
+          "</div>" +
+          '<div class="detalle"><p>' + esc(t.porque) + "</p>" +
+          (t.archivos.length ? '<div class="linea-d"><span>Archivos</span>' + t.archivos.map(function (a) { return '<span class="archivo">' + esc(a) + "</span>"; }).join("") + "</div>" : "") +
+          (t.espera.length ? '<div class="linea-d"><span>Espera a</span>' + refs(t.espera) + "</div>" : "") +
+          (t.desbloquea.length ? '<div class="linea-d"><span>Desbloquea</span>' + refs(t.desbloquea) + "</div>" : "") +
+          "</div></div></div>";
+      });
+      html += "</div>";
+    });
+    lista.innerHTML = alguna ? html : '<div class="vacio">Nada con estos filtros.</div>';
+  }
+
+  function contadores() {
+    var n = { ya: 0, bloq: 0, hecho: 0, curso: 0 };
+    TAREAS.forEach(function (t) {
+      var s = situacion(t);
+      if (s === "ya" || s === "curso") n.ya++;
+      if (s === "curso") n.curso++;
+      if (s === "bloq") n.bloq++;
+      if (s === "hecho") n.hecho++;
+    });
+    var total = TAREAS.length;
+    document.getElementById("k-todo").textContent = total;
+    document.getElementById("k-ya").textContent = n.ya;
+    document.getElementById("k-bloq").textContent = n.bloq;
+    document.getElementById("k-hecho").textContent = n.hecho;
+    document.getElementById("n-hecho").textContent = n.hecho;
+    document.getElementById("n-total").textContent = total;
+    document.getElementById("b-h").style.width = (100 * n.hecho / total) + "%";
+    document.getElementById("b-c").style.width = (100 * n.curso / total) + "%";
+  }
+
+  function todo() { contadores(); dibujaMapa(); dibujaLista(); }
+
+  function marcaFiltros() {
+    document.querySelectorAll("[data-vista]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.vista === filtro.vista); });
+    document.querySelectorAll("[data-pieza]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.pieza === filtro.pieza); });
+  }
+
+  function ir(id) {
+    abierta = id;
+    if (!pasa(POR_ID[id])) { filtro = { vista: "todo", pieza: "todo" }; marcaFiltros(); }
+    todo();
+    var n = document.getElementById("t-" + id);
+    if (n) n.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b) return;
+    if (b.dataset.estado) {
+      var id = b.dataset.estado, orden = ["pendiente", "curso", "hecho"];
+      estado[id] = orden[(orden.indexOf(est(id)) + 1) % 3];
+      if (estado[id] === "pendiente") delete estado[id];
+      guarda(); todo();
+      var otra = document.querySelector('[data-estado="' + id + '"]');
+      if (otra) otra.focus();
+    } else if (b.dataset.abrir) {
+      abierta = abierta === b.dataset.abrir ? null : b.dataset.abrir; dibujaLista();
+    } else if (b.dataset.ir) {
+      ir(b.dataset.ir);
+    } else if (b.dataset.vista) {
+      filtro.vista = b.dataset.vista; marcaFiltros(); dibujaLista();
+    } else if (b.dataset.pieza) {
+      filtro.pieza = b.dataset.pieza; marcaFiltros(); todo();
+    } else if (b.id === "reiniciar") {
+      if (confirm("¿Volver a dejar todas las tareas como pendientes?")) { estado = {}; abierta = null; guarda(); todo(); }
+    } else if (b.id === "copiar") {
+      copia();
+    }
+  });
+
+  function copia() {
+    var l = ["# Medicci: lo que falta por montar", ""];
+    PIEZAS.forEach(function (p) {
+      l.push("## " + p.nombre + " (" + p.det + ")");
+      TAREAS.filter(function (t) { return t.pieza === p.id; }).forEach(function (t) {
+        var s = situacion(t), f = faltan(t);
+        var extra = s === "curso" ? " · en curso" : s === "bloq" ? " · " + (f.length ? "espera a " + f.join(", ") : "espera al hospital") : "";
+        l.push("- " + (s === "hecho" ? "[x]" : "[ ]") + " " + t.id + " " + t.titulo + extra + (t.hosp ? " · del hospital: " + t.hosp : ""));
+      });
+      l.push("");
+    });
+    var texto = l.join("\n"), aviso = document.getElementById("aviso");
+    function ok() { aviso.classList.add("ver"); setTimeout(function () { aviso.classList.remove("ver"); }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(ok, function () { prompt("Copia el resumen:", texto); });
+    else prompt("Copia el resumen:", texto);
+  }
+
+  todo();
+})();
+</script>
+</body>
+</html>
