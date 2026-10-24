@@ -236,6 +236,7 @@ struct Medicci {
     refresco: f64,
     filas_red: Vec<FilaRed>,            // los datos del paciente, del servidor
     alertas_red: Vec<(String, Vec<String>)>, // la tarjeta del servidor: texto y sus fuentes
+    resumen_auto: bool,             // al abrir el paciente, el resumen sale solo
 }
 
 /// Lo que la burbuja le pide al servidor.
@@ -340,6 +341,7 @@ impl Medicci {
             refresco: 0.0,
             filas_red: Vec::new(),
             alertas_red: Vec::new(),
+            resumen_auto: false,
         };
         app.saludo();
         if let Some(id) = inicial {
@@ -658,6 +660,7 @@ impl Medicci {
                 self.alertas_red.clear();
                 self.resumen = None;
                 self.ampliado = false;
+                self.resumen_auto = true;
             }
             Llega::Tarjeta { sesion, alertas, mas } => {
                 if self.sesion.as_deref() != Some(sesion.as_str()) {
@@ -674,6 +677,8 @@ impl Medicci {
                     .collect();
                 if novedad {
                     self.pedidos.push(Pedido::Filas);   // el resumen también cambia
+                } else if self.resumen_auto {
+                    return;                             // va dentro del resumen, que llega enseguida
                 }
                 let mut partes = vec![Parte::Rotulo(if novedad {
                     "Ha llegado algo nuevo de HCIS:".into()
@@ -724,11 +729,27 @@ impl Medicci {
                     return;
                 }
                 self.filas_red = filas;
-                if let (Some(_), Some(p)) = (&self.resumen, &self.paciente) {
+                if std::mem::take(&mut self.resumen_auto) {
+                    // recién abierto: el resumen, con sus pestañas, es lo primero que se ve
+                    if let Some(p) = &self.paciente {
+                        self.resumen = resumen_de_red(p, &self.filas_red, &self.alertas_red);
+                    }
+                    if self.resumen.is_some() {
+                        self.hilo.push(Mensaje::tarjeta());
+                        self.pestana = Pestana::Resumen;
+                        self.hilo.push(Mensaje::suyo(vec![Parte::Texto(
+                            "Pregunte lo que necesite: contesta solo con sus datos y cita la fila                              de la que sale.".into())]));
+                        self.bajar = true;
+                    } else {
+                        self.tarjeta_vista = None;      // sin datos: la tarjeta de siempre
+                        self.pedidos.push(Pedido::Tarjeta);
+                    }
+                } else if let (Some(_), Some(p)) = (&self.resumen, &self.paciente) {
                     self.resumen = resumen_de_red(p, &self.filas_red, &self.alertas_red);
                 }
             }
             Llega::Fallo(e) => {
+                self.resumen_auto = false;
                 if std::mem::take(&mut self.esperando) {
                     self.hilo.pop();
                 }
@@ -2598,6 +2619,35 @@ mod pruebas {
         let mut app = Medicci::nuevo(datos, Some(ident.into()), None);
         app.abre_resumen();
         app
+    }
+
+    /// Contra un servidor de verdad: `MEDICCI_SERVIDOR=http://localhost:8000 cargo test -- --ignored`
+    #[test]
+    #[ignore]
+    fn conectada_resumen_contra_el_servidor() {
+        let url = std::env::var("MEDICCI_SERVIDOR").unwrap_or("http://localhost:8000".into());
+        let datos = datos::base_de_prueba("conectada");
+        let mut app = Medicci::nuevo(datos, None, Some(Servidor::nuevo(&url)));
+        let ctx = egui::Context::default();
+        app.abre_paciente("129798");
+        for _ in 0..200 {
+            app.red(&ctx);
+            if !app.filas_red.is_empty() && !app.alertas_red.is_empty() {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        assert!(!app.filas_red.is_empty(), "no han llegado los datos del servidor");
+        assert!(app.hilo.iter().any(|m| m.tarjeta), "al abrir, el resumen sale solo");
+        app.abre_resumen();
+        assert!(app.hilo.last().is_some_and(|m| m.tarjeta), "Resumen no pone la tarjeta en el chat");
+        let r = app.resumen.as_ref().expect("hay resumen");
+        println!("motivo: {:?} · alertas {} · documentos {} · pruebas {} · pendiente {}",
+                 r.motivo.as_ref().map(|m| &m.valor), r.alertas.len(), r.documentos.len(),
+                 r.pruebas.len(), r.faltas.len());
+        assert!(!r.alertas.is_empty());
+        app.muestra(Pestana::Pruebas);
+        assert!(app.pestana == Pestana::Pruebas);
     }
 
     #[test]
