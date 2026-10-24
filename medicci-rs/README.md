@@ -3,8 +3,13 @@
 Binario único, sin runtime ni intérprete. Una **burbuja con un médico** vive
 abajo a la derecha, encima del HCE. Al pulsarla se despliega el **chat**:
 arriba se escribe el número o el ID del paciente (`417` o `PAC-00417`) y abajo
-se pregunta. **RESUMEN** abre una ventana flotante, en mitad de la pantalla,
-con lo que el lector ha sacado de la historia, cada dato con su fuente.
+se pregunta. **Resumen** pone en el chat una tarjeta con lo que el lector ha
+sacado de la historia, cada dato con su fuente, en cuatro pestañas: Resumen
+(alertas, lo que no coincide con la derivación, valores clave, pendiente y lo
+que no consta), Historial, Pruebas y Medicación. **Ampliar** la abre en una
+ventana grande, en mitad de la pantalla, con tres columnas, la evolución de la
+hemoglobina y un botón para copiarla a la nota clínica. Los botones de abajo
+(Pruebas, Medicación, ¿Qué falta?) son atajos.
 
 ## Arrancar
 

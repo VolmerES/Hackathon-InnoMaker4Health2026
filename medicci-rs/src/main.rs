@@ -2,8 +2,8 @@
 //!
 //! Una burbuja con un médico, siempre abajo a la derecha y encima del HCE.
 //! Al pulsarla se despliega el chat: arriba se escribe el número del
-//! paciente y abajo se pregunta. RESUMEN abre una ventana flotante, en
-//! mitad de la pantalla, con lo que el lector ha sacado de la historia.
+//! paciente y abajo se pregunta. Resumen pone en el chat una tarjeta con
+//! pestañas; Ampliar la abre en una ventana grande, en mitad de la pantalla.
 //!
 //!     medicci                       # abre con la base de al lado
 //!     medicci --db ruta.db --paciente 417
@@ -19,18 +19,18 @@ mod datos;
 mod lector;
 mod servidor;
 
-use datos::{CampoFicha, Datos, Hecho, Paciente};
+use datos::{CampoFicha, Datos, Documento, Hecho, Paciente};
 use eframe::egui;
 use egui::emath::{easing, TSTransform};
 use egui::{pos2, vec2, Align, Color32, FontFamily, FontId, Layout, Pos2, Rect, RichText,
            Rounding, Sense, Shape, Stroke, UiBuilder, Vec2};
-use lector::{Lector, Respuesta};
+use lector::{Lector, Respuesta, ValorHallado};
 use servidor::{Llega, Servidor};
 use std::path::PathBuf;
 
 // medidas, en puntos
 const BOLA: f32 = 56.0;                     // diámetro de la burbuja
-const PANEL: Vec2 = vec2(360.0, 540.0);     // el chat desplegado
+const PANEL: Vec2 = vec2(420.0, 640.0);     // el chat desplegado
 const HUECO: f32 = 12.0;                    // entre el chat y la burbuja
 const AIRE: f32 = 16.0;                     // borde transparente donde cabe la sombra
 const MARGEN: f32 = 24.0;                   // de la burbuja al borde derecho
@@ -38,7 +38,8 @@ const MARGEN: f32 = 24.0;                   // de la burbuja al borde derecho
 const BAJO: f32 = 72.0;                     // de la burbuja al borde de abajo (barra de tareas)
 #[cfg(not(windows))]
 const BAJO: f32 = 24.0;
-const HOJA: Vec2 = vec2(660.0, 740.0);      // la ventana del resumen
+const HOJA: Vec2 = vec2(1240.0, 780.0);     // la ventana del resumen ampliado
+const PIE: f32 = 104.0;                     // acciones rápidas y redactor, al pie del chat
 
 // la paleta de Medicci
 const VERDE: Color32 = Color32::from_rgb(0x1a, 0x5c, 0x44);
@@ -57,6 +58,38 @@ const TINTA: Color32 = Color32::from_rgb(0x1d, 0x2a, 0x24);
 const TINTA_2: Color32 = Color32::from_rgb(0x3f, 0x4c, 0x45);
 const MIO: Color32 = Color32::from_rgb(0xe4, 0xee, 0xe8);
 const CITA_FONDO: Color32 = Color32::from_rgb(0xfb, 0xf7, 0xe8);
+const FICHA_FONDO: Color32 = Color32::from_rgb(0xf4, 0xf1, 0xe8);
+
+// colores con significado: cada tipo de dato, el suyo, y siempre con título
+const ALERTA: Color32 = Color32::from_rgb(0x9b, 0x1c, 0x1c);
+const ALERTA_TITULO: Color32 = Color32::from_rgb(0x7a, 0x14, 0x14);
+const ALERTA_FONDO: Color32 = Color32::from_rgb(0xfd, 0xed, 0xed);
+const ALERTA_BORDE: Color32 = Color32::from_rgb(0xf3, 0xc4, 0xc4);
+const CHOQUE: Color32 = Color32::from_rgb(0x8a, 0x4b, 0x00);       // no coincide con la derivación
+const CHOQUE_TACHADO: Color32 = Color32::from_rgb(0x6b, 0x55, 0x36);
+const CHOQUE_FONDO: Color32 = Color32::from_rgb(0xff, 0xf6, 0xe8);
+const CHOQUE_BORDE: Color32 = Color32::from_rgb(0xf1, 0xd3, 0xa8);
+const PENDIENTE: Color32 = Color32::from_rgb(0x1e, 0x4e, 0x8c);
+const PENDIENTE_FONDO: Color32 = Color32::from_rgb(0xee, 0xf4, 0xfc);
+const PENDIENTE_BORDE: Color32 = Color32::from_rgb(0xc9, 0xda, 0xf0);
+const NO_CONSTA_FONDO: Color32 = Color32::from_rgb(0xf7, 0xf8, 0xfa);
+const NO_CONSTA_BORDE: Color32 = Color32::from_rgb(0x9a, 0xa6, 0xb2);
+
+/// Las pestañas de la tarjeta de resumen del chat.
+#[derive(Clone, Copy, PartialEq)]
+enum Pestana {
+    Resumen,
+    Historial,
+    Pruebas,
+    Medicacion,
+}
+
+/// Lo que se pulsa dentro de la tarjeta de resumen o de la ventana ampliada.
+enum Accion {
+    Pestana(Pestana),
+    Ampliar,
+    Tema(String),
+}
 
 /// Cada trozo de un mensaje del chat.
 enum Parte {
@@ -71,29 +104,103 @@ enum Parte {
 struct Mensaje {
     mio: bool,
     partes: Vec<Parte>,
+    tarjeta: bool,                  // en vez de partes, la tarjeta de resumen
 }
 
 impl Mensaje {
     fn mio(t: impl Into<String>) -> Self {
-        Self { mio: true, partes: vec![Parte::Texto(t.into())] }
+        Self { mio: true, partes: vec![Parte::Texto(t.into())], tarjeta: false }
     }
     fn suyo(partes: Vec<Parte>) -> Self {
-        Self { mio: false, partes }
+        Self { mio: false, partes, tarjeta: false }
+    }
+    fn tarjeta() -> Self {
+        Self { mio: false, partes: Vec::new(), tarjeta: true }
     }
 }
 
-/// Lo que enseña la ventana de resumen, ya leído de la base.
+/// Un dato suelto del resumen: lo que se dice, un detalle y de dónde sale.
+struct Punto {
+    titulo: String,
+    detalle: Option<String>,
+    documento: Option<String>,
+}
+
+/// Una fila de la tabla de analíticas: la penúltima y la última.
+struct FilaLab {
+    nombre: String,
+    unidad: String,
+    antes: Option<String>,
+    ahora: Option<String>,
+}
+
+/// Lo que enseñan la tarjeta del chat y la ventana ampliada, ya leído de la base.
 struct Resumen {
     paciente: Paciente,
-    documentos: usize,
+    documentos: Vec<Documento>,
     desde: String,
     hasta: String,
     campos: Vec<CampoFicha>,
-    historia: Vec<Hecho>,
+    motivo: Option<CampoFicha>,
+    alertas: Vec<Punto>,            // seguridad y datos de alarma: lo primero
     contradicciones: Vec<Hecho>,
-    alarmas: Vec<Hecho>,
     faltas: Vec<Hecho>,
+    pruebas: Vec<Hecho>,
+    historia: Vec<Hecho>,
+    no_consta: Vec<String>,
+    marcados: Vec<String>,          // documentos con algo de riesgo: punto rojo en la historia
+    labs: Vec<FilaLab>,
+    labs_docs: (Option<(String, String)>, Option<(String, String)>),
+    hb: Vec<ValorHallado>,
+    hechos: Vec<Hecho>,
 }
+
+impl Resumen {
+    fn de(&self, bloque: &str) -> Vec<&CampoFicha> {
+        self.campos.iter().filter(|c| c.bloque == bloque).collect()
+    }
+    fn de_seccion(&self, seccion: &str) -> Vec<&CampoFicha> {
+        self.campos.iter()
+            .filter(|c| c.bloque == "por_que_viene" && c.seccion.as_deref() == Some(seccion))
+            .collect()
+    }
+    /// Lo que se le dice al paciente o a quien le acompaña: vida y cabecera destacadas.
+    fn para_la_consulta(&self) -> Vec<&CampoFicha> {
+        self.campos.iter()
+            .filter(|c| c.bloque == "vida" && c.destacado && !sin_dato(&c.valor))
+            .collect()
+    }
+    fn documento(&self, id: &str) -> Option<&Documento> {
+        self.documentos.iter().find(|d| d.id == id)
+    }
+    /// Lo que dice un documento, en una línea: su primer hecho, o su tipo.
+    fn linea_de(&self, d: &Documento) -> String {
+        self.hechos.iter()
+            .find(|h| h.documento.as_deref() == Some(d.id.as_str()))
+            .map(|h| cabeza_y_resto(&h.afirmacion).0)
+            .unwrap_or_else(|| d.tipo.clone())
+    }
+}
+
+/// Parte una afirmación en lo principal, que va en negrita, y el resto.
+fn cabeza_y_resto(t: &str) -> (String, Option<String>) {
+    for sep in [": ", ". "] {
+        if let Some((a, b)) = t.split_once(sep) {
+            let n = a.chars().count();
+            if (12..=90).contains(&n) && !b.trim().is_empty() {
+                let a = if sep == ". " { format!("{}.", a) } else { a.to_string() };
+                let mut resto = b.trim().chars();
+                let resto = resto.next().map(|c| c.to_uppercase().collect::<String>() + resto.as_str());
+                return (a, resto);
+            }
+        }
+    }
+    (t.to_string(), None)
+}
+
+/// Los parámetros de la tabla de analíticas, en este orden.
+const TABLA_LAB: &[&str] = &["Hemoglobina", "VCM", "Ferritina", "IST", "Creatinina",
+                             "Filtrado glomerular", "PCR", "INR", "GOT", "GPT"];
 
 struct Medicci {
     datos: Datos,
@@ -113,6 +220,9 @@ struct Medicci {
     foco_ident: bool,
     foco_chat: bool,
     resumen: Option<Resumen>,
+    pestana: Pestana,               // la pestaña abierta en la tarjeta del chat
+    ampliado: bool,                 // la ventana del resumen ampliado, abierta
+    copiado: f64,                   // cuándo se copió el resumen a la nota clínica
     resumen_t: f32,
     resumen_pos: Option<Pos2>,
     pendiente: Option<String>,      // un tema pulsado en el resumen
@@ -211,6 +321,9 @@ impl Medicci {
             foco_ident: false,
             foco_chat: false,
             resumen: None,
+            pestana: Pestana::Resumen,
+            ampliado: false,
+            copiado: f64::NEG_INFINITY,
             resumen_t: 0.0,
             resumen_pos: None,
             pendiente: None,
@@ -263,7 +376,7 @@ impl Medicci {
                 self.hilo.push(Mensaje::suyo(vec![
                     Parte::Texto(format!("He leído los {} documentos de {}, de {} a {}.",
                                          n, p.id, desde, hasta)),
-                    Parte::Texto("Pulse RESUMEN para ver lo que hay que saber antes de que \
+                    Parte::Texto("Pulse Resumen para ver lo que hay que saber antes de que \
                                   entre, o pregunte por un dato: «GOT de la última analítica», \
                                   «¿alergias?», «¿qué falta por hacer?».".into()),
                 ]));
@@ -271,6 +384,7 @@ impl Medicci {
                 self.paciente = Some(p);
                 self.ident.clear();
                 self.resumen = None;
+                self.ampliado = false;
                 self.foco_chat = true;
             }
             None => {
@@ -288,6 +402,7 @@ impl Medicci {
         self.paciente = None;
         self.lector = None;
         self.resumen = None;
+        self.ampliado = false;
         self.sesion = None;
         self.tarjeta_vista = None;
         self.esperando = false;
@@ -307,36 +422,115 @@ impl Medicci {
             }
             return;
         }
-        let (Some(p), Some(l)) = (self.paciente.clone(), self.lector.as_ref()) else { return };
+        let Some(p) = self.paciente.clone() else { return };
+        if self.lector.is_none() {
+            return;
+        }
         self.datos.registra(&self.usuario, &p.id, "generar_resumen", None);
-        let documentos = l.docs.len();
+        if self.resumen.as_ref().map(|r| &r.paciente.id) != Some(&p.id) {
+            self.resumen = self.lee_resumen(&p);
+        }
+        // una sola tarjeta en el hilo: la nueva sustituye a la anterior
+        self.hilo.retain(|m| !m.tarjeta);
+        self.hilo.push(Mensaje::mio("Resumen del paciente"));
+        self.hilo.push(Mensaje::tarjeta());
+        self.pestana = Pestana::Resumen;
+        self.bajar = true;
+    }
+
+    /// Lleva la tarjeta del chat a una pestaña; si no hay tarjeta, la saca antes.
+    fn muestra(&mut self, pestana: Pestana) {
+        if self.red.is_some() {
+            return self.abre_resumen();
+        }
+        if !self.hilo.last().is_some_and(|m| m.tarjeta) {
+            self.abre_resumen();
+        }
+        self.pestana = pestana;
+        self.bajar = true;
+    }
+
+    fn amplia(&mut self) {
+        if self.resumen.is_some() && !self.ampliado {
+            if let Some(p) = &self.paciente {
+                self.datos.registra(&self.usuario, &p.id, "ampliar_resumen", None);
+            }
+            self.ampliado = true;
+            self.resumen_t = 0.0;
+            self.resumen_pos = None;
+        }
+    }
+
+    /// Lee de la base todo lo que enseñan la tarjeta y la ventana ampliada.
+    fn lee_resumen(&self, p: &Paciente) -> Option<Resumen> {
+        let l = self.lector.as_ref()?;
         let desde = l.docs.last().map(|d| año(&d.fecha)).unwrap_or_default();
         let hasta = l.docs.first().map(|d| año(&d.fecha)).unwrap_or_default();
+        let campos = self.datos.ficha(&p.id);
         let mut vistos = Vec::new();
         let contradicciones = nuevos(self.datos.hechos(&p.id, &["contradiccion"]), &mut vistos);
         let alarmas = nuevos(self.datos.hechos(&p.id, &["alarma"]), &mut vistos);
         let faltas = nuevos(self.datos.hechos(&p.id, &["falta"]), &mut vistos);
+        let pruebas = nuevos(self.datos.hechos(&p.id, &["pruebas"]), &mut vistos);
         let historia = nuevos(self.datos.hechos(&p.id, &["resumen"]), &mut vistos);
-        let campos = self.datos.ficha(&p.id);
-        let con_fuente = campos.iter().filter(|c| c.documento.is_some()).count() + vistos.len();
+        let todos = self.datos.hechos(&p.id, &[]);
 
-        self.hilo.push(Mensaje::mio("RESUMEN"));
-        let mut partes = vec![Parte::Texto(format!(
-            "Resumen abierto en el centro de la pantalla: {} datos, cada uno con su fuente.",
-            con_fuente))];
-        if !contradicciones.is_empty() {
-            partes.push(Parte::Aviso(format!(
-                "{} no cuadran con la derivación.", contradicciones.len())));
-        }
-        self.hilo.push(Mensaje::suyo(partes));
-        self.bajar = true;
+        // alertas: lo de seguridad que sí consta y destaca, la medicación que hay que
+        // revisar y los datos de alarma
+        let mut alertas: Vec<Punto> = campos.iter()
+            .filter(|c| c.bloque == "antes_de_empezar" && c.destacado && !sin_dato(&c.valor))
+            .map(|c| Punto { titulo: format!("{}: {}", c.etiqueta, c.valor),
+                             detalle: c.detalle.clone(), documento: c.documento.clone() })
+            .collect();
+        alertas.extend(campos.iter()
+            .filter(|c| c.bloque == "por_que_viene" && c.seccion.as_deref() == Some("medicacion") && c.destacado)
+            .map(|c| Punto { titulo: format!("{} {}", c.etiqueta, c.valor),
+                             detalle: c.detalle.clone(), documento: c.documento.clone() }));
+        alertas.extend(alarmas.iter().map(|h| {
+            let (titulo, detalle) = cabeza_y_resto(&h.afirmacion);
+            Punto { titulo, detalle, documento: h.documento.clone() }
+        }));
 
-        self.resumen = Some(Resumen {
-            paciente: p, documentos, desde, hasta, campos,
-            historia, contradicciones, alarmas, faltas,
-        });
-        self.resumen_t = 0.0;
-        self.resumen_pos = None;
+        let mut no_consta: Vec<String> = campos.iter()
+            .filter(|c| c.bloque == "antes_de_empezar" && sin_dato(&c.valor))
+            .map(|c| format!("{}: {}", c.etiqueta, c.detalle.as_deref().unwrap_or(&c.valor)))
+            .collect();
+        no_consta.extend(todos.iter()
+            .filter(|h| h.documento.is_none() && !h.categoria.contains("falta"))
+            .map(|h| h.afirmacion.clone()));
+
+        let mut marcados: Vec<String> = todos.iter()
+            .filter(|h| ["contradiccion", "alarma", "alergias"].iter().any(|c| h.categoria.contains(c)))
+            .filter_map(|h| h.documento.clone())
+            .collect();
+        marcados.dedup();
+
+        let analiticas = l.analiticas();
+        let (ultima, penultima) = (analiticas.first().copied(), analiticas.get(1).copied());
+        let labs = TABLA_LAB.iter()
+            .filter_map(|n| {
+                let ahora = ultima.and_then(|d| l.valor_en(d, n));
+                let antes = penultima.and_then(|d| l.valor_en(d, n));
+                let unidad = ahora.as_ref().or(antes.as_ref())?.unidad.clone();
+                Some(FilaLab { nombre: n.to_string(), unidad,
+                               antes: antes.map(|v| v.valor), ahora: ahora.map(|v| v.valor) })
+            })
+            .collect();
+        let doc_fecha = |d: Option<&Documento>| d.map(|d| (d.id.clone(), d.fecha.clone()));
+
+        Some(Resumen {
+            paciente: p.clone(),
+            documentos: l.docs.clone(),
+            desde, hasta,
+            motivo: campos.iter()
+                .find(|c| c.bloque == "por_que_viene" && c.seccion.as_deref() == Some("motivo"))
+                .cloned(),
+            campos,
+            alertas, contradicciones, faltas, pruebas, historia, no_consta, marcados, labs,
+            labs_docs: (doc_fecha(penultima), doc_fecha(ultima)),
+            hb: l.serie("Hemoglobina"),
+            hechos: todos,
+        })
     }
 
     fn preguntar(&mut self) {
@@ -747,7 +941,7 @@ impl Medicci {
 
                 let cabeza = Rect::from_min_size(caja.min, vec2(caja.width(), 64.0));
                 let ficha = Rect::from_min_size(cabeza.left_bottom(), vec2(caja.width(), 52.0));
-                let pie = Rect::from_min_max(pos2(caja.left(), caja.bottom() - 60.0), caja.max);
+                let pie = Rect::from_min_max(pos2(caja.left(), caja.bottom() - PIE), caja.max);
                 let hilo = Rect::from_min_max(ficha.left_bottom(), pie.right_top());
                 self.cabecera(ui, cabeza);
                 self.barra_paciente(ui, ficha);
@@ -845,6 +1039,7 @@ impl Medicci {
 
     fn conversacion(&mut self, ui: &mut egui::Ui, caja: Rect) {
         let bajar = std::mem::take(&mut self.bajar);
+        let mut accion = None;
         ui.allocate_new_ui(UiBuilder::new().max_rect(caja.shrink2(vec2(12.0, 0.0))), |ui| {
             egui::ScrollArea::vertical()
                 .id_salt("hilo")
@@ -854,7 +1049,13 @@ impl Medicci {
                     ui.add_space(12.0);
                     let ancho = ui.available_width();
                     for m in &self.hilo {
-                        mensaje(ui, m, ancho);
+                        if m.tarjeta {
+                            if let Some(r) = &self.resumen {
+                                accion = tarjeta(ui, r, self.pestana).or(accion.take());
+                            }
+                        } else {
+                            mensaje(ui, m, ancho);
+                        }
                         ui.add_space(8.0);
                     }
                     if bajar {
@@ -862,6 +1063,12 @@ impl Medicci {
                     }
                 });
         });
+        match accion {
+            Some(Accion::Pestana(p)) => self.pestana = p,
+            Some(Accion::Ampliar) => self.amplia(),
+            Some(Accion::Tema(t)) => self.pendiente = Some(t),
+            None => {}
+        }
     }
 
     fn redactor(&mut self, ui: &mut egui::Ui, caja: Rect) {
@@ -871,9 +1078,21 @@ impl Medicci {
         let hay = self.paciente.is_some();
         let mut resumen = false;
         let mut enviar = false;
-        ui.allocate_new_ui(UiBuilder::new().max_rect(caja.shrink2(vec2(12.0, 12.0)))
+        let mut ir: Option<Pestana> = None;
+        let mut falta = false;
+        let dentro = caja.shrink2(vec2(12.0, 12.0));
+        let (arriba, abajo) = dentro.split_top_bottom_at_y(dentro.top() + 34.0);
+        // acciones rápidas: Resumen es la principal
+        ui.allocate_new_ui(UiBuilder::new().max_rect(arriba)
                                .layout(Layout::left_to_right(Align::Center)), |ui| {
-            resumen = boton(ui, "RESUMEN", ORO, TINTA, hay);
+            ui.spacing_mut().item_spacing.x = 6.0;
+            resumen = boton(ui, "Resumen", ORO, TINTA, hay);
+            if rapida(ui, "Pruebas", hay) { ir = Some(Pestana::Pruebas) }
+            if rapida(ui, "Medicación", hay) { ir = Some(Pestana::Medicacion) }
+            falta = rapida(ui, "¿Qué falta?", hay);
+        });
+        ui.allocate_new_ui(UiBuilder::new().max_rect(abajo.with_min_y(abajo.top() + 8.0))
+                               .layout(Layout::left_to_right(Align::Center)), |ui| {
             egui::Frame::none()
                 .fill(CREMA)
                 .stroke(trazo(1.0, LINEA))
@@ -915,10 +1134,33 @@ impl Medicci {
         if resumen {
             self.abre_resumen();
         }
+        if let Some(p) = ir {
+            if self.red.is_some() {
+                // conectada, las pestañas no existen: se le pregunta a la IA del servidor
+                self.entrada = match p { Pestana::Pruebas => "¿Qué pruebas tiene?", _ => "¿Qué medicación toma?" }.into();
+                self.preguntar();
+            } else {
+                self.muestra(p);
+            }
+        }
+        if falta {
+            self.entrada = "¿Qué falta por hacer?".into();
+            self.preguntar();
+        }
         if enviar {
             self.preguntar();
         }
     }
+}
+
+/// Un botón secundario de acción rápida: blanco, con borde.
+fn rapida(ui: &mut egui::Ui, t: &str, activo: bool) -> bool {
+    let b = egui::Button::new(texto(t, 12.5, TINTA, false))
+        .fill(BLANCO)
+        .stroke(trazo(1.0, LINEA))
+        .rounding(16.0)
+        .min_size(vec2(0.0, 32.0));
+    ui.add_enabled(activo, b).on_hover_cursor(egui::CursorIcon::PointingHand).clicked()
 }
 
 fn mensaje(ui: &mut egui::Ui, m: &Mensaje, ancho: f32) {
@@ -958,135 +1200,14 @@ fn mensaje(ui: &mut egui::Ui, m: &Mensaje, ancho: f32) {
 }
 
 // =====================================================================
-//  La ventana del resumen
+//  El resumen: la tarjeta del chat y la ventana ampliada
 // =====================================================================
-
-/// Un título de sección, con una línea a la derecha.
-fn seccion(ui: &mut egui::Ui, titulo: &str, nota: &str) {
-    ui.add_space(18.0);
-    ui.horizontal(|ui| {
-        ui.label(texto(titulo, 14.5, TINTA, true));
-        if !nota.is_empty() {
-            ui.label(texto(nota, 11.5, GRIS, false));
-        }
-    });
-    ui.add_space(6.0);
-}
 
 fn columna(ui: &mut egui::Ui, ancho: f32, alin: Align, dentro: impl FnOnce(&mut egui::Ui)) {
     ui.allocate_ui_with_layout(vec2(ancho, 0.0), Layout::top_down(alin), |ui| {
         ui.set_width(ancho);
         ui.spacing_mut().item_spacing.y = 2.0;
         dentro(ui);
-    });
-}
-
-fn hoja_blanca(ui: &mut egui::Ui, dentro: impl FnOnce(&mut egui::Ui)) {
-    egui::Frame::none()
-        .fill(BLANCO)
-        .stroke(trazo(1.0, LINEA))
-        .rounding(10.0)
-        .inner_margin(egui::Margin::symmetric(16.0, 2.0))
-        .show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            dentro(ui);
-        });
-}
-
-fn separa(ui: &mut egui::Ui, primera: bool) {
-    if !primera {
-        let y = ui.cursor().top();
-        ui.painter().hline(ui.max_rect().x_range(), y, trazo(1.0, LINEA_SUAVE));
-    }
-}
-
-/// Tabla de tres columnas: qué, cuánto y de dónde sale.
-fn tabla(ui: &mut egui::Ui, filas: &[&CampoFicha]) {
-    hoja_blanca(ui, |ui| {
-        for (i, c) in filas.iter().enumerate() {
-            separa(ui, i == 0);
-            ui.add_space(8.0);
-            ui.horizontal_top(|ui| {
-                let total = ui.available_width();
-                let hueco = ui.spacing().item_spacing.x;
-                columna(ui, 132.0, Align::Min, |ui| {
-                    ui.label(texto(&c.etiqueta, 12.0, GRIS, false));
-                });
-                columna(ui, total - 132.0 - 96.0 - 2.0 * hueco, Align::Min, |ui| {
-                    let vacio = sin_dato(&c.valor);
-                    let tam = if c.destacado { 14.5 } else { 13.0 };
-                    // el dato corto va en negrita; una frase entera, no
-                    let corto = c.valor.chars().count() <= 40;
-                    ui.label(texto(&c.valor, tam, if vacio { GRIS } else { TINTA }, !vacio && corto));
-                    if let Some(d) = &c.detalle {
-                        ui.label(texto(d, 12.0, TINTA_2, false));
-                    }
-                });
-                columna(ui, 96.0, Align::Max, |ui| {
-                    match (&c.documento, &c.fecha_doc) {
-                        (Some(d), Some(f)) => fuente(ui, &format!("¹ {} · {}", d, año(f))),
-                        (Some(d), None) => fuente(ui, &format!("¹ {}", d)),
-                        _ => { ui.label(texto("—", 11.0, LINEA, false)); }
-                    }
-                });
-            });
-            ui.add_space(8.0);
-        }
-    });
-}
-
-/// Casillas en fila: alergias, constantes...
-fn casillas(ui: &mut egui::Ui, celdas: &[&CampoFicha]) {
-    if celdas.is_empty() {
-        return;
-    }
-    let hueco = 8.0;
-    let n = celdas.len() as f32;
-    let ancho = ((ui.available_width() - hueco * (n - 1.0)) / n).floor();
-    ui.horizontal_top(|ui| {
-        ui.spacing_mut().item_spacing.x = hueco;
-        for c in celdas {
-            egui::Frame::none()
-                .fill(BLANCO)
-                .stroke(trazo(1.0, if c.destacado { ROJO } else { LINEA }))
-                .rounding(10.0)
-                .inner_margin(egui::Margin::symmetric(11.0, 9.0))
-                .show(ui, |ui| {
-                    ui.set_width(ancho - 22.0);
-                    ui.set_min_height(54.0);
-                    ui.vertical(|ui| {
-                        ui.spacing_mut().item_spacing.y = 2.0;
-                        ui.label(texto(&c.etiqueta, 11.5, GRIS, false));
-                        let vacio = sin_dato(&c.valor);
-                        let color = if vacio { GRIS } else if c.destacado { ROJO } else { TINTA };
-                        ui.label(texto(&c.valor, if vacio { 13.0 } else { 15.0 }, color, !vacio));
-                        if let Some(d) = &c.documento {
-                            fuente(ui, &format!("¹ {}", d));
-                        }
-                    });
-                });
-        }
-    });
-}
-
-fn bloque_hechos(ui: &mut egui::Ui, hechos: &[Hecho], rojo: bool, total: usize) {
-    hoja_blanca(ui, |ui| {
-        for (i, h) in hechos.iter().enumerate() {
-            separa(ui, i == 0);
-            ui.add_space(9.0);
-            let r = ui.vertical(|ui| {
-                ui.spacing_mut().item_spacing.y = 4.0;
-                ui.label(texto(&h.afirmacion, 13.0, if rojo { ROJO } else { TINTA }, rojo));
-                if let Some(c) = &h.cita {
-                    cita(ui, c);
-                }
-                fuente(ui, &fuente_hecho(h, total));
-            }).response;
-            if rojo {
-                ui.painter().vline(r.rect.left() - 9.0, r.rect.y_range(), trazo(2.5, ROJO));
-            }
-            ui.add_space(9.0);
-        }
     });
 }
 
@@ -1100,119 +1221,741 @@ fn pastilla(ui: &mut egui::Ui, t: &str, destacada: bool) {
         });
 }
 
-/// El contenido de la hoja de resumen. Devuelve el tema pulsado, si alguno.
-fn hoja_resumen(ui: &mut egui::Ui, r: &Resumen) -> Option<String> {
-    let mut tema = None;
-    let de = |bloque: &str| -> Vec<&CampoFicha> {
-        r.campos.iter().filter(|c| c.bloque == bloque).collect()
-    };
-    let de_seccion = |seccion: &str| -> Vec<&CampoFicha> {
-        r.campos.iter()
-            .filter(|c| c.bloque == "por_que_viene" && c.seccion.as_deref() == Some(seccion))
-            .collect()
-    };
+/// Una etiqueta pequeña de color: «Revisar», «Evitar…».
+fn marca(ui: &mut egui::Ui, t: &str, fondo: Color32, tinta: Color32) {
+    egui::Frame::none()
+        .fill(fondo)
+        .rounding(9.0)
+        .inner_margin(egui::Margin::symmetric(8.0, 1.0))
+        .show(ui, |ui| {
+            ui.label(texto(t, 11.0, tinta, true));
+        });
+}
 
-    // la edad y el sexo ya van en la cabecera
-    let chips: Vec<&CampoFicha> = de("cabecera").into_iter()
-        .filter(|c| !c.valor.contains(" años")).collect();
-    if !chips.is_empty() {
+/// El título de un bloque, en pequeño y con el color de lo que contiene.
+fn rotulo(ui: &mut egui::Ui, t: &str, color: Color32) {
+    ui.label(texto(t.to_uppercase(), 10.5, color, true));
+}
+
+fn fecha_es(f: &str) -> String {
+    let t: Vec<&str> = f.split('-').collect();
+    if t.len() == 3 {
+        format!("{}/{}/{}", t[2].chars().take(2).collect::<String>(), t[1], t[0])
+    } else {
+        f.to_string()
+    }
+}
+
+/// «2019-11-27» → «nov 19».
+fn mes_año(fecha: &str) -> String {
+    const MESES: [&str; 12] = ["ene", "feb", "mar", "abr", "may", "jun",
+                               "jul", "ago", "sep", "oct", "nov", "dic"];
+    let mes: usize = fecha.get(5..7).and_then(|m| m.parse().ok()).unwrap_or(0);
+    match (MESES.get(mes.wrapping_sub(1)), fecha.get(2..4)) {
+        (Some(m), Some(a)) => format!("{} {}", m, a),
+        _ => año(fecha),
+    }
+}
+
+/// La fuente de un dato: el documento en pequeño; encima del ratón, cuál es.
+fn chip(ui: &mut egui::Ui, r: &Resumen, id: &str) {
+    let resp = egui::Frame::none()
+        .fill(MIO)
+        .stroke(trazo(1.0, VERDE_CLARO))
+        .rounding(4.0)
+        .inner_margin(egui::Margin::symmetric(5.0, 1.0))
+        .show(ui, |ui| {
+            ui.label(RichText::new(id).monospace().size(10.5).color(VERDE_2));
+        })
+        .response;
+    if let Some(d) = r.documento(id) {
+        resp.on_hover_text(format!("{} · {} · {}", d.tipo, fecha_es(&d.fecha), d.servicio));
+    }
+}
+
+/// Una fila: el contenido a la izquierda y, si la hay, la fuente a la derecha.
+fn con_fuente(ui: &mut egui::Ui, r: &Resumen, doc: Option<&str>, dentro: impl FnOnce(&mut egui::Ui)) {
+    ui.horizontal_top(|ui| {
+        let ancho = ui.available_width() - if doc.is_some() { 46.0 } else { 0.0 };
+        columna(ui, ancho, Align::Min, dentro);
+        if let Some(d) = doc {
+            ui.with_layout(Layout::right_to_left(Align::Min), |ui| chip(ui, r, d));
+        }
+    });
+}
+
+fn caja(ui: &mut egui::Ui, fondo: Color32, borde: Color32, dentro: impl FnOnce(&mut egui::Ui)) {
+    egui::Frame::none()
+        .fill(fondo)
+        .stroke(trazo(1.0, borde))
+        .rounding(8.0)
+        .inner_margin(egui::Margin::same(10.0))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.spacing_mut().item_spacing.y = 4.0;
+            dentro(ui);
+        });
+}
+
+/// Borde discontinuo: lo que no consta, para que no se confunda con un dato.
+fn caja_discontinua(ui: &mut egui::Ui, dentro: impl FnOnce(&mut egui::Ui)) {
+    let r = egui::Frame::none()
+        .fill(NO_CONSTA_FONDO)
+        .rounding(2.0)
+        .inner_margin(egui::Margin::same(10.0))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.spacing_mut().item_spacing.y = 3.0;
+            dentro(ui);
+        })
+        .response;
+    let q = r.rect.shrink(0.5);
+    let borde = [q.left_top(), q.right_top(), q.right_bottom(), q.left_bottom(), q.left_top()];
+    ui.painter().extend(Shape::dashed_line(&borde, trazo(1.0, NO_CONSTA_BORDE), 4.0, 3.0));
+}
+
+fn separador(ui: &mut egui::Ui, color: Color32) {
+    ui.add_space(3.0);
+    let y = ui.cursor().top();
+    ui.painter().hline(ui.max_rect().x_range(), y, trazo(1.0, color));
+    ui.add_space(5.0);
+}
+
+fn icono_alerta(p: &egui::Painter, c: Pos2) {
+    let s = trazo(1.6, ALERTA);
+    p.add(Shape::closed_line(vec![c + vec2(0.0, -7.0), c + vec2(7.5, 6.0), c + vec2(-7.5, 6.0)], s));
+    p.line_segment([c + vec2(0.0, -2.5), c + vec2(0.0, 1.5)], s);
+    p.circle_filled(c + vec2(0.0, 3.8), 1.0, ALERTA);
+}
+
+fn icono_reloj(p: &egui::Painter, c: Pos2) {
+    let s = trazo(1.5, PENDIENTE);
+    p.circle_stroke(c, 6.5, s);
+    p.line_segment([c, c + vec2(0.0, -4.0)], s);
+    p.line_segment([c, c + vec2(3.0, 1.5)], s);
+}
+
+/// Un icono pintado de 18 px, alineado con la primera línea del texto.
+fn icono(ui: &mut egui::Ui, pinta: fn(&egui::Painter, Pos2)) {
+    let (sitio, _) = ui.allocate_exact_size(vec2(18.0, 18.0), Sense::hover());
+    pinta(ui.painter(), sitio.center());
+}
+
+fn motivo(ui: &mut egui::Ui, r: &Resumen, tam: f32) {
+    match &r.motivo {
+        Some(c) => con_fuente(ui, r, c.documento.as_deref(), |ui| {
+            ui.label(texto(&c.valor, tam, TINTA, true));
+            if let Some(d) = &c.detalle {
+                ui.label(texto(d, 12.0, TINTA_2, false));
+            }
+        }),
+        None => {
+            ui.label(texto(&r.paciente.motivo, tam, TINTA, true));
+        }
+    }
+}
+
+fn bloque_alertas(ui: &mut egui::Ui, r: &Resumen) {
+    if r.alertas.is_empty() {
+        return;
+    }
+    rotulo(ui, &format!("Alertas · {}", r.alertas.len()), ALERTA);
+    for a in &r.alertas {
+        caja(ui, ALERTA_FONDO, ALERTA_BORDE, |ui| {
+            ui.horizontal_top(|ui| {
+                icono(ui, icono_alerta);
+                con_fuente(ui, r, a.documento.as_deref(), |ui| {
+                    ui.label(texto(&a.titulo, 13.0, ALERTA_TITULO, true));
+                    if let Some(d) = &a.detalle {
+                        ui.label(texto(d, 12.0, TINTA_2, false));
+                    }
+                });
+            });
+        });
+    }
+    ui.add_space(10.0);
+}
+
+fn bloque_choques(ui: &mut egui::Ui, r: &Resumen) {
+    if r.contradicciones.is_empty() {
+        return;
+    }
+    rotulo(ui, &format!("No coincide con la derivación · {}", r.contradicciones.len()), CHOQUE);
+    caja(ui, CHOQUE_FONDO, CHOQUE_BORDE, |ui| {
+        for (i, h) in r.contradicciones.iter().enumerate() {
+            if i > 0 {
+                separador(ui, CHOQUE_BORDE);
+            }
+            let (cabeza, resto) = cabeza_y_resto(&h.afirmacion);
+            con_fuente(ui, r, h.documento.as_deref(), |ui| {
+                ui.label(texto(cabeza, 12.5, TINTA, true));
+                if let Some(t) = resto {
+                    ui.label(texto(t, 12.0, CHOQUE_TACHADO, false));
+                }
+            });
+        }
+    });
+    ui.add_space(10.0);
+}
+
+/// Los valores que han cambiado, en casillas: cifra grande, detalle y fuente.
+fn bloque_claves(ui: &mut egui::Ui, r: &Resumen, por_fila: usize) {
+    let claves = r.de_seccion("cambios");
+    if claves.is_empty() {
+        return;
+    }
+    rotulo(ui, "Valores clave", GRIS);
+    let hueco = 8.0;
+    let ancho = ((ui.available_width() - hueco * (por_fila as f32 - 1.0)) / por_fila as f32).floor();
+    for fila in claves.chunks(por_fila) {
+        ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = hueco;
+            for c in fila {
+                egui::Frame::none()
+                    .fill(BLANCO)
+                    .stroke(trazo(1.0, LINEA))
+                    .rounding(8.0)
+                    .inner_margin(egui::Margin::symmetric(10.0, 8.0))
+                    .show(ui, |ui| {
+                        ui.set_width(ancho - 22.0);
+                        ui.set_min_height(58.0);
+                        ui.vertical(|ui| {
+                            ui.spacing_mut().item_spacing.y = 1.0;
+                            ui.horizontal(|ui| {
+                                ui.label(texto(&c.etiqueta, 11.5, GRIS, false));
+                                if let Some(d) = &c.documento {
+                                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| chip(ui, r, d));
+                                }
+                            });
+                            ui.label(texto(&c.valor, 17.0, TINTA, true));
+                            if let Some(d) = &c.detalle {
+                                ui.label(texto(d, 11.0, TINTA_2, false));
+                            }
+                        });
+                    });
+            }
+        });
+        ui.add_space(4.0);
+    }
+    ui.add_space(6.0);
+}
+
+fn bloque_pendiente(ui: &mut egui::Ui, r: &Resumen) {
+    if r.faltas.is_empty() {
+        return;
+    }
+    rotulo(ui, "Pendiente", PENDIENTE);
+    caja(ui, PENDIENTE_FONDO, PENDIENTE_BORDE, |ui| {
+        for h in &r.faltas {
+            ui.horizontal_top(|ui| {
+                icono(ui, icono_reloj);
+                con_fuente(ui, r, h.documento.as_deref(), |ui| {
+                    ui.label(texto(&h.afirmacion, 12.5, TINTA, false));
+                });
+            });
+        }
+    });
+    ui.add_space(10.0);
+}
+
+fn bloque_no_consta(ui: &mut egui::Ui, r: &Resumen) {
+    if r.no_consta.is_empty() {
+        return;
+    }
+    caja_discontinua(ui, |ui| {
+        rotulo(ui, "No consta · preguntar", GRIS);
+        for t in &r.no_consta {
+            ui.label(texto(t, 12.0, TINTA_2, false));
+        }
+    });
+    ui.add_space(10.0);
+}
+
+fn bloque_consulta(ui: &mut egui::Ui, r: &Resumen) {
+    let campos = r.para_la_consulta();
+    if campos.is_empty() {
+        return;
+    }
+    rotulo(ui, "Para la consulta", GRIS);
+    caja(ui, BLANCO, LINEA, |ui| {
+        for (i, c) in campos.iter().enumerate() {
+            if i > 0 {
+                separador(ui, LINEA_SUAVE);
+            }
+            con_fuente(ui, r, c.documento.as_deref(), |ui| {
+                ui.label(texto(&c.etiqueta, 11.5, GRIS, true));
+                ui.label(texto(&c.valor, 12.5, TINTA, false));
+            });
+        }
+    });
+    ui.add_space(10.0);
+}
+
+fn bloque_historia(ui: &mut egui::Ui, r: &Resumen) {
+    if r.historia.is_empty() {
+        return;
+    }
+    rotulo(ui, "Qué le ha pasado", GRIS);
+    caja(ui, BLANCO, LINEA, |ui| {
+        for (i, h) in r.historia.iter().enumerate() {
+            if i > 0 {
+                separador(ui, LINEA_SUAVE);
+            }
+            con_fuente(ui, r, h.documento.as_deref(), |ui| {
+                ui.label(texto(&h.afirmacion, 12.5, TINTA, false));
+            });
+        }
+    });
+    ui.add_space(10.0);
+}
+
+/// La historia en una línea de tiempo: del documento más reciente al más antiguo.
+/// Punto rojo: el documento tiene algo de riesgo.
+fn linea_tiempo(ui: &mut egui::Ui, r: &Resumen) {
+    let n = r.documentos.len();
+    for (i, d) in r.documentos.iter().enumerate() {
+        let fila = ui.horizontal_top(|ui| {
+            ui.spacing_mut().item_spacing.x = 6.0;
+            columna(ui, 44.0, Align::Min, |ui| {
+                ui.label(texto(mes_año(&d.fecha), 11.0, GRIS, true));
+            });
+            let (punto, _) = ui.allocate_exact_size(vec2(12.0, 16.0), Sense::hover());
+            let ancho = ui.available_width();
+            columna(ui, ancho, Align::Min, |ui| {
+                con_fuente(ui, r, Some(&d.id), |ui| {
+                    ui.label(texto(d.servicio.to_uppercase(), 10.0, GRIS, true));
+                    ui.label(texto(r.linea_de(d), 12.5, TINTA, false));
+                });
+                ui.add_space(10.0);
+            });
+            punto.center()
+        });
+        let c = fila.inner;
+        let p = ui.painter();
+        if i + 1 < n {
+            p.vline(c.x, egui::Rangef::new(c.y + 5.0, fila.response.rect.bottom() + 6.0), trazo(2.0, LINEA));
+        }
+        if r.marcados.contains(&d.id) {
+            p.circle_filled(c, 5.0, ALERTA);
+        } else if i == 0 {
+            p.circle_filled(c, 5.0, VERDE);
+        } else {
+            p.circle_filled(c, 5.0, BLANCO);
+            p.circle_stroke(c, 4.0, trazo(2.0, NO_CONSTA_BORDE));
+        }
+    }
+    ui.add_space(10.0);
+}
+
+/// La penúltima y la última analítica, lado a lado.
+fn tabla_labs(ui: &mut egui::Ui, r: &Resumen, id: &str) {
+    if r.labs.is_empty() {
+        return;
+    }
+    rotulo(ui, "Analíticas", GRIS);
+    caja(ui, BLANCO, LINEA, |ui| {
+        egui::Grid::new(id).num_columns(3).spacing(vec2(14.0, 6.0)).show(ui, |ui| {
+            ui.label(texto("Parámetro", 11.0, GRIS, false));
+            for doc in [&r.labs_docs.0, &r.labs_docs.1] {
+                match doc {
+                    Some((d, f)) => ui.horizontal(|ui| {
+                        ui.label(texto(fecha_es(f), 11.0, GRIS, false));
+                        chip(ui, r, d);
+                    }).response,
+                    None => ui.label(texto("—", 11.0, GRIS, false)),
+                };
+            }
+            ui.end_row();
+            for f in &r.labs {
+                let nombre = if f.unidad.is_empty() { f.nombre.clone() } else { format!("{} ({})", f.nombre, f.unidad) };
+                ui.label(texto(nombre, 12.5, TINTA, false));
+                ui.label(texto(f.antes.clone().unwrap_or_else(|| "—".into()), 12.5, GRIS, false));
+                let numero = |v: &Option<String>| v.as_ref().and_then(|v| v.replace(',', ".").parse::<f32>().ok());
+                let flecha = match (numero(&f.antes), numero(&f.ahora)) {
+                    (Some(a), Some(b)) if b < a => " ↓",
+                    (Some(a), Some(b)) if b > a => " ↑",
+                    _ => "",
+                };
+                ui.label(texto(format!("{}{}", f.ahora.clone().unwrap_or_else(|| "—".into()), flecha), 12.5, TINTA, true));
+                ui.end_row();
+            }
+        });
+    });
+    ui.add_space(10.0);
+}
+
+fn lista_pruebas(ui: &mut egui::Ui, r: &Resumen) {
+    if r.pruebas.is_empty() {
+        return;
+    }
+    rotulo(ui, "Pruebas e imagen", GRIS);
+    for h in &r.pruebas {
+        caja(ui, BLANCO, LINEA, |ui| {
+            ui.horizontal_top(|ui| {
+                columna(ui, 34.0, Align::Min, |ui| {
+                    ui.label(texto(h.fecha_doc.as_deref().map(año).unwrap_or_default(), 11.0, GRIS, true));
+                });
+                let (cabeza, resto) = cabeza_y_resto(&h.afirmacion);
+                con_fuente(ui, r, h.documento.as_deref(), |ui| {
+                    ui.label(texto(cabeza, 12.5, TINTA, true));
+                    if let Some(t) = resto {
+                        ui.label(texto(t, 12.0, TINTA_2, false));
+                    }
+                });
+            });
+        });
+    }
+    ui.add_space(10.0);
+}
+
+fn lista_medicacion(ui: &mut egui::Ui, r: &Resumen) {
+    let meds = r.de_seccion("medicacion");
+    if meds.is_empty() {
+        return;
+    }
+    rotulo(ui, "Medicación", GRIS);
+    caja(ui, BLANCO, LINEA, |ui| {
+        for (i, c) in meds.iter().enumerate() {
+            if i > 0 {
+                separador(ui, LINEA_SUAVE);
+            }
+            con_fuente(ui, r, c.documento.as_deref(), |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(texto(&c.etiqueta, 13.5, TINTA, true));
+                    if c.destacado {
+                        marca(ui, "Revisar", ALERTA_FONDO, ALERTA);
+                    }
+                });
+                ui.label(texto(&c.valor, 12.0, if sin_dato(&c.valor) { GRIS } else { TINTA_2 }, false));
+                if c.destacado {
+                    if let Some(d) = &c.detalle {
+                        ui.label(texto(d, 12.0, ALERTA_TITULO, false));
+                    }
+                }
+            });
+        }
+    });
+    let alergias: Vec<&CampoFicha> = r.campos.iter()
+        .filter(|c| c.bloque == "antes_de_empezar" && c.etiqueta == "Alergias" && !sin_dato(&c.valor))
+        .collect();
+    if !alergias.is_empty() {
         ui.add_space(4.0);
         ui.horizontal_wrapped(|ui| {
             ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
-            for c in chips {
-                pastilla(ui, &c.valor, c.destacado);
+            for c in alergias {
+                marca(ui, &format!("Evitar: {}", c.valor), ALERTA_FONDO, ALERTA_TITULO);
             }
         });
     }
+    ui.add_space(10.0);
+}
 
-    let antes = de("antes_de_empezar");
-    if !antes.is_empty() {
-        seccion(ui, "Antes de empezar", "");
-        casillas(ui, &antes);
+/// La hemoglobina de toda la historia: bajadas en rojo, el resto en gris.
+fn grafica_hb(ui: &mut egui::Ui, r: &Resumen) {
+    let puntos: Vec<(f32, &ValorHallado)> = r.hb.iter()
+        .filter_map(|v| v.valor.replace(',', ".").parse::<f32>().ok().map(|n| (n, v)))
+        .collect();
+    if puntos.len() < 2 {
+        return;
     }
+    rotulo(ui, "Hemoglobina · evolución (g/dL)", GRIS);
+    let (caja, _) = ui.allocate_exact_size(vec2(ui.available_width(), 150.0), Sense::hover());
+    let p = ui.painter();
+    p.rect(caja, 8.0, BLANCO, trazo(1.0, LINEA));
+    let zona = caja.shrink2(vec2(36.0, 32.0));
+    let (min, max) = puntos.iter().fold((f32::MAX, f32::MIN), |(a, b), (n, _)| (a.min(*n), b.max(*n)));
+    let (min, max) = (min - 0.5, max + 0.5);
+    let n = puntos.len() as f32 - 1.0;
+    let sitios: Vec<Pos2> = puntos.iter().enumerate()
+        .map(|(i, (v, _))| pos2(zona.left() + zona.width() * i as f32 / n,
+                                zona.bottom() - (v - min) / (max - min) * zona.height()))
+        .collect();
+    for (i, w) in sitios.windows(2).enumerate() {
+        let baja = puntos[i + 1].0 < puntos[i].0;
+        p.line_segment([w[0], w[1]], trazo(if baja { 2.5 } else { 2.0 }, if baja { ALERTA } else { GRIS }));
+    }
+    for (i, (s, (v, h))) in sitios.iter().zip(&puntos).enumerate() {
+        let ultimo = i + 1 == sitios.len();
+        let color = if ultimo { ALERTA } else { TINTA_2 };
+        p.circle_filled(*s, if ultimo { 5.5 } else { 4.0 }, color);
+        p.text(*s - vec2(0.0, 9.0), egui::Align2::CENTER_BOTTOM, format!("{:.1}", v).replace('.', ","),
+               FontId::new(11.5, negrita()), if ultimo { ALERTA } else { TINTA });
+        p.text(pos2(s.x, caja.bottom() - 7.0), egui::Align2::CENTER_BOTTOM, mes_año(&h.fecha),
+               FontId::proportional(10.5), GRIS);
+    }
+    ui.add_space(2.0);
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
+        ui.label(texto("Fuentes", 11.0, GRIS, false));
+        for (_, h) in &puntos {
+            chip(ui, r, &h.documento);
+        }
+    });
+    ui.add_space(10.0);
+}
 
-    seccion(ui, "Por qué viene hoy", "");
-    let motivo = de_seccion("motivo");
-    if motivo.is_empty() {
-        hoja_blanca(ui, |ui| {
-            ui.add_space(9.0);
-            ui.label(texto(&r.paciente.motivo, 13.0, TINTA, true));
-            ui.add_space(9.0);
-        });
-    } else {
-        tabla(ui, &motivo);
+/// Una pestaña de la tarjeta: nombre, número y, si está abierta, subrayada.
+fn pestana_boton(ui: &mut egui::Ui, nombre: &str, n: usize, roja: bool, abierta: bool) -> bool {
+    let tinta = if abierta { TINTA } else { GRIS };
+    let familia = if abierta { negrita() } else { FontFamily::Proportional };
+    let g_nombre = ui.painter().layout_no_wrap(nombre.to_string(), FontId::new(12.5, familia), tinta);
+    let (fondo_n, tinta_n) = if roja && n > 0 { (ALERTA_FONDO, ALERTA) } else { (LINEA_SUAVE, GRIS) };
+    let g_num = ui.painter().layout_no_wrap(n.to_string(), FontId::new(10.5, negrita()), tinta_n);
+    let (tam_nombre, tam_num) = (g_nombre.size(), g_num.size());
+    let ancho = 8.0 + tam_nombre.x + 5.0 + tam_num.x + 10.0 + 8.0;
+    let (rect, resp) = ui.allocate_exact_size(vec2(ancho, 36.0), Sense::click());
+    let p = ui.painter();
+    let x = rect.left() + 8.0;
+    p.galley(pos2(x, rect.center().y - tam_nombre.y / 2.0), g_nombre, tinta);
+    let pildora = Rect::from_min_size(pos2(x + tam_nombre.x + 5.0, rect.center().y - 8.0),
+                                      vec2(tam_num.x + 10.0, 16.0));
+    p.rect_filled(pildora, 8.0, fondo_n);
+    p.galley(pildora.center() - tam_num / 2.0, g_num, tinta_n);
+    if abierta {
+        p.hline(rect.x_range(), rect.bottom() - 1.0, trazo(2.5, VERDE));
+    } else if resp.hovered() {
+        p.hline(rect.x_range(), rect.bottom() - 1.0, trazo(2.0, LINEA));
     }
-    let cambios = de_seccion("cambios");
-    if !cambios.is_empty() {
-        seccion(ui, "Qué ha cambiado", "desde la última vez");
-        tabla(ui, &cambios);
-    }
+    resp.on_hover_cursor(egui::CursorIcon::PointingHand).clicked()
+}
 
-    if !r.contradicciones.is_empty() {
-        seccion(ui, "Lo que no cuadra con la derivación", "");
-        bloque_hechos(ui, &r.contradicciones, true, r.documentos);
-    }
-    if !r.alarmas.is_empty() {
-        seccion(ui, "Datos de alarma", "");
-        bloque_hechos(ui, &r.alarmas, false, r.documentos);
-    }
+/// La tarjeta de resumen dentro del chat: motivo, pestañas y el botón de ampliar.
+fn tarjeta(ui: &mut egui::Ui, r: &Resumen, pestana: Pestana) -> Option<Accion> {
+    let mut accion = None;
+    egui::Frame::none()
+        .fill(BLANCO)
+        .stroke(trazo(1.0, LINEA))
+        .rounding(12.0)
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.spacing_mut().item_spacing.y = 4.0;
+            egui::Frame::none()
+                .inner_margin(egui::Margin { left: 12.0, right: 12.0, top: 10.0, bottom: 4.0 })
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        rotulo(ui, "Por qué viene hoy", GRIS);
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            let b = egui::Button::new(texto("Ampliar ↗", 11.5, TINTA, true))
+                                .fill(BLANCO)
+                                .stroke(trazo(1.0, LINEA))
+                                .rounding(8.0)
+                                .min_size(vec2(0.0, 26.0));
+                            if ui.add(b).on_hover_text("Ver todo el resumen en una ventana grande")
+                                .on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                                accion = Some(Accion::Ampliar);
+                            }
+                        });
+                    });
+                    motivo(ui, r, 13.5);
+                });
 
-    let problemas = de_seccion("problemas");
-    if !problemas.is_empty() {
-        seccion(ui, "Problemas activos", "");
-        tabla(ui, &problemas);
-    }
-    let medicacion = de_seccion("medicacion");
-    if !medicacion.is_empty() {
-        seccion(ui, "Medicación", "");
-        tabla(ui, &medicacion);
-    }
-
-    let constantes = de("constantes");
-    if !constantes.is_empty() {
-        seccion(ui, "Constantes", "la última toma");
-        casillas(ui, &constantes);
-    }
-
-    if !r.historia.is_empty() {
-        seccion(ui, "Qué le ha pasado", "");
-        bloque_hechos(ui, &r.historia, false, r.documentos);
-    }
-
-    let vida = de("vida");
-    if !vida.is_empty() {
-        seccion(ui, "Su vida, en una línea", "");
-        tabla(ui, &vida);
-    }
-
-    if !r.faltas.is_empty() {
-        seccion(ui, "Lo que falta por hacer", "");
-        bloque_hechos(ui, &r.faltas, false, r.documentos);
-    }
-
-    let temas = de("temas");
-    if !temas.is_empty() {
-        seccion(ui, "Memoria profunda", "toque un tema y se pregunta en el chat");
-        ui.horizontal_wrapped(|ui| {
-            ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
-            for c in temas {
-                let b = egui::Button::new(texto(&c.valor, 12.0, VERDE_2, false))
-                    .fill(BLANCO)
-                    .stroke(trazo(1.0, LINEA))
-                    .rounding(14.0);
-                if ui.add(b).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                    tema = Some(c.valor.clone());
+            let pestanas = [
+                (Pestana::Resumen, "Resumen", r.alertas.len() + r.contradicciones.len(), true),
+                (Pestana::Historial, "Historial", r.documentos.len(), false),
+                (Pestana::Pruebas, "Pruebas", r.pruebas.len(), false),
+                (Pestana::Medicacion, "Medicación", r.de_seccion("medicacion").len(), false),
+            ];
+            let fila = ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 0.0;
+                ui.add_space(4.0);
+                for (p, nombre, n, roja) in pestanas {
+                    if pestana_boton(ui, nombre, n, roja, p == pestana) {
+                        accion = Some(Accion::Pestana(p));
+                    }
                 }
-            }
+            }).response;
+            ui.painter().hline(ui.max_rect().x_range(), fila.rect.bottom() + 0.5, trazo(1.0, LINEA));
+
+            egui::Frame::none()
+                .inner_margin(egui::Margin { left: 12.0, right: 12.0, top: 10.0, bottom: 2.0 })
+                .show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    ui.spacing_mut().item_spacing.y = 4.0;
+                    match pestana {
+                        Pestana::Resumen => {
+                            bloque_alertas(ui, r);
+                            bloque_choques(ui, r);
+                            bloque_claves(ui, r, 2);
+                            bloque_pendiente(ui, r);
+                            bloque_no_consta(ui, r);
+                        }
+                        Pestana::Historial => linea_tiempo(ui, r),
+                        Pestana::Pruebas => {
+                            tabla_labs(ui, r, "labs_chat");
+                            lista_pruebas(ui, r);
+                            bloque_pendiente(ui, r);
+                        }
+                        Pestana::Medicacion => lista_medicacion(ui, r),
+                    }
+                });
+            let y = ui.cursor().top();
+            ui.painter().hline(ui.max_rect().x_range(), y, trazo(1.0, LINEA));
+            egui::Frame::none()
+                .inner_margin(egui::Margin::symmetric(12.0, 8.0))
+                .show(ui, |ui| {
+                    ui.label(texto("Cada dato lleva su documento. Medicci propone; usted decide.", 11.0, GRIS, false));
+                });
+        });
+    accion
+}
+
+/// El resumen ampliado: el motivo arriba y tres columnas que bajan por separado.
+fn hoja_ampliada(ui: &mut egui::Ui, r: &Resumen, cuerpo: Rect) -> Option<Accion> {
+    let mut accion = None;
+    let franja = egui::Frame::none()
+        .fill(FICHA_FONDO)
+        .inner_margin(egui::Margin::symmetric(22.0, 12.0))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal_top(|ui| {
+                columna(ui, 140.0, Align::Min, |ui| {
+                    ui.add_space(3.0);
+                    rotulo(ui, "Por qué viene hoy", GRIS);
+                });
+                let ancho = ui.available_width();
+                columna(ui, ancho, Align::Min, |ui| {
+                    motivo(ui, r, 15.5);
+                    let chips: Vec<&CampoFicha> = r.de("cabecera").into_iter()
+                        .filter(|c| !c.valor.contains(" años")).collect();
+                    if !chips.is_empty() {
+                        ui.add_space(4.0);
+                        ui.horizontal_wrapped(|ui| {
+                            ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+                            for c in chips {
+                                pastilla(ui, &c.valor, c.destacado);
+                            }
+                        });
+                    }
+                });
+            });
+        })
+        .response;
+    ui.painter().hline(cuerpo.x_range(), franja.rect.bottom(), trazo(1.0, LINEA));
+
+    let arriba = franja.rect.bottom() + 1.0;
+    let alto = (cuerpo.bottom() - arriba).max(120.0);
+    let total = cuerpo.width();
+    let a1 = (total * 0.31).floor();
+    let a3 = (total * 0.29).floor();
+    let a2 = total - a1 - a3;
+    let columnas = [
+        Rect::from_min_size(pos2(cuerpo.left(), arriba), vec2(a1, alto)),
+        Rect::from_min_size(pos2(cuerpo.left() + a1, arriba), vec2(a2, alto)),
+        Rect::from_min_size(pos2(cuerpo.left() + a1 + a2, arriba), vec2(a3, alto)),
+    ];
+    for (i, sitio) in columnas.iter().enumerate() {
+        if i > 0 {
+            ui.painter().vline(sitio.left(), sitio.y_range(), trazo(1.0, LINEA));
+        }
+        ui.allocate_new_ui(UiBuilder::new().max_rect(*sitio), |ui| {
+            egui::ScrollArea::vertical()
+                .id_salt(("columna", i))
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    egui::Frame::none()
+                        .inner_margin(egui::Margin::symmetric(18.0, 14.0))
+                        .show(ui, |ui| {
+                            ui.set_width(ui.available_width());
+                            ui.spacing_mut().item_spacing.y = 4.0;
+                            match i {
+                                0 => {
+                                    bloque_alertas(ui, r);
+                                    bloque_choques(ui, r);
+                                    bloque_consulta(ui, r);
+                                    bloque_no_consta(ui, r);
+                                }
+                                1 => {
+                                    bloque_historia(ui, r);
+                                    grafica_hb(ui, r);
+                                    bloque_claves(ui, r, 4);
+                                    tabla_labs(ui, r, "labs_hoja");
+                                    lista_pruebas(ui, r);
+                                    bloque_pendiente(ui, r);
+                                }
+                                _ => {
+                                    lista_medicacion(ui, r);
+                                    rotulo(ui, &format!("Historia · {} a {}", r.desde, r.hasta), GRIS);
+                                    ui.add_space(4.0);
+                                    linea_tiempo(ui, r);
+                                    let temas = r.de("temas");
+                                    if !temas.is_empty() {
+                                        rotulo(ui, "Memoria profunda · se pregunta en el chat", GRIS);
+                                        ui.horizontal_wrapped(|ui| {
+                                            ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+                                            for c in temas {
+                                                let b = egui::Button::new(texto(&c.valor, 12.0, VERDE_2, false))
+                                                    .fill(BLANCO)
+                                                    .stroke(trazo(1.0, LINEA))
+                                                    .rounding(14.0);
+                                                if ui.add(b).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                                                    accion = Some(Accion::Tema(c.valor.clone()));
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                });
         });
     }
-    ui.add_space(20.0);
-    tema
+    accion
+}
+
+/// El resumen en texto, para pegarlo en la nota clínica del HCE.
+fn texto_nota(r: &Resumen) -> String {
+    let fuente = |d: &Option<String>| d.as_ref().map(|d| format!(" [{}]", d)).unwrap_or_default();
+    let mut t = format!("Resumen Medicci · {} · {} años · {}\n", r.paciente.id, r.paciente.edad, r.paciente.sexo);
+    if let Some(m) = &r.motivo {
+        t += &format!("Motivo: {}{}\n", m.valor, fuente(&m.documento));
+    }
+    if !r.alertas.is_empty() {
+        t += "\nAlertas:\n";
+        for a in &r.alertas {
+            t += &format!("- {}{}\n", a.titulo, fuente(&a.documento));
+        }
+    }
+    if !r.contradicciones.is_empty() {
+        t += "\nNo coincide con la derivación:\n";
+        for h in &r.contradicciones {
+            t += &format!("- {}{}\n", h.afirmacion, fuente(&h.documento));
+        }
+    }
+    let claves = r.de_seccion("cambios");
+    if !claves.is_empty() {
+        t += "\nValores clave:\n";
+        for c in claves {
+            let detalle = c.detalle.as_ref().map(|d| format!(" ({})", d)).unwrap_or_default();
+            let fecha = c.fecha_doc.as_deref().map(|f| format!(", {}", fecha_es(f))).unwrap_or_default();
+            t += &format!("- {}: {}{}{}{}\n", c.etiqueta, c.valor, detalle, fecha, fuente(&c.documento));
+        }
+    }
+    if !r.faltas.is_empty() {
+        t += "\nPendiente:\n";
+        for h in &r.faltas {
+            t += &format!("- {}{}\n", h.afirmacion, fuente(&h.documento));
+        }
+    }
+    if !r.no_consta.is_empty() {
+        t += "\nNo consta:\n";
+        for n in &r.no_consta {
+            t += &format!("- {}\n", n);
+        }
+    }
+    t += &format!("\nLeídos {} documentos, de {} a {}. Generado por Medicci con IA local: verificar antes de decidir.\n",
+                  r.documentos.len(), r.desde, r.hasta);
+    t
 }
 
 impl Medicci {
     fn ventana_resumen(&mut self, ctx: &egui::Context) {
-        let Some(resumen) = self.resumen.take() else { return };
+        if !self.ampliado {
+            return;
+        }
+        let Some(resumen) = self.resumen.take() else {
+            self.ampliado = false;
+            return;
+        };
         let monitor = ctx.input(|i| i.viewport().monitor_size).unwrap_or(vec2(1440.0, 900.0));
         let hoja = vec2(HOJA.x.min(monitor.x - 80.0), HOJA.y.min(monitor.y - 80.0));
         let tam = hoja + Vec2::splat(2.0 * AIRE);
@@ -1232,15 +1975,18 @@ impl Medicci {
         let dt = ctx.input(|i| i.stable_dt).min(0.05);
         self.resumen_t = (self.resumen_t + dt / 0.22).min(1.0);
         let e = easing::cubic_out(self.resumen_t);
+        let ahora = ctx.input(|i| i.time);
+        let recien_copiado = ahora - self.copiado < 2.0;
         let mut cerrar = false;
-        let mut tema = None;
+        let mut copiar = false;
+        let mut accion = None;
 
         ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("medicci_resumen"), constructor,
                                     |ctx, _clase| {
             if ctx.input(|i| i.viewport().close_requested() || i.key_pressed(egui::Key::Escape)) {
                 cerrar = true;
             }
-            if e < 1.0 {
+            if e < 1.0 || recien_copiado {
                 ctx.request_repaint();
             }
             let caja = Rect::from_min_size(pos2(AIRE, AIRE), hoja);
@@ -1274,11 +2020,11 @@ impl Medicci {
                     medico(&p, c, 18.0, VERDE, 1.0);
                     let pac = &resumen.paciente;
                     p.text(pos2(c.x + 31.0, cabeza.center().y - 10.0), egui::Align2::LEFT_CENTER,
-                           format!("Resumen de entrada · {}", pac.id),
+                           format!("Resumen ampliado · {}", pac.id),
                            FontId::new(17.0, negrita()), BLANCO);
                     p.text(pos2(c.x + 31.0, cabeza.center().y + 12.0), egui::Align2::LEFT_CENTER,
                            format!("{} años · {} · {} documentos leídos, de {} a {}",
-                                   pac.edad, pac.sexo, resumen.documentos, resumen.desde, resumen.hasta),
+                                   pac.edad, pac.sexo, resumen.documentos.len(), resumen.desde, resumen.hasta),
                            FontId::proportional(12.0), VERDE_CLARO);
                     let x = Rect::from_center_size(pos2(cabeza.right() - 30.0, cabeza.center().y),
                                                    Vec2::splat(30.0));
@@ -1294,32 +2040,60 @@ impl Medicci {
                     if rx.clicked() {
                         cerrar = true;
                     }
+                    // copiar a la nota clínica, a la izquierda de la X
+                    let sitio = Rect::from_min_max(pos2(cabeza.center().x, cabeza.center().y - 17.0),
+                                                   pos2(x.left() - 12.0, cabeza.center().y + 17.0));
+                    ui.allocate_new_ui(UiBuilder::new().max_rect(sitio)
+                                           .layout(Layout::right_to_left(Align::Center)), |ui| {
+                        let t = if recien_copiado { "Copiado en el portapapeles" } else { "Copiar a la nota clínica" };
+                        let b = egui::Button::new(texto(t, 12.5, BLANCO, true))
+                            .fill(VERDE)
+                            .stroke(trazo(1.0, VERDE_CLARO))
+                            .rounding(10.0)
+                            .min_size(vec2(0.0, 34.0));
+                        if ui.add(b).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                            copiar = true;
+                        }
+                    });
 
-                    let cuerpo = Rect::from_min_max(cabeza.left_bottom(), caja.max).shrink2(vec2(6.0, 4.0));
+                    let pie = Rect::from_min_max(pos2(caja.left(), caja.bottom() - 52.0), caja.max);
+                    let cuerpo = Rect::from_min_max(cabeza.left_bottom(), pie.right_top());
                     ui.allocate_new_ui(UiBuilder::new().max_rect(cuerpo), |ui| {
-                        egui::ScrollArea::vertical()
-                            .id_salt("resumen")
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                egui::Frame::none()
-                                    .inner_margin(egui::Margin::symmetric(16.0, 8.0))
-                                    .show(ui, |ui| {
-                                        ui.set_width(ui.available_width());
-                                        tema = hoja_resumen(ui, &resumen);
-                                    });
-                            });
+                        accion = hoja_ampliada(ui, &resumen, cuerpo);
+                    });
+
+                    p.rect_filled(pie, Rounding { nw: 0.0, ne: 0.0, sw: 14.0, se: 14.0 }, BLANCO);
+                    p.hline(pie.x_range(), pie.top() + 0.5, trazo(1.0, LINEA));
+                    ui.allocate_new_ui(UiBuilder::new().max_rect(pie.shrink2(vec2(20.0, 9.0)))
+                                           .layout(Layout::left_to_right(Align::Center)), |ui| {
+                        let (punto, _) = ui.allocate_exact_size(vec2(8.0, 8.0), Sense::hover());
+                        ui.painter().circle_filled(punto.center(), 3.5, VERDE);
+                        ui.label(texto("Cada dato lleva su fuente. Medicci propone; usted decide.", 11.5, GRIS, false));
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            if boton(ui, "Volver al chat", VERDE, BLANCO, true) {
+                                cerrar = true;
+                            }
+                        });
                     });
                 });
         });
 
-        if let Some(t) = tema {
+        if copiar {
+            ctx.copy_text(texto_nota(&resumen));
+            self.datos.registra(&self.usuario, &resumen.paciente.id, "copiar_resumen", None);
+            self.copiado = ahora;
+        }
+        if let Some(Accion::Tema(t)) = accion {
             self.pendiente = Some(t);
+            cerrar = true;
         }
-        if !cerrar {
-            self.resumen = Some(resumen);
+        if cerrar {
+            self.ampliado = false;
         }
+        self.resumen = Some(resumen);
     }
 }
+
 
 impl eframe::App for Medicci {
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
@@ -1436,4 +2210,62 @@ fn main() -> eframe::Result<()> {
             Ok(Box::new(Medicci::nuevo(datos, paciente, red)))
         }),
     )
+}
+
+#[cfg(test)]
+mod pruebas {
+    use super::*;
+
+    fn con_paciente(ident: &str) -> Medicci {
+        let datos = datos::base_de_prueba(&format!("resumen-{}", ident));
+        let mut app = Medicci::nuevo(datos, Some(ident.into()), None);
+        app.abre_resumen();
+        app
+    }
+
+    #[test]
+    fn el_resumen_sale_como_tarjeta_en_el_chat() {
+        let mut app = con_paciente("2856");
+        assert!(app.hilo.last().is_some_and(|m| m.tarjeta));
+        assert!(!app.ampliado);
+        // pedirlo otra vez no duplica la tarjeta
+        app.abre_resumen();
+        assert_eq!(app.hilo.iter().filter(|m| m.tarjeta).count(), 1);
+        app.muestra(Pestana::Pruebas);
+        assert!(app.pestana == Pestana::Pruebas);
+        app.amplia();
+        assert!(app.ampliado);
+    }
+
+    #[test]
+    fn el_resumen_trae_alertas_contradicciones_y_analiticas_con_fuente() {
+        for ident in ["417", "2856"] {
+            let app = con_paciente(ident);
+            let r = app.resumen.as_ref().expect("hay resumen");
+            assert!(!r.alertas.is_empty(), "{}", ident);
+            assert!(!r.contradicciones.is_empty(), "{}", ident);
+            assert!(r.motivo.is_some(), "{}", ident);
+            assert!(r.alertas.iter().any(|a| a.documento.is_some()), "{}", ident);
+            for id in &r.marcados {
+                assert!(r.documento(id).is_some(), "{}: {} no es suyo", ident, id);
+            }
+        }
+        let app = con_paciente("2856");
+        let r = app.resumen.as_ref().unwrap();
+        assert!(r.labs.iter().any(|f| f.nombre == "Hemoglobina" && f.ahora.as_deref() == Some("9,6")));
+        assert!(r.alertas.iter().any(|a| a.titulo.contains("Contrastes yodados")));
+        let nota = texto_nota(r);
+        assert!(nota.contains("[E03]") && nota.contains("No coincide con la derivación"));
+    }
+
+    #[test]
+    fn la_afirmacion_se_parte_por_donde_toca() {
+        let (a, b) = cabeza_y_resto("Sí tiene antecedentes digestivos de peso: angiodisplasia gástrica en 2019.");
+        assert_eq!(a, "Sí tiene antecedentes digestivos de peso");
+        assert_eq!(b.as_deref(), Some("Angiodisplasia gástrica en 2019."));
+        // «H. pylori» no es el final de una frase
+        let (a, b) = cabeza_y_resto("H. pylori negativo en biopsias antrales de 2012");
+        assert_eq!(a, "H. pylori negativo en biopsias antrales de 2012");
+        assert!(b.is_none());
+    }
 }

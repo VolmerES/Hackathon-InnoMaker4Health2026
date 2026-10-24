@@ -180,6 +180,35 @@ impl Lector {
         salida
     }
 
+    /// El valor de un parámetro en un documento, con su línea literal.
+    pub fn valor_en(&self, doc: &Documento, nombre: &str) -> Option<ValorHallado> {
+        let (nombre, alias, unidad) = ANALITOS.iter().find(|(n, _, _)| *n == nombre)?;
+        let patron = format!(r"\b({})\s*:?\s*({})", alias.join("|"), NUMERO);
+        let re = RegexBuilder::new(&patron).case_insensitive(true).build().ok()?;
+        doc.texto.lines().find_map(|linea| {
+            re.captures(&sin_tildes(linea)).map(|c| ValorHallado {
+                nombre: nombre.to_string(),
+                valor: c[2].trim().replace('.', ","),
+                unidad: unidad.to_string(),
+                linea: linea.trim().to_string(),
+                documento: doc.id.clone(),
+                fecha: doc.fecha.clone(),
+                tipo: doc.tipo.clone(),
+                servicio: doc.servicio.clone(),
+            })
+        })
+    }
+
+    /// Todos los valores de un parámetro en la historia, del más antiguo al más reciente.
+    pub fn serie(&self, nombre: &str) -> Vec<ValorHallado> {
+        self.docs.iter().rev().filter_map(|d| self.valor_en(d, nombre)).collect()
+    }
+
+    /// Las analíticas, de la más reciente a la más antigua.
+    pub fn analiticas(&self) -> Vec<&Documento> {
+        self.docs.iter().filter(|d| d.tipo == "Analítica" || d.tipo == "Resultado de pruebas").collect()
+    }
+
     fn claves(&self, pregunta: &str) -> Vec<String> {
         let t = sin_tildes(pregunta);
         LEXICO
@@ -244,6 +273,20 @@ mod pruebas {
         match l.responde(&d, "¿alergias?") {
             Respuesta::Hechos(h) => assert!(h[0].categoria.contains("contradiccion")),
             _ => panic!("esperaba hechos"),
+        }
+    }
+
+    #[test]
+    fn la_serie_de_hemoglobina_va_en_orden_y_sale_de_sus_documentos() {
+        let d = base_de_prueba("serie");
+        let l = Lector::nuevo(&d, "PAC-02856");
+        let hb = l.serie("Hemoglobina");
+        assert!(hb.len() >= 2);
+        assert!(hb.windows(2).all(|w| w[0].fecha <= w[1].fecha));
+        assert_eq!(hb.last().map(|v| v.valor.as_str()), Some("9,6"));
+        for v in &hb {
+            let doc = l.docs.iter().find(|x| x.id == v.documento).unwrap();
+            assert!(doc.texto.contains(&v.linea));
         }
     }
 
