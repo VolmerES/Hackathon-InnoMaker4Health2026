@@ -125,6 +125,12 @@ class Peticion(SimpleHTTPRequestHandler):
             return str(FUENTES / Path(ruta).name)
         return super().translate_path(path)
 
+    def end_headers(self):
+        # Que el navegador no se quede con una versión vieja de las páginas:
+        # pasó con la burbuja web, que seguía saliendo después de quitarla.
+        self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+
     def log_message(self, formato, *args):
         if "/api/" in self.path:
             sys.stderr.write(f"{self.command} {self.path}\n")

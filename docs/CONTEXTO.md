@@ -1069,10 +1069,12 @@ Java o por Citrix ⚠️. No hay demo ni manual público.
 Si el médico cambia de paciente en HCIS, la pestaña borra el chat y vuelve al
 paso 1, para que nunca se mezclen dos pacientes.
 
-**Para la demo:** la réplica `demo/web/hcis.html` hace de HCIS. Un script lee
-el NHC de su cinta, como haría la extensión, y el panel de `agente.js` pasa a
-ser una pestaña lateral. Frase para el pitch: *«El médico no abre nada nuevo.
-Busca al paciente en HCIS como siempre, y Medicci ya está ahí.»*
+**Para la demo:** la réplica de HCIS (`mvp/web/index.html`) no lleva ningún
+asistente dentro. Medicci es solo la burbuja nativa (`medicci-rs/`), que se
+pone encima de HCIS sea web o de Windows; la pestaña web dentro de HCIS se
+quitó el 24‑oct para que haya un único asistente. Frase para el pitch: *«El
+médico no abre nada nuevo. Busca al paciente en HCIS como siempre, y Medicci
+ya está ahí.»*
 
 **Para preguntar a un mentor de La Princesa ⚠️:** ¿HCIS se abre en Chrome o
 Edge con barra de direcciones? ¿Sale el icono de Internet Explorer o una
