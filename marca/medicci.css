@@ -10,10 +10,10 @@
   --fondo-alt: #ECE4D3;      /* tarjetas, filas de fuente */
   --tinta: #16211F;
   --tinta-suave: #4B5A57;
-  --verde-medici: #0E3B36;   /* el color de la marca: símbolo, portada, barra superior */
+  --verde-medicci: #0E3B36;   /* el color de la marca: símbolo, portada, barra superior */
   --verde-claustro: #1F6B61; /* acento: enlaces, botón principal, foco */
   --salvia: #CFE0D9;         /* fondo de la respuesta de Medicci y de las cifras */
-  --oro: #D4AF37;            /* el punto de la marca: solo forma o sobre verde-medici */
+  --oro: #D4AF37;            /* el punto de la marca: solo forma o sobre verde-medicci */
   --oro-hondo: #7A5C0E;      /* antetítulos y el ¹ de fuente sobre fondos claros */
   --terracota: #A34A24;      /* solo «No consta» y avisos, siempre con la palabra */
   --linea: #D9CFBA;

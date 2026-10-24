@@ -46,10 +46,10 @@ const FOTOGRAMA: std::time::Duration = std::time::Duration::from_millis(16);
 
 // la paleta de Medicci: la de su identidad (marca/IDENTIDAD.md, marca/tokens.json)
 const VERDE: Color32 = Color32::from_rgb(0x1f, 0x6b, 0x61);        // verde claustro: acento, botones, el bocadillo
-const VERDE_OSC: Color32 = Color32::from_rgb(0x0e, 0x3b, 0x36);    // verde Medici: el color de la marca
+const VERDE_OSC: Color32 = Color32::from_rgb(0x0e, 0x3b, 0x36);    // verde Medicci: el color de la marca
 const VERDE_2: Color32 = Color32::from_rgb(0x1f, 0x6b, 0x61);      // enlaces y fuentes
-const VERDE_CLARO: Color32 = Color32::from_rgb(0xbf, 0xd3, 0xce);  // texto suave sobre verde Medici
-const MARFIL: Color32 = Color32::from_rgb(0xf6, 0xf1, 0xe6);       // fondo; y el texto sobre verde Medici
+const VERDE_CLARO: Color32 = Color32::from_rgb(0xbf, 0xd3, 0xce);  // texto suave sobre verde Medicci
+const MARFIL: Color32 = Color32::from_rgb(0xf6, 0xf1, 0xe6);       // fondo; y el texto sobre verde Medicci
 const FONDO: Color32 = MARFIL;
 const BLANCO: Color32 = Color32::from_rgb(0xff, 0xff, 0xff);
 const LINEA: Color32 = Color32::from_rgb(0xd9, 0xcf, 0xba);
@@ -1069,7 +1069,7 @@ fn estilo(ctx: &egui::Context) {
 
 /// El isotipo de Medicci (marca/isotipo.svg), dentro de un círculo de radio `r`:
 /// un bocadillo en verde claustro con la «m» que se convierte en pulso, en
-/// verde Medici, y el punto de oro. Se dibuja con las mismas medidas del SVG.
+/// verde Medicci, y el punto de oro. Se dibuja con las mismas medidas del SVG.
 fn isotipo(p: &egui::Painter, c: Pos2, r: f32, alfa: f32) {
     if alfa <= 0.01 {
         return;
