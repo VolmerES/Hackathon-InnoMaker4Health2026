@@ -38,6 +38,7 @@ pub enum Llega {
     Tarjeta { sesion: String, alertas: Vec<Alerta>, mas: i64 },
     Respuesta { texto: String, consta: bool, fuentes: Vec<Fuente>, segundos: f64 },
     Paso { n: i64, accion: String, texto: String },   // la simulación (mvp/simular.py)
+    Dictado(Result<String, String>),                 // el texto de lo dictado, o por qué no
     Fallo(String),
 }
 
@@ -229,6 +230,15 @@ impl Servidor {
         self.en_hilo(ctx, move |base| vec![tarjeta(base, &sesion)]);
     }
 
+    /// Manda lo dictado (WAV) y trae el texto: el médico lo revisa antes de preguntar.
+    pub fn dictar(&self, ctx: &egui::Context, sesion: String, audio: Vec<u8>) {
+        self.en_hilo(ctx, move |base| {
+            let url = format!("{base}/api/sesion/{sesion}/voz");
+            let r = agente(90).post(&url).set("Content-Type", "audio/wav").send_bytes(&audio);
+            vec![Llega::Dictado(leer(r).map(|v| v["texto"].as_str().unwrap_or_default().trim().to_string()))]
+        });
+    }
+
     pub fn preguntar(&self, ctx: &egui::Context, sesion: String, texto: String) {
         self.en_hilo(ctx, move |base| {
             let url = format!("{base}/api/sesion/{sesion}/pregunta");
@@ -276,6 +286,25 @@ mod pruebas {
         let Llega::Respuesta { texto, consta, .. } = espera(&s) else { panic!("esperaba la respuesta") };
         println!("  ¿Tiene alergias? → {}", texto);
         assert!(!consta);
+    }
+
+    /// El dictado contra un servidor de verdad, con un WAV grabado:
+    /// `MEDICCI_WAV=pregunta.wav cargo test -- --ignored dictado`
+    #[test]
+    #[ignore]
+    fn dictado_contra_el_servidor() {
+        let url = std::env::var("MEDICCI_SERVIDOR").unwrap_or("http://localhost:8000".into());
+        let audio = std::fs::read(std::env::var("MEDICCI_WAV").expect("falta MEDICCI_WAV")).unwrap();
+        let s = Servidor::nuevo(&url);
+        let ctx = egui::Context::default();
+        s.abrir(&ctx, nhc("129798"), "prueba-burbuja".into());
+        let Llega::Sesion { sesion, .. } = espera(&s) else { panic!("esperaba la sesión") };
+        while let Ok(_) = s.rx.recv_timeout(Duration::from_secs(5)) {}   // la tarjeta y los datos
+        s.dictar(&ctx, sesion, audio);
+        let Llega::Dictado(r) = espera(&s) else { panic!("esperaba el dictado") };
+        let texto = r.expect("el servidor transcribe");
+        println!("  dictado → {}", texto);
+        assert!(!texto.is_empty());
     }
 
     #[test]

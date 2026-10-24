@@ -40,7 +40,7 @@ la barra de tareas.
 ### Ubuntu
 
 `cargo install just` (una vez) y `just`. Si falta algo, `just revisa` dice
-qué instalar. En Wayland una ventana
+qué instalar (para el micrófono del dictado: `sudo apt install libasound2-dev pkg-config`). En Wayland una ventana
 no puede colocarse sola en la esquina, así que Medicci arranca sobre XWayland
 por su cuenta.
 
@@ -92,6 +92,7 @@ medicci --db ruta.db --paciente PAC-00417
 | `src/datos.rs` | La base: pacientes, documentos, hechos, campos de ficha y el registro de accesos |
 | `src/lector.rs` | El lector: valores concretos, hechos por categoría, frases literales o «no consta» |
 | `src/main.rs` | La interfaz: burbuja, chat y ventana de resumen |
+| `src/voz.rs` | El dictado: el micrófono mientras se mantiene pulsado, en WAV para el servidor |
 | `fuentes/` | Noto Sans (licencia SIL OFL), incrustada en el binario |
 
 `eframe`/`egui` para la interfaz, `rusqlite` con SQLite **incrustado** y

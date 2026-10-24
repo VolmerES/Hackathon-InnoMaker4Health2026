@@ -1,1 +1,3 @@
 duckdb==2.0.0
+faster-whisper==1.2.1   # dictado por voz (mvp/voz.py)
+av==16.1.0              # lo que lee el audio; con la 19 faster-whisper 1.2.1 falla al abrirlo

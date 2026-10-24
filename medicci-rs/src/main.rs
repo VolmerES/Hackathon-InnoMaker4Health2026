@@ -19,6 +19,7 @@ mod datos;
 mod hcis;
 mod lector;
 mod servidor;
+mod voz;
 
 use datos::{CampoFicha, Datos, Documento, Hecho, Paciente};
 use eframe::egui;
@@ -261,6 +262,10 @@ struct Medicci {
     paso_n: Option<i64>,
     paso_mirado: f64,
     escribiendo: Option<(String, f64)>, // una pregunta que se va escribiendo sola
+    // dictado: se graba solo mientras se mantiene pulsado el micrófono (src/voz.rs)
+    grabacion: Option<voz::Grabacion>,
+    transcribiendo: bool,
+    aviso_voz: Option<String>,      // por qué no se ha podido dictar, debajo de la caja
 }
 
 /// Lo que la burbuja le pide al servidor.
@@ -271,6 +276,7 @@ enum Pedido {
     Filas,
     Registro(&'static str),         // lo que hace el médico en pantalla, para el registro
     Paso,                           // simulación: qué toca ahora
+    Dictar(Vec<u8>),                // el audio dictado (WAV), para transcribirlo
 }
 
 /// Quita las referencias del texto («[C3]»): ya van debajo, como fuentes.
@@ -465,6 +471,9 @@ impl Medicci {
             paso_n: None,
             paso_mirado: f64::NEG_INFINITY,
             escribiendo: None,
+            grabacion: None,
+            transcribiendo: false,
+            aviso_voz: None,
         };
         app.saludo();
         if let Some(id) = inicial {
@@ -610,6 +619,9 @@ impl Medicci {
         self.filas_red.clear();
         self.alertas_red.clear();
         self.esperando = false;
+        self.grabacion = None;          // lo que se estuviera dictando no sigue al otro paciente
+        self.transcribiendo = false;
+        self.aviso_voz = None;
         self.entrada.clear();
         self.saludo();
         self.foco_ident = true;
@@ -852,6 +864,7 @@ impl Medicci {
                     (Pedido::Filas, Some(s)) => red.filas(ctx, s.clone()),
                     (Pedido::Registro(a), Some(s)) => red.registra(ctx, s.clone(), a),
                     (Pedido::Paso, _) => red.paso(ctx),
+                    (Pedido::Dictar(audio), Some(s)) => red.dictar(ctx, s.clone(), audio),
                     _ => {}
                 }
             }
@@ -975,6 +988,19 @@ impl Medicci {
                 // el primer paso que se ve es de antes de arrancar: no se hace
                 if self.paso_n.replace(n).is_some_and(|antes| antes != n) {
                     self.haz_paso(&accion, texto);
+                }
+            }
+            Llega::Dictado(r) => {
+                self.transcribiendo = false;
+                match r {
+                    Ok(t) if t.is_empty() => self.aviso_voz = Some("No he entendido nada: pruebe otra vez.".into()),
+                    Ok(t) => {
+                        // a la caja, no al modelo: el médico lo revisa y pulsa enviar
+                        self.entrada = if self.entrada.trim().is_empty() { t } else { format!("{} {}", self.entrada.trim(), t) };
+                        self.aviso_voz = None;
+                        self.foco_chat = true;
+                    }
+                    Err(e) => self.aviso_voz = Some(e),
                 }
             }
             Llega::Fallo(e) => {
@@ -1478,6 +1504,10 @@ impl Medicci {
         let mut enviar = false;
         let mut ir: Option<Pestana> = None;
         let mut falta = false;
+        // dictado: solo conectada al servidor, que es quien transcribe
+        let puede_dictar = hay && self.red.is_some() && self.sesion.is_some();
+        let grabando = self.grabacion.as_ref().map(|g| g.segundos());
+        let mut pulsado = false;
         let dentro = caja.shrink2(vec2(12.0, 12.0));
         let (arriba, abajo) = dentro.split_top_bottom_at_y(dentro.top() + 34.0);
         // acciones rápidas: Resumen es la principal
@@ -1498,14 +1528,21 @@ impl Medicci {
                 .inner_margin(egui::Margin { left: 12.0, right: 3.0, top: 3.0, bottom: 3.0 })
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
-                        let pista = if hay { "Pregunte a la historia" } else { "Primero, el paciente" };
+                        let pista = match (grabando, &self.aviso_voz) {
+                            (Some(s), _) => format!("Escuchando… {:.0} s · suelte para transcribir", s),
+                            _ if self.transcribiendo => "Transcribiendo…".to_string(),
+                            (_, Some(aviso)) => aviso.clone(),
+                            _ if hay => "Pregunte a la historia".to_string(),
+                            _ => "Primero, el paciente".to_string(),
+                        };
+                        let color_pista = if grabando.is_some() { ROJO } else { GRIS };
                         let campo = egui::TextEdit::singleline(&mut self.entrada)
-                            .hint_text(texto(pista, 13.0, GRIS, false))
+                            .hint_text(texto(pista, 13.0, color_pista, false))
                             .frame(false)
                             .text_color(TINTA)
                             .font(FontId::proportional(13.0))
                             .margin(vec2(0.0, 4.0))
-                            .desired_width(ui.available_width() - 28.0 - ui.spacing().item_spacing.x - 4.0);
+                            .desired_width(ui.available_width() - 2.0 * (28.0 + ui.spacing().item_spacing.x) - 4.0);
                         let r = ui.add_enabled(hay, campo);
                         if self.foco_chat && hay {
                             r.request_focus();
@@ -1515,6 +1552,14 @@ impl Medicci {
                             enviar = true;
                             r.request_focus();
                         }
+                        // el micrófono: graba mientras se mantiene pulsado
+                        let (bm, pm) = ui.allocate_painter(Vec2::splat(28.0), Sense::click_and_drag());
+                        pulsado = puede_dictar && bm.is_pointer_button_down_on();
+                        microfono(&pm, bm.rect.center(), grabando.is_some(), self.transcribiendo, puede_dictar);
+                        let ayuda = if puede_dictar { "Mantenga pulsado para dictar la pregunta" }
+                                    else { "El dictado necesita el servidor de Medicci" };
+                        bm.on_hover_text(ayuda).on_hover_cursor(if puede_dictar { egui::CursorIcon::PointingHand }
+                                                                else { egui::CursorIcon::NotAllowed });
                         let (b, pintor) = ui.allocate_painter(Vec2::splat(28.0), Sense::click());
                         let lleno = hay && !self.entrada.trim().is_empty();
                         let c = b.rect.center();
@@ -1529,6 +1574,7 @@ impl Medicci {
                     });
                 });
         });
+        self.dicta(ui.ctx(), pulsado);
         if resumen {
             self.resumen_flotante();
         }
@@ -1543,6 +1589,59 @@ impl Medicci {
             self.preguntar();
         }
     }
+}
+
+impl Medicci {
+    /// Empieza a grabar al pulsar el micrófono; al soltarlo (o al llegar al
+    /// minuto) manda el audio a transcribir. El texto vuelve a la caja.
+    fn dicta(&mut self, ctx: &egui::Context, pulsado: bool) {
+        match (&self.grabacion, pulsado) {
+            (None, true) if !self.transcribiendo => match voz::Grabacion::empezar() {
+                Ok(g) => {
+                    self.grabacion = Some(g);
+                    self.aviso_voz = None;
+                }
+                Err(e) => self.aviso_voz = Some(e),
+            },
+            (Some(g), _) if !pulsado || g.segundos() >= voz::MAX_SEGUNDOS => {
+                let Some(g) = self.grabacion.take() else { return };
+                if g.segundos() < 0.4 {
+                    self.aviso_voz = Some("Mantenga pulsado el micrófono mientras habla.".into());
+                    return;
+                }
+                self.transcribiendo = true;
+                self.pedidos.push(Pedido::Dictar(g.terminar()));
+            }
+            _ => {}
+        }
+        if self.grabacion.is_some() {
+            ctx.request_repaint();              // el contador de segundos y soltar el botón
+        }
+        if !self.entrada.trim().is_empty() {
+            self.aviso_voz = None;
+        }
+    }
+}
+
+/// El botón del micrófono: terracota mientras graba, gris mientras transcribe.
+fn microfono(p: &egui::Painter, c: Pos2, grabando: bool, transcribiendo: bool, activo: bool) {
+    let (fondo, tinta) = match (grabando, transcribiendo, activo) {
+        (true, _, _) => (ROJO, BLANCO),
+        (_, true, _) => (LINEA, GRIS),
+        (_, _, true) => (MIO, VERDE_OSC),
+        _ => (LINEA_SUAVE, LINEA),
+    };
+    p.circle_filled(c, 14.0, fondo);
+    let s = trazo(1.6, tinta);
+    p.rect_stroke(Rect::from_center_size(c + vec2(0.0, -2.5), vec2(6.0, 10.0)), 3.0, s);
+    let arco: Vec<Pos2> = (0..=12)
+        .map(|i| {
+            let a = std::f32::consts::PI * i as f32 / 12.0;
+            c + vec2(-6.0 * a.cos(), 0.5 + 5.5 * a.sin())
+        })
+        .collect();
+    p.add(Shape::line(arco, s));
+    p.line_segment([c + vec2(0.0, 6.0), c + vec2(0.0, 8.5)], s);
 }
 
 /// Un botón secundario de acción rápida: blanco, con borde.

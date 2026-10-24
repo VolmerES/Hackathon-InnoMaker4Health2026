@@ -61,6 +61,36 @@ de accesos a su nombre. Los rótulos y el arranque los pone `web/simulacion.js`
 toca en cada paso, que le llega por `/api/simulacion`. Graba con ffmpeg
 (`winget install Gyan.FFmpeg`).
 
+## Dictar la pregunta
+
+En la burbuja, junto a la caja de la pregunta, hay un **micrófono**: se graba
+**solo mientras se mantiene pulsado**. Al soltarlo, el audio va a
+`POST /api/sesion/<id>/voz`, el servidor lo transcribe con **Whisper en local**
+(`voz.py`, con faster-whisper) y el texto vuelve a la caja. **El médico lo
+revisa y pulsa enviar**: al modelo de lenguaje le sigue llegando texto, y las
+fuentes, el «no consta» y la prueba de acierto no cambian.
+
+- **El audio no se guarda**: se transcribe en memoria y se tira. En el registro
+  de accesos queda el texto dictado (acción `dictado`), no la voz.
+- **Va en el procesador** por defecto, para dejar la VRAM al modelo de lenguaje
+  (qwen3:8b ya ocupa unos 6 GB). Se cambia en `medicci.conf`:
+
+  | `MEDICCI_VOZ_MODELO` | Medido en un portátil Intel sin GPU, con una pregunta de 4 s |
+  |---|---|
+  | `small` (por defecto) | ~4,7 s · «¿Qué pruebas tiene pendiente si está **allí coagulado**?» |
+  | `large-v3-turbo` | ~16 s · «¿Qué pruebas tiene pendiente si está **anticoagulado**?» |
+
+  En un procesador de sobremesa va bastante más rápido. Con
+  `MEDICCI_VOZ_DISPOSITIVO=cuda` va en la GPU, pero necesita las bibliotecas de
+  CUDA en la imagen y ~1,5 GB más de VRAM.
+- La primera vez descarga el modelo de Whisper (small, unos 500 MB) y lo guarda
+  en el volumen `medicci-voz`. Para un servidor sin internet, se descarga antes
+  y se pone su ruta en `MEDICCI_VOZ_MODELO`.
+
+Prueba de punta a punta con un WAV grabado, contra el servidor en marcha:
+`MEDICCI_WAV=pregunta.wav cargo test --release -- --ignored dictado` (en
+`medicci-rs`).
+
 ## El registro de accesos
 
 **Sin médico no se abre ningún paciente** (la API contesta 401), y todo lo que

@@ -12,6 +12,7 @@ API de Medicci (la que llama la burbuja):
     GET  /api/sesion/<id>/filas                        → sus datos, para el resumen de la burbuja
     POST /api/sesion/<id>/pregunta      {texto}        → respuesta con sus fuentes
     POST /api/sesion/<id>/registro      {accion}       → lo que hace en pantalla (ampliar, copiar…)
+    POST /api/sesion/<id>/voz           audio WAV      → el texto dictado, para revisarlo (mvp/voz.py)
     GET  /api/estado                                   → si el modelo local responde
 
 Sin médico no se abre ningún paciente, y todo lo que ve queda en el registro de
@@ -48,6 +49,7 @@ from alertas import tarjeta
 from paciente import cargar, cargar_vacia, datos_del_paciente
 from registro import Registro, comprobar as comprobar_registro, leer as leer_registro
 from responder import MODELO, URL, responder
+import voz
 
 AQUI = Path(__file__).resolve().parent
 WEB = AQUI / "web"
@@ -187,7 +189,7 @@ class Peticion(SimpleHTTPRequestHandler):
                 ok = True
             except Exception:
                 ok = False
-            return self._json(200, {"modelo": self.modelo, "responde": ok})
+            return self._json(200, {"modelo": self.modelo, "responde": ok, "voz": voz.disponible()})
         if partes[1:] == ["hcis", "agenda"]:
             return self._json(200, m.agenda)
         if partes[1:] == ["hl7", "ultimos"]:
@@ -293,6 +295,22 @@ class Peticion(SimpleHTTPRequestHandler):
                         fuentes=r.fuentes, segundos=round(time.perf_counter() - inicio, 2))
             return self._json(200, {"respuesta": r.respuesta, "consta": r.consta,
                                     "fuentes": m.fuentes(r.usadas, r.fuentes), "segundos": round(r.segundos, 1)})
+        if partes[:2] == ["api", "sesion"] and partes[-1] == "voz":
+            if not self._sesion(partes):
+                return
+            n = int(self.headers.get("Content-Length") or 0)
+            if not 0 < n <= voz.MAX_BYTES:
+                return self._json(400, {"error": "El audio está vacío o es demasiado largo."})
+            audio = self.rfile.read(n)
+            if not voz.disponible():
+                return self._json(503, {"error": "Este servidor no tiene el dictado instalado (faster-whisper)."})
+            try:
+                texto, segundos = voz.transcribir(audio)
+            except Exception as e:
+                return self._json(503, {"error": f"No he podido transcribir el audio ({e.__class__.__name__})."})
+            # en el registro, el texto; el audio no se guarda
+            m.registrar(partes[2], "dictado", texto=texto, segundos=round(segundos, 2))
+            return self._json(200, {"texto": texto, "segundos": round(segundos, 1)})
         if partes[:2] == ["api", "sesion"] and partes[-1] == "registro":
             if not self._sesion(partes):
                 return

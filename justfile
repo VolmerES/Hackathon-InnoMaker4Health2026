@@ -75,6 +75,9 @@ _sistema:
         done
         if [ -z "$faltan" ]; then bien "bibliotecas de ventana y OpenGL"
         else mal "bibliotecas:$faltan" "sudo apt install libx11-6 libxcursor1 libxrandr2 libxi6 libxkbcommon0 libxkbcommon-x11-0 libgl1"; fi
+        # el micrófono del dictado (cpal) se compila contra ALSA
+        if pkg-config --exists alsa 2>/dev/null; then bien "audio (ALSA) para el dictado"
+        else mal "audio (ALSA) para el dictado" "sudo apt install libasound2-dev pkg-config"; fi
     fi
     exit $falta
 
