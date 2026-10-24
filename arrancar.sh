@@ -31,5 +31,6 @@ url="http://localhost:8000/?paciente=primera"
 (xdg-open "$url" || open "$url") >/dev/null 2>&1 || true
 echo
 echo "Listo: http://localhost:8000   ·   mensajes HL7: http://localhost:8000/hl7.html"
+echo "       registro de accesos: http://localhost:8000/registro.html"
 echo "En directo: docker compose -f mvp/docker-compose.yml run --rm --no-deps emisor --evento resultado"
 echo "Para pararlo: docker compose -f mvp/docker-compose.yml down"

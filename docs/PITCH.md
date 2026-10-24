@@ -182,7 +182,7 @@ Unas 580 palabras. **Ensayar con cronómetro.**
 **Preparar antes de subir:**
 
 1. Arrancar limpio: doble clic en **`arrancar.bat`**. En unos 30 s levanta todo,
-   manda la historia por HL7, comprueba 8/8 tarjetas y abre a María.
+   manda la historia por HL7, comprueba 20/20 tarjetas y abre a María.
 2. Abrir `http://localhost:8000` y, en otra pestaña, `/hl7.html`. Dejar la
    terminal con el comando del evento escrito.
 3. Hacer una pregunta de calentamiento, para que el modelo esté cargado.
@@ -227,7 +227,7 @@ cuesta por uso, y funciona**.
 | 8.000 horas, cinco especialistas | **Hipótesis:** 1 minuto × 473.257 consultas = 7.888 h ÷ 1.540 h de consulta al año por especialista (suposición) ≈ 5,1 |
 | 29 de 30, ninguna fuente inventada, menos de un segundo | `mvp/prueba_acierto.py --semilla 2026` con Qwen3‑8B en un portátil con RTX 5060 de 8 GB (24‑oct): 29/30, 6/6 «no consta», 0 fuentes inventadas, 0,7 s de mediana |
 | La tarjeta no se equivoca | Reglas sin IA, contrastadas con SQL directo en 2.000 pacientes: 0 errores (`mvp/prueba_alertas.py`) |
-| Por HL7 | 43/43 mensajes aceptados y 8/8 tarjetas idénticas a las de los CSV (`mvp/hl7_emisor.py --comprobar`) |
+| Por HL7 | 11.831/11.831 mensajes aceptados y 20/20 tarjetas idénticas a las de los CSV (`mvp/hl7_emisor.py --comprobar`) |
 | 4.700 € el Spark | Precio de la Founders Edition en la UE, con IVA (oct‑2026) |
 | 700.000–1,4 M$ al año en la nube | 558 médicos de plantilla (La Princesa, abr‑2024) × 110–208 $/mes (Heidi y Abridge; fuentes en CONTEXTO) × 12. Son escribas: orden de magnitud |
 | Dos centésimas de vatio-hora por respuesta | **Estimado:** 0,7 s medidos × unos 100 W de GPU de portátil (supuesto) ≈ 0,02 Wh. Ver [Lo que cuesta la IA](#lo-que-cuesta-la-ia) |

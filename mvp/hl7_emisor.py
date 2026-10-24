@@ -177,7 +177,9 @@ def main() -> None:
         print("\nTarjeta de Medicci (datos por HL7) frente a la de los CSV:")
         iguales = 0
         for p in agenda:
-            pet = urllib.request.Request(f"{args.api}/sesion", data=json.dumps({"nhc": p["nhc"]}).encode(),
+            # la comprobación también queda en el registro de accesos, a su nombre
+            cuerpo = {"nhc": p["nhc"], "medico": "comprobacion-hl7", "origen": "prueba"}
+            pet = urllib.request.Request(f"{args.api}/sesion", data=json.dumps(cuerpo).encode(),
                                          headers={"Content-Type": "application/json"})
             sesion = json.load(urllib.request.urlopen(pet))["sesion"]
             de_hl7 = [a["texto"] for a in json.load(urllib.request.urlopen(f"{args.api}/sesion/{sesion}/tarjeta"))["alertas"]]

@@ -1,35 +1,43 @@
-"""La agenda del día de la demo: 8 pacientes con tarjetas variadas.
+"""La agenda del día de la demo: 14 pacientes del reto con tarjetas variadas y,
+si están cargados, los 6 crónicos generados con más historia.
 
 La usan el servidor (para enseñarla) y el emisor HL7 (para saber qué pacientes
-mandar). Con los mismos datos sale siempre la misma agenda.
+mandar). Con los mismos datos sale siempre la misma agenda, y también con solo
+los pacientes de la agenda (la copia que se llena por HL7): cada paciente se
+elige por una regla que no depende de los demás.
 """
 
 from alertas import alertas
 
 # Los CSV no traen nombres: son inventados para la demo.
 NOMBRES = {"F": ["María Alonso", "Carmen Ruiz", "Lucía Sanz", "Ana Gil", "Pilar Mora",
-                 "Rosa Navarro", "Elena Prieto", "Teresa Vidal"],
+                 "Rosa Navarro", "Elena Prieto", "Teresa Vidal", "Isabel Romero", "Marta Delgado",
+                 "Dolores Castro", "Julia Herrero"],
            "M": ["José Pardo", "Antonio Vega", "Manuel Ortiz", "Javier Lozano", "Luis Cano",
-                 "Pedro Ibáñez", "Ramón Soler", "Andrés Molina"]}
+                 "Pedro Ibáñez", "Ramón Soler", "Andrés Molina", "Francisco Rubio", "Miguel Santos",
+                 "Alberto Gallego", "Rafael Méndez"]}
+# cuántos del reto con 3, 2, 1 y 0 cosas en la tarjeta (María cuenta en las de 3)
+CUPOS = {3: 5, 2: 4, 1: 3, 0: 2}
+CRONICOS = 6          # los generados con más citas
+CADA = 3              # un crónico cada tantos huecos
 
 
 def elegir_agenda(con, filas_de) -> list[dict]:
-    """Tres pacientes con 3 cosas, dos con 2, dos con 1 y uno sin nada.
-
-    La primera es «María», la del guion: mujer, con una necesidad de
+    """La primera es «María», la del guion: mujer, con una necesidad de
     accesibilidad, una prueba pendiente y una derivación de Primaria.
     `filas_de(nhc)` devuelve las filas del paciente (paciente.datos_del_paciente).
     """
     maria = [r[0] for r in con.execute(
-        "SELECT p.id_paciente FROM pacientes p WHERE p.sexo = 'F' "
+        "SELECT p.id_paciente FROM pacientes p WHERE p.sexo = 'F' AND p.id_paciente NOT LIKE 'G%' "
         "AND p.necesidades_accesibilidad <> 'NINGUNA' "
         "AND EXISTS (SELECT 1 FROM pruebas r WHERE r.id_paciente = p.id_paciente AND r.estado_prueba = 'PROGRAMADA') "
         "AND EXISTS (SELECT 1 FROM derivaciones_ap d WHERE d.id_paciente = p.id_paciente) "
         "ORDER BY hash(p.id_paciente || 'maria') LIMIT 200").fetchall()]
     candidatos = [r[0] for r in con.execute(
-        "SELECT DISTINCT id_paciente FROM citas ORDER BY hash(id_paciente || 'agenda') LIMIT 400").fetchall()]
+        "SELECT DISTINCT id_paciente FROM citas WHERE id_paciente NOT LIKE 'G%' "
+        "ORDER BY hash(id_paciente || 'agenda') LIMIT 600").fetchall()]
 
-    faltan = {3: 3, 2: 2, 1: 2, 0: 1}
+    faltan = dict(CUPOS)
     elegidos = []
     for nhc in maria:
         filas = filas_de(nhc)
@@ -48,8 +56,19 @@ def elegir_agenda(con, filas_de) -> list[dict]:
         if not any(faltan.values()):
             break
 
+    # alternando: una con muchas cosas, otra con pocas…
     elegidos.sort(key=lambda e: (-e[0], e[1]))
-    orden = [elegidos[i] for i in (0, 3, 5, 1, 7, 4, 2, 6) if i < len(elegidos)]
+    mitad = (len(elegidos) + 1) // 2
+    orden = [e for par in zip(elegidos[:mitad], elegidos[mitad:][::-1]) for e in par]
+    orden += elegidos[len(orden):mitad]
+
+    # los crónicos de años: los que más citas tienen
+    cronicos = [(None, r[0], filas_de(r[0])[0].campos) for r in con.execute(
+        "SELECT id_paciente FROM citas WHERE id_paciente LIKE 'G%' GROUP BY 1 "
+        "ORDER BY count(*) DESC, 1 LIMIT ?", [CRONICOS]).fetchall()]
+    for i, c in enumerate(cronicos):
+        orden.insert(min(CADA * (i + 1) - 1, len(orden)), c)
+
     usados = {"F": 0, "M": 0}
     agenda = []
     for i, (_, nhc, ficha) in enumerate(orden):
@@ -58,5 +77,6 @@ def elegir_agenda(con, filas_de) -> list[dict]:
         nombre = lista[usados.get(sexo, 0) % len(lista)]
         usados[sexo] = usados.get(sexo, 0) + 1
         agenda.append({"nhc": nhc, "hora": f"{9 + (i * 20) // 60:02d}:{(i * 20) % 60:02d}",
-                       "nombre": nombre, "edad": ficha["edad"], "sexo": sexo})
+                       "nombre": nombre, "edad": ficha["edad"], "sexo": sexo,
+                       "cronico": nhc.startswith("G")})
     return agenda

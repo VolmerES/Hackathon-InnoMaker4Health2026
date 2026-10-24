@@ -6,6 +6,7 @@
 (function () {
   const SELECTOR_NHC = "#c-nhc";        // en el hospital, un ajuste que pone Informática
   const SELECTOR_NOMBRE = "#c-nombre";
+  const SELECTOR_MEDICO = "#c-medico";  // el usuario con el que el médico ha entrado en HCIS
   const API = "/api";
   const PREGUNTAS = ["¿Qué pruebas tiene pendientes?", "¿Por qué lo manda su médico de cabecera?",
                      "¿Ha faltado a alguna cita?", "¿Tiene alergias?"];
@@ -131,10 +132,12 @@
     if (!nhc) return vaciar("Medicci se activa cuando abre un paciente en HCIS.");
     vaciar("Leyendo sus datos…");
     try {
-      const s = await pide("/sesion", {nhc});
+      // Sin médico no hay sesión: todo lo que se mira queda a su nombre en el registro.
+      const medico = ($(SELECTOR_MEDICO)?.textContent || "").trim();
+      const s = await pide("/sesion", {nhc, medico, origen: "pestana"});
       if (nhc !== nhcActual) return;                // el médico ya ha cambiado de paciente
       sesion = s.sesion;
-      $("#m-sub").textContent = `${s.edad} años · NHC ${nhc} · ${s.filas} registros`;
+      $("#m-sub").textContent = `${s.edad} años · NHC ${nhc} · ${s.filas} registros · acceso registrado a nombre de ${medico}`;
       hilo().innerHTML = "";
       await pintaTarjeta(nhc);
       if (nhc !== nhcActual) return;

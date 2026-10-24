@@ -23,3 +23,5 @@ MEDICCI_DATOS=csv
 MEDICCI_HL7_PUERTO=2575
 # Solo para la demo: a qué equipo manda el emisor que hace de HCIS.
 MEDICCI_HL7_HOST=localhost
+# Solo para la demo: suma los crónicos sintéticos de data/generados a la agenda.
+MEDICCI_GENERADOS=si

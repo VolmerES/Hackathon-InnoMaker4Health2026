@@ -9,7 +9,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analisis"))
-from datos import conectar  # noqa: E402
+from datos import DATA, conectar  # noqa: E402
+from config import valor  # noqa: E402
+
+# Los pacientes sintéticos de generar_pacientes.py (crónicos de años): la demo los
+# suma a los del reto con MEDICCI_GENERADOS=si; las pruebas de acierto, no.
+GENERADOS = DATA / "generados"
 
 ESPECIALIDADES = {
     "OFT": "Oftalmología",
@@ -35,9 +40,15 @@ TABLAS_MEDICCI = ["pacientes", "derivaciones_ap", "citas", "huecos_agenda", "age
                  "movimientos_citas", "pruebas", "comunicaciones"]
 
 
-def cargar():
+def _carpetas(generados: bool | None) -> tuple:
+    if generados is None:
+        generados = valor("MEDICCI_GENERADOS", "no").lower() in ("si", "sí", "1", "true")
+    return (GENERADOS,) if generados and (GENERADOS / "PACIENTES.csv").exists() else ()
+
+
+def cargar(generados: bool | None = None):
     """Copia en memoria las tablas que usa Medicci: leer los CSV en cada consulta es lento."""
-    con = conectar()
+    con = conectar(_carpetas(generados))
     for t in TABLAS_MEDICCI:
         con.execute(f"CREATE TABLE {t}_m AS SELECT * FROM {t}")
         con.execute(f"DROP VIEW {t}")
@@ -45,13 +56,13 @@ def cargar():
     return con
 
 
-def cargar_vacia():
+def cargar_vacia(generados: bool | None = None):
     """La copia de Medicci vacía, para llenarla con mensajes HL7.
 
     Los avisos al paciente no van por HL7 (vienen de la plataforma de SMS):
     esos sí se cargan de su CSV.
     """
-    con = conectar()
+    con = conectar(_carpetas(generados))
     for t in TABLAS_MEDICCI:
         filtro = "" if t == "comunicaciones" else " LIMIT 0"
         con.execute(f"CREATE TABLE {t}_m AS SELECT * FROM {t}{filtro}")
@@ -80,7 +91,7 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         filas += _numerar("F", "PACIENTES", [(id_paciente,
             f"Ficha: {p[0]} años, sexo {p[1]}. Contacto preferido: {p[2]}. "
             f"Necesidades de accesibilidad: {p[3]}.",
-            {"edad": p[0], "contacto": p[2], "accesibilidad": p[3]})])
+            {"edad": p[0], "sexo": p[1], "contacto": p[2], "accesibilidad": p[3]})])
 
     der = con.execute(
         "SELECT id_derivacion, fecha_solicitud, especialidad_destino, prioridad, "
@@ -90,8 +101,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
     filas += _numerar("D", "DERIVACIONES_AP", [(d[0],
         f"Derivación de Primaria el {_fecha(d[1])} a {ESPECIALIDADES.get(d[2], d[2])}, "
         f"prioridad {d[3]}, estado {d[6]}. Motivo: {d[4]}. Observaciones del médico: {d[5]}",
-        {"fecha": d[1], "especialidad": d[2], "prioridad": d[3], "motivo": d[4], "estado": d[6],
-         "observaciones": d[5]})
+        {"fecha": d[1], "especialidad": d[2], "servicio": ESPECIALIDADES.get(d[2], d[2]),
+         "prioridad": d[3], "motivo": d[4], "estado": d[6], "observaciones": d[5]})
         for d in der])
 
     citas = con.execute(
@@ -104,8 +115,8 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         f"Cita en {ESPECIALIDADES.get(c[3], c[3] or 'servicio desconocido')} el {_fecha(c[1])}"
         f"{' a las ' + c[2].strftime('%H:%M') if c[2] else ''}, visita "
         f"{TIPO_VISITA.get(c[4], c[4])}, estado {c[5]}, prioridad {c[6]}.",
-        {"fecha": c[1], "especialidad": c[3], "estado": c[5], "hora": c[2], "tipo_visita": c[4],
-         "prioridad": c[6]})
+        {"fecha": c[1], "especialidad": c[3], "servicio": ESPECIALIDADES.get(c[3], c[3] or ""),
+         "estado": c[5], "hora": c[2], "tipo_visita": c[4], "prioridad": c[6]})
         for c in citas])
     filas += filas_citas
     ref_cita = {f.id: f.ref for f in filas_citas}

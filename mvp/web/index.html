@@ -58,7 +58,7 @@ td .obs{display:block;margin-top:3px;color:#555;font:11px/1.45 "Courier New",mon
     <span id="c-nombre"></span>
     <span id="c-datos"></span>
     <span>Episodio: <span class="epi">CEX · 24/10/2026</span></span>
-    <span class="fin">HCIS · Consultas externas · réplica con datos sintéticos</span>
+    <span class="fin">Usuario: <b id="c-medico">med.demo01</b> · HCIS · Consultas externas · réplica con datos sintéticos</span>
   </div>
   <div class="iconos">
     <span class="i" style="background:#b7c9e2"></span><span class="i" style="background:#9fd3a8"></span>
@@ -141,7 +141,7 @@ async function pintaHistoria(p){
   pintado = clave;
   const arriba = $("#hoja").scrollTop;
   $("#hoja").innerHTML = `<div class="titulo">HISTORIA CLÍNICA · ${esc(p.nombre)} · ${r.filas.length} registros</div>
-    <div class="aviso">Nombre inventado para la demo. Los datos son de los CSV sintéticos del reto.</div>` +
+    <div class="aviso">Nombre inventado para la demo. ${p.cronico ? "Paciente crónico generado para las pruebas (mvp/generar_pacientes.py), con el formato de los CSV del reto." : "Los datos son de los CSV sintéticos del reto."}</div>` +
     SECCIONES.map(([tabla, titulo]) => {
       const filas = r.filas.filter(f => f.tabla === tabla);
       return `<fieldset><legend><b>▲</b> ${titulo}${tabla === "PACIENTES" ? "" : ` (${filas.length})`}</legend>${filas.length
@@ -158,7 +158,7 @@ async function pintaAgenda(){
   agenda = nueva;
   $("#agenda").innerHTML = agenda.length ? agenda.map(p => `<button class="cita" data-nhc="${p.nhc}"
     aria-current="${abierto && abierto.nhc === p.nhc}">
-    <span class="h">${p.hora}</span><span>${esc(p.nombre)}<small>${p.nhc} · ${p.edad} años</small></span></button>`).join("")
+    <span class="h">${p.hora}</span><span>${esc(p.nombre)}<small>${p.nhc} · ${p.edad} años${p.cronico ? " · <b>crónico</b>" : ""}</small></span></button>`).join("")
     : `<p class="vacia" style="padding:8px">Agenda vacía: esperando datos de HCIS…</p>`;
 }
 $("#agenda").onclick = e => { const b = e.target.closest(".cita"); if (b) abrePaciente(agenda.find(p => p.nhc === b.dataset.nhc)); };
@@ -168,7 +168,7 @@ pintaAgenda().then(() => {
   const p = pedido === "primera" ? agenda[0] : agenda.find(x => x.nhc === pedido);
   if (p) abrePaciente(p);
 });
-setInterval(() => { if (agenda.length < 8) pintaAgenda(); }, 3000);   // con HL7 la agenda se va llenando
+setInterval(pintaAgenda, 3000);   // con HL7 la agenda se va llenando
 </script>
 
 <!-- Medicci: en el hospital lo pondría la extensión del navegador; aquí, estas dos líneas -->

@@ -25,11 +25,14 @@ docker compose -f mvp/docker-compose.yml up -d            # modelo + servidor
 ```
 
 Abrir **http://localhost:8000**. Es una réplica de HCIS con la agenda del día
-(8 pacientes de los CSV con nombres inventados). Al abrir un paciente, la
-pestaña Medicci de la derecha:
+de 20 pacientes con nombres inventados: 14 de los CSV del reto y los 6
+crónicos generados con más historia (hasta 1.649 citas en 15 años; se quitan
+con `MEDICCI_GENERADOS=no`). Al abrir un paciente, la pestaña Medicci de la
+derecha:
 
-1. lee el NHC de la cinta del paciente, como haría la extensión del navegador;
-2. abre una sesión atada a ese paciente;
+1. lee el NHC de la cinta del paciente y el usuario de HCIS (`#c-medico`),
+   como haría la extensión del navegador;
+2. abre una sesión atada a ese paciente y a ese médico;
 3. enseña la tarjeta «antes de que entre» y deja preguntar.
 
 Cada dato lleva un botón con su fuente (`P1`, `M2`…). Al pulsarlo se ve la
@@ -46,7 +49,28 @@ conectada`), para cuando HCIS no va en el navegador.
 
 **María Alonso**, la primera de la agenda, es la del guion. Tiene movilidad
 reducida, una radiografía pendiente y una derivación preferente de Primaria.
-Cada pregunta queda registrada en `resultados/registro.jsonl`.
+
+## El registro de accesos
+
+**Sin médico no se abre ningún paciente** (la API contesta 401), y todo lo que
+ve queda apuntado a su nombre en `resultados/registro.jsonl`: qué paciente
+abrió, qué tarjeta vio, qué preguntó, qué le contestó la IA con qué fuentes, y
+si amplió el resumen o lo copió a la nota clínica. La pestaña toma el usuario
+de HCIS; la burbuja, el de Windows.
+
+Solo se añaden líneas, y cada una lleva la huella (SHA-256) de la anterior: si
+alguien borra o cambia una, la cadena se rompe y se ve.
+
+```bash
+python mvp/registro.py --medico med.demo01     # qué ha consultado este médico
+python mvp/registro.py --paciente P0129798     # quién ha mirado a este paciente
+python mvp/registro.py --comprobar             # que nadie lo ha tocado
+```
+
+El panel está en **http://localhost:8000/registro.html**. En la demo el médico
+es el nombre que manda la pantalla; en el hospital vendría firmado por el
+inicio de sesión único (Active Directory o el token de HCIS) ⚠️, y el panel lo
+abriría solo quien audita.
 
 ## Los datos por HL7
 
@@ -77,8 +101,9 @@ Sin Docker: `python mvp/servidor.py --datos hl7` y `python mvp/hl7_emisor.py
 
 **Comprobado el 24‑oct:**
 
-- Los 43 mensajes de los 8 pacientes de la agenda llegan todos con `ACK AA`.
-- Las 8 tarjetas y todas las filas son **idénticas** a las que salen de los
+- Los 11.831 mensajes de los 20 pacientes de la agenda llegan todos con
+  `ACK AA` (unos 90 s; con los 8 del reto eran 43).
+- Las 20 tarjetas y todas las filas son **idénticas** a las que salen de los
   CSV.
 - Los dos eventos en directo salen arriba de la tarjeta con «Nuevo:».
 

@@ -25,7 +25,7 @@ use egui::emath::{easing, TSTransform};
 use egui::{pos2, vec2, Align, Color32, FontFamily, FontId, Layout, Pos2, Rect, RichText,
            Rounding, Sense, Shape, Stroke, UiBuilder, Vec2};
 use lector::{Lector, Respuesta, ValorHallado};
-use servidor::{Llega, Servidor};
+use servidor::{FilaRed, Llega, Servidor};
 use std::path::PathBuf;
 
 // medidas, en puntos
@@ -234,6 +234,8 @@ struct Medicci {
     esperando: bool,                // el último mensaje es «Buscando…»
     tarjeta_vista: Option<Vec<String>>,
     refresco: f64,
+    filas_red: Vec<FilaRed>,            // los datos del paciente, del servidor
+    alertas_red: Vec<(String, Vec<String>)>, // la tarjeta del servidor: texto y sus fuentes
 }
 
 /// Lo que la burbuja le pide al servidor.
@@ -241,6 +243,8 @@ enum Pedido {
     Abrir(String),
     Preguntar(String),
     Tarjeta,
+    Filas,
+    Registro(&'static str),         // lo que hace el médico en pantalla, para el registro
 }
 
 /// Quita las referencias del texto («[C3]»): ya van debajo, como fuentes.
@@ -334,6 +338,8 @@ impl Medicci {
             esperando: false,
             tarjeta_vista: None,
             refresco: 0.0,
+            filas_red: Vec::new(),
+            alertas_red: Vec::new(),
         };
         app.saludo();
         if let Some(id) = inicial {
@@ -405,6 +411,8 @@ impl Medicci {
         self.ampliado = false;
         self.sesion = None;
         self.tarjeta_vista = None;
+        self.filas_red.clear();
+        self.alertas_red.clear();
         self.esperando = false;
         self.entrada.clear();
         self.saludo();
@@ -412,23 +420,28 @@ impl Medicci {
     }
 
     fn abre_resumen(&mut self) {
-        if self.red.is_some() {
-            // conectada, RESUMEN vuelve a enseñar la tarjeta «antes de que entre»
-            if self.sesion.is_some() {
-                self.hilo.push(Mensaje::mio("RESUMEN"));
-                self.tarjeta_vista = None;
-                self.pedidos.push(Pedido::Tarjeta);
-                self.bajar = true;
-            }
-            return;
-        }
         let Some(p) = self.paciente.clone() else { return };
-        if self.lector.is_none() {
-            return;
-        }
-        self.datos.registra(&self.usuario, &p.id, "generar_resumen", None);
-        if self.resumen.as_ref().map(|r| &r.paciente.id) != Some(&p.id) {
-            self.resumen = self.lee_resumen(&p);
+        if self.red.is_some() {
+            // conectada, el mismo resumen con los datos del servidor
+            self.resumen = resumen_de_red(&p, &self.filas_red, &self.alertas_red);
+            if self.resumen.is_none() {
+                // aún no han llegado los datos: la tarjeta «antes de que entre»
+                if self.sesion.is_some() {
+                    self.hilo.push(Mensaje::mio("RESUMEN"));
+                    self.tarjeta_vista = None;
+                    self.pedidos.push(Pedido::Tarjeta);
+                    self.bajar = true;
+                }
+                return;
+            }
+        } else {
+            if self.lector.is_none() {
+                return;
+            }
+            self.datos.registra(&self.usuario, &p.id, "generar_resumen", None);
+            if self.resumen.as_ref().map(|r| &r.paciente.id) != Some(&p.id) {
+                self.resumen = self.lee_resumen(&p);
+            }
         }
         // una sola tarjeta en el hilo: la nueva sustituye a la anterior
         self.hilo.retain(|m| !m.tarjeta);
@@ -440,9 +453,6 @@ impl Medicci {
 
     /// Lleva la tarjeta del chat a una pestaña; si no hay tarjeta, la saca antes.
     fn muestra(&mut self, pestana: Pestana) {
-        if self.red.is_some() {
-            return self.abre_resumen();
-        }
         if !self.hilo.last().is_some_and(|m| m.tarjeta) {
             self.abre_resumen();
         }
@@ -454,6 +464,9 @@ impl Medicci {
         if self.resumen.is_some() && !self.ampliado {
             if let Some(p) = &self.paciente {
                 self.datos.registra(&self.usuario, &p.id, "ampliar_resumen", None);
+            }
+            if self.red.is_some() {
+                self.pedidos.push(Pedido::Registro("ampliar_resumen"));
             }
             self.ampliado = true;
             self.resumen_t = 0.0;
@@ -609,9 +622,11 @@ impl Medicci {
             let Some(red) = &self.red else { return };
             for p in pedidos {
                 match (p, &self.sesion) {
-                    (Pedido::Abrir(nhc), _) => red.abrir(ctx, nhc),
+                    (Pedido::Abrir(nhc), _) => red.abrir(ctx, nhc, self.usuario.clone()),
                     (Pedido::Preguntar(t), Some(s)) => red.preguntar(ctx, s.clone(), t),
                     (Pedido::Tarjeta, Some(s)) => red.tarjeta(ctx, s.clone()),
+                    (Pedido::Filas, Some(s)) => red.filas(ctx, s.clone()),
+                    (Pedido::Registro(a), Some(s)) => red.registra(ctx, s.clone(), a),
                     _ => {}
                 }
             }
@@ -639,6 +654,10 @@ impl Medicci {
                 self.hilo.clear();
                 self.tarjeta_vista = None;
                 self.foco_chat = true;
+                self.filas_red.clear();
+                self.alertas_red.clear();
+                self.resumen = None;
+                self.ampliado = false;
             }
             Llega::Tarjeta { sesion, alertas, mas } => {
                 if self.sesion.as_deref() != Some(sesion.as_str()) {
@@ -650,6 +669,12 @@ impl Medicci {
                 }
                 let novedad = self.tarjeta_vista.is_some();
                 self.tarjeta_vista = Some(textos);
+                self.alertas_red = alertas.iter()
+                    .map(|a| (a.texto.clone(), a.fuentes.iter().map(|f| f.referencia.clone()).collect()))
+                    .collect();
+                if novedad {
+                    self.pedidos.push(Pedido::Filas);   // el resumen también cambia
+                }
                 let mut partes = vec![Parte::Rotulo(if novedad {
                     "Ha llegado algo nuevo de HCIS:".into()
                 } else {
@@ -673,7 +698,7 @@ impl Medicci {
                 }
                 if !novedad {
                     partes.push(Parte::Texto("Pregunte lo que necesite: contesta solo con sus datos \
-                                              y cita la fila de la que sale.".into()));
+                                              y cita la fila de la que sale. Resumen lo ordena todo.".into()));
                 }
                 self.hilo.push(Mensaje::suyo(partes));
                 self.bajar = true;
@@ -693,6 +718,15 @@ impl Medicci {
                     segundos)));
                 self.hilo.push(Mensaje::suyo(partes));
                 self.bajar = true;
+            }
+            Llega::Filas { sesion, filas } => {
+                if self.sesion.as_deref() != Some(sesion.as_str()) {
+                    return;
+                }
+                self.filas_red = filas;
+                if let (Some(_), Some(p)) = (&self.resumen, &self.paciente) {
+                    self.resumen = resumen_de_red(p, &self.filas_red, &self.alertas_red);
+                }
             }
             Llega::Fallo(e) => {
                 if std::mem::take(&mut self.esperando) {
@@ -974,6 +1008,53 @@ impl Medicci {
         if r.clicked() {
             self.abierto = false;
         }
+
+        // apagar y reiniciar: la ventana no tiene marco, así que van aquí
+        let mut apagar = false;
+        let mut reiniciar = false;
+        for (i, (id, ayuda)) in [("apagar", "Apagar Medicci"), ("reiniciar", "Reiniciar Medicci")]
+            .into_iter().enumerate()
+        {
+            let b = Rect::from_center_size(pos2(caja.right() - 64.0 - 34.0 * i as f32, caja.center().y),
+                                           Vec2::splat(30.0));
+            let r = ui.interact(b, egui::Id::new(id), Sense::click())
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .on_hover_text(ayuda);
+            if r.hovered() {
+                p.circle_filled(b.center(), 15.0, Color32::from_white_alpha(22));
+            }
+            if i == 0 { icono_apagar(&p, b.center()) } else { icono_reiniciar(&p, b.center()) }
+            if r.clicked() {
+                if i == 0 { apagar = true } else { reiniciar = true }
+            }
+        }
+        if apagar {
+            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+        if reiniciar {
+            self.reinicia(ui.ctx());
+        }
+    }
+
+    /// Se vuelve a abrir a sí misma, con el mismo paciente, y se cierra.
+    fn reinicia(&self, ctx: &egui::Context) {
+        let Ok(exe) = std::env::current_exe() else { return };
+        let mut args = Vec::new();
+        let mut viejos = std::env::args().skip(1);
+        while let Some(a) = viejos.next() {
+            if a == "--paciente" {
+                viejos.next();
+            } else if a != "--reinicio" {
+                args.push(a);
+            }
+        }
+        if let Some(p) = &self.paciente {
+            args.extend(["--paciente".to_string(), p.id.clone()]);
+        }
+        args.push("--reinicio".into());         // la nueva espera a que esta se cierre
+        if std::process::Command::new(exe).args(&args).spawn().is_ok() {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
     }
 
     fn barra_paciente(&mut self, ui: &mut egui::Ui, caja: Rect) {
@@ -1135,13 +1216,7 @@ impl Medicci {
             self.abre_resumen();
         }
         if let Some(p) = ir {
-            if self.red.is_some() {
-                // conectada, las pestañas no existen: se le pregunta a la IA del servidor
-                self.entrada = match p { Pestana::Pruebas => "¿Qué pruebas tiene?", _ => "¿Qué medicación toma?" }.into();
-                self.preguntar();
-            } else {
-                self.muestra(p);
-            }
+            self.muestra(p);
         }
         if falta {
             self.entrada = "¿Qué falta por hacer?".into();
@@ -1197,6 +1272,229 @@ fn mensaje(ui: &mut egui::Ui, m: &Mensaje, ancho: f32) {
                 });
             });
     });
+}
+
+// =====================================================================
+//  Conectada: el mismo resumen, con las filas que manda el servidor
+// =====================================================================
+
+/// Un campo de una fila del servidor, como texto («» si no está).
+fn campo(f: &FilaRed, k: &str) -> String {
+    match &f.campos[k] {
+        serde_json::Value::String(s) => s.clone(),
+        serde_json::Value::Null => String::new(),
+        v => v.to_string(),
+    }
+}
+
+/// La fecha de una fila, «2025-04-13»: cuándo pasó o cuándo está prevista.
+fn fecha_fila(f: &FilaRed) -> String {
+    ["fecha", "realizada", "programada"].iter()
+        .map(|k| campo(f, k))
+        .find(|v| !v.is_empty())
+        .map(|v| v.chars().take(10).collect())
+        .unwrap_or_default()
+}
+
+fn filas_de<'a>(filas: &'a [FilaRed], tabla: &'a str) -> impl Iterator<Item = &'a FilaRed> + 'a {
+    filas.iter().filter(move |f| f.tabla == tabla)
+}
+
+/// «MOVILIDAD_REDUCIDA» → «Movilidad reducida».
+fn legible(t: &str) -> String {
+    let t = t.replace('_', " ").to_lowercase();
+    let mut letras = t.chars();
+    letras.next().map(|l| l.to_uppercase().collect::<String>() + letras.as_str()).unwrap_or_default()
+}
+
+fn prueba_legible(tipo: &str) -> String {
+    match tipo {
+        "ANALITICA" => "Analítica".into(),
+        "ECOGRAFIA" => "Ecografía".into(),
+        "RADIOGRAFIA" => "Radiografía".into(),
+        "ESPIROMETRIA" => "Espirometría".into(),
+        "TAC" | "ECG" => tipo.into(),
+        _ => legible(tipo),
+    }
+}
+
+/// Cuántos documentos van en la historia: un crónico tiene miles de filas.
+const HISTORIA_MAX: usize = 120;
+
+/// El resumen de la burbuja hecho con los datos del servidor: cada fila es un
+/// documento con su referencia (C3, P1…), la tarjeta da las alertas y lo que
+/// el servidor no tiene (medicación, alergias, analíticas) sale como «no consta».
+fn resumen_de_red(p: &Paciente, filas: &[FilaRed], alertas: &[(String, Vec<String>)]) -> Option<Resumen> {
+    let ficha = filas.iter().find(|f| f.tabla == "PACIENTES")?;
+    let mut paciente = p.clone();
+    paciente.sexo = match campo(ficha, "sexo").as_str() {
+        "F" => "mujer".into(),
+        "M" => "hombre".into(),
+        s => s.to_lowercase(),
+    };
+    let hecho = |f: &FilaRed, afirmacion: String| Hecho {
+        id: f.referencia.clone(),
+        categoria: f.tabla.to_lowercase(),
+        afirmacion,
+        cita: None,
+        documento: Some(f.referencia.clone()),
+        fecha_doc: Some(fecha_fila(f)),
+        servicio: Some(campo(f, "servicio")),
+    };
+    let ficha_campo = |bloque: &str, seccion: Option<&str>, etiqueta: &str, valor: String,
+                       detalle: Option<String>, doc: &str, destacado: bool| CampoFicha {
+        bloque: bloque.into(),
+        seccion: seccion.map(Into::into),
+        etiqueta: etiqueta.into(),
+        valor,
+        detalle,
+        documento: Some(doc.into()),
+        fecha_doc: None,
+        destacado,
+    };
+
+    // cada fila es un documento; lo más reciente primero
+    let mut documentos: Vec<Documento> = filas.iter()
+        .filter(|f| f.tabla != "PACIENTES")
+        .map(|f| Documento {
+            id: f.referencia.clone(),
+            fecha: fecha_fila(f),
+            tipo: match f.tabla.as_str() {
+                "DERIVACIONES_AP" => "Derivación de Primaria",
+                "CITAS" => "Cita",
+                "MOVIMIENTOS_CITAS" => "Cambio de cita",
+                "PRUEBAS" => "Prueba",
+                "COMUNICACIONES" => "Aviso al paciente",
+                otra => otra,
+            }.to_string(),
+            servicio: campo(f, "servicio"),
+            texto: f.texto.clone(),
+        })
+        .collect();
+    documentos.sort_by(|a, b| b.fecha.cmp(&a.fecha));
+    let desde = documentos.last().map(|d| año(&d.fecha)).unwrap_or_default();
+    let hasta = documentos.first().map(|d| año(&d.fecha)).unwrap_or_default();
+    documentos.truncate(HISTORIA_MAX);
+    let hechos: Vec<Hecho> = documentos.iter()
+        .map(|d| Hecho {
+            id: d.id.clone(),
+            categoria: d.tipo.to_lowercase(),
+            afirmacion: sin_referencias(&d.texto),
+            cita: None,
+            documento: Some(d.id.clone()),
+            fecha_doc: Some(d.fecha.clone()),
+            servicio: Some(d.servicio.clone()),
+        })
+        .collect();
+
+    // por qué viene: la última derivación de Primaria
+    let mut campos = Vec::new();
+    match filas_de(filas, "DERIVACIONES_AP").max_by_key(|f| fecha_fila(f)) {
+        Some(d) => {
+            let obs = campo(d, "observaciones");
+            campos.push(ficha_campo("por_que_viene", Some("motivo"), "Motivo",
+                format!("{} · {}", campo(d, "motivo"), campo(d, "servicio")),
+                Some(format!("Derivación de Primaria del {}, prioridad {}.{}", fecha_es(&fecha_fila(d)),
+                             campo(d, "prioridad").to_lowercase(),
+                             if obs.is_empty() { String::new() } else { format!(" «{}»", recorta(&obs, 220)) })),
+                &d.referencia, false));
+        }
+        None => paciente.motivo = "Sin derivación de Primaria en sus datos.".into(),
+    }
+    let (accesibilidad, contacto) = (campo(ficha, "accesibilidad"), campo(ficha, "contacto"));
+    let f1 = ficha.referencia.as_str();
+    if !paciente.sexo.is_empty() {
+        campos.push(ficha_campo("cabecera", None, "Sexo", legible(&paciente.sexo), None, f1, false));
+    }
+    if !accesibilidad.is_empty() && accesibilidad != "NINGUNA" {
+        campos.push(ficha_campo("cabecera", None, "Accesibilidad", legible(&accesibilidad), None, f1, true));
+        campos.push(ficha_campo("vida", None, "Accesibilidad", legible(&accesibilidad), None, f1, true));
+    }
+    if !contacto.is_empty() {
+        campos.push(ficha_campo("cabecera", None, "Contacto",
+                                format!("Contacto: {}", contacto.to_lowercase()), None, f1, false));
+        campos.push(ficha_campo("vida", None, "Prefiere que le contacten por",
+                                legible(&contacto), None, f1, true));
+    }
+
+    // pendiente: pruebas programadas y citas por venir, la más próxima primero
+    let mut pendientes: Vec<&FilaRed> = filas_de(filas, "PRUEBAS")
+        .filter(|f| campo(f, "estado") == "PROGRAMADA").collect();
+    pendientes.sort_by_key(|f| fecha_fila(f));
+    let mut citadas: Vec<&FilaRed> = filas_de(filas, "CITAS").filter(|f| campo(f, "estado") == "CITADA").collect();
+    citadas.sort_by_key(|f| fecha_fila(f));
+    let mut faltas: Vec<Hecho> = pendientes.iter()
+        .map(|f| hecho(f, format!("{} programada para el {}", prueba_legible(&campo(f, "tipo")),
+                                  fecha_es(&fecha_fila(f)))))
+        .chain(citadas.iter().map(|f| hecho(f, format!("Cita en {} el {}", campo(f, "servicio"),
+                                                         fecha_es(&fecha_fila(f))))))
+        .collect();
+    faltas.truncate(8);
+
+    let mut pruebas: Vec<&FilaRed> = filas_de(filas, "PRUEBAS").collect();
+    pruebas.sort_by(|a, b| fecha_fila(b).cmp(&fecha_fila(a)));
+    let pruebas: Vec<Hecho> = pruebas.into_iter().take(30)
+        .map(|f| {
+            let (tipo, fecha) = (prueba_legible(&campo(f, "tipo")), fecha_es(&fecha_fila(f)));
+            hecho(f, match campo(f, "estado").as_str() {
+                "REALIZADA" => format!("{} · realizada: el {}, {}", tipo, fecha,
+                    if f.campos["resultado"].as_bool().unwrap_or(false) { "con el resultado disponible" }
+                    else { "sin resultado disponible todavía" }),
+                "PROGRAMADA" => format!("{} · pendiente: programada para el {}", tipo, fecha),
+                "NO_REALIZADA" => format!("{} · no realizada: estaba programada el {}", tipo, fecha),
+                e => format!("{} · {}: {}", tipo, legible(e).to_lowercase(), fecha),
+            })
+        })
+        .collect();
+
+    // qué le ha pasado: las cuentas de toda la historia y los últimos cambios de cita
+    let cuenta = |tabla: &str, k: &str, v: &str| filas_de(filas, tabla).filter(|f| campo(f, k) == v).count();
+    let mut historia = vec![Hecho {
+        id: "cuentas".into(),
+        categoria: "resumen".into(),
+        afirmacion: format!("{} citas desde {}: {} realizadas y {} cerradas sin atenderle. {} pruebas y {} avisos.",
+                            filas_de(filas, "CITAS").count(), desde, cuenta("CITAS", "estado", "REALIZADA"),
+                            cuenta("MOVIMIENTOS_CITAS", "tipo", "NO_REALIZADA"),
+                            filas_de(filas, "PRUEBAS").count(), filas_de(filas, "COMUNICACIONES").count()),
+        cita: None,
+        documento: None,
+        fecha_doc: None,
+        servicio: None,
+    }];
+    let mut movs: Vec<&FilaRed> = filas_de(filas, "MOVIMIENTOS_CITAS").collect();
+    movs.sort_by(|a, b| fecha_fila(b).cmp(&fecha_fila(a)));
+    historia.extend(movs.into_iter().take(5).map(|f| hecho(f, sin_referencias(&f.texto))));
+
+    let mut marcados: Vec<String> = alertas.iter().flat_map(|(_, r)| r.iter().cloned()).collect();
+    marcados.sort();
+    marcados.dedup();
+
+    Some(Resumen {
+        paciente,
+        documentos,
+        desde,
+        hasta,
+        motivo: campos.iter()
+            .find(|c| c.bloque == "por_que_viene" && c.seccion.as_deref() == Some("motivo"))
+            .cloned(),
+        campos,
+        alertas: alertas.iter()
+            .map(|(t, r)| Punto { titulo: t.clone(), detalle: None, documento: r.first().cloned() })
+            .collect(),
+        contradicciones: Vec::new(),
+        faltas,
+        pruebas,
+        historia,
+        no_consta: vec![
+            "Alergias, diagnósticos y medicación: no vienen en los datos que tiene Medicci.".into(),
+            "El valor de los resultados: solo consta si la prueba tiene el resultado disponible.".into(),
+        ],
+        marcados,
+        labs: Vec::new(),
+        labs_docs: (None, None),
+        hb: Vec::new(),
+        hechos,
+    })
 }
 
 // =====================================================================
@@ -1271,6 +1569,36 @@ fn chip(ui: &mut egui::Ui, r: &Resumen, id: &str) {
     if let Some(d) = r.documento(id) {
         resp.on_hover_text(format!("{} · {} · {}", d.tipo, fecha_es(&d.fecha), d.servicio));
     }
+}
+
+fn icono_apagar(p: &egui::Painter, c: Pos2) {
+    let s = trazo(2.0, BLANCO);
+    let arco: Vec<Pos2> = (0..=20)
+        .map(|i| {
+            let a = -std::f32::consts::FRAC_PI_2 + 0.7 + i as f32 / 20.0 * (std::f32::consts::TAU - 1.4);
+            c + vec2(6.5 * a.cos(), 6.5 * a.sin())
+        })
+        .collect();
+    p.add(Shape::line(arco, s));
+    p.line_segment([c + vec2(0.0, -8.0), c + vec2(0.0, -1.5)], s);
+}
+
+fn icono_reiniciar(p: &egui::Painter, c: Pos2) {
+    let s = trazo(2.0, BLANCO);
+    let (desde, hasta) = (-std::f32::consts::FRAC_PI_2 + 0.5,
+                          -std::f32::consts::FRAC_PI_2 + std::f32::consts::TAU - 0.6);
+    let arco: Vec<Pos2> = (0..=20)
+        .map(|i| {
+            let a = desde + (hasta - desde) * i as f32 / 20.0;
+            c + vec2(6.5 * a.cos(), 6.5 * a.sin())
+        })
+        .collect();
+    let fin = *arco.last().unwrap_or(&c);
+    p.add(Shape::line(arco, s));
+    // la punta de la flecha, al final del arco
+    let (t, n) = (vec2(-hasta.sin(), hasta.cos()), vec2(hasta.cos(), hasta.sin()));
+    p.add(Shape::convex_polygon(vec![fin + t * 4.0, fin - t * 1.5 + n * 3.5, fin - t * 1.5 - n * 3.5],
+                                BLANCO, Stroke::NONE));
 }
 
 /// Una fila: el contenido a la izquierda y, si la hay, la fuente a la derecha.
@@ -1611,6 +1939,12 @@ fn lista_pruebas(ui: &mut egui::Ui, r: &Resumen) {
 fn lista_medicacion(ui: &mut egui::Ui, r: &Resumen) {
     let meds = r.de_seccion("medicacion");
     if meds.is_empty() {
+        caja_discontinua(ui, |ui| {
+            rotulo(ui, "Medicación · no consta", GRIS);
+            ui.label(texto("No viene en los datos que tiene Medicci de este paciente: pregúntela en la consulta.",
+                           12.0, TINTA_2, false));
+        });
+        ui.add_space(10.0);
         return;
     }
     rotulo(ui, "Medicación", GRIS);
@@ -2081,6 +2415,9 @@ impl Medicci {
         if copiar {
             ctx.copy_text(texto_nota(&resumen));
             self.datos.registra(&self.usuario, &resumen.paciente.id, "copiar_resumen", None);
+            if self.red.is_some() {
+                self.pedidos.push(Pedido::Registro("copiar_nota"));
+            }
             self.copiado = ahora;
         }
         if let Some(Accion::Tema(t)) = accion {
@@ -2133,6 +2470,21 @@ impl eframe::App for Medicci {
     }
 }
 
+/// Una sola burbuja por usuario: la primera se queda un puerto local y las
+/// demás, al no poder, se cierran. El puerto sale del usuario de Windows, para
+/// que en un mismo servidor (Citrix) cada médico tenga la suya. Al reiniciar,
+/// la nueva espera a que la vieja lo suelte.
+fn una_sola(usuario: &str, esperar: bool) -> Option<std::net::TcpListener> {
+    let puerto = 40000 + usuario.bytes().fold(7u32, |h, b| h.wrapping_mul(31).wrapping_add(b as u32)) % 20000;
+    for _ in 0..if esperar { 50 } else { 1 } {
+        if let Ok(l) = std::net::TcpListener::bind(("127.0.0.1", puerto as u16)) {
+            return Some(l);
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    None
+}
+
 fn main() -> eframe::Result<()> {
     // En Wayland una ventana no puede colocarse sola en la esquina; por
     // XWayland sí, así que en Linux se prefiere X11 cuando lo hay.
@@ -2145,9 +2497,11 @@ fn main() -> eframe::Result<()> {
     let mut paciente: Option<String> = None;
     // adónde mandar las peticiones: --servidor, la variable o medicci.conf (el que diga el hospital)
     let mut url = std::env::var("MEDICCI_SERVIDOR").ok().or_else(|| servidor::de_la_configuracion("MEDICCI_SERVIDOR"));
+    let mut reinicio = false;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
+            "--reinicio" => reinicio = true,
             "--db" => ruta = args.next().map(PathBuf::from),
             "--paciente" => paciente = args.next(),
             "--servidor" => url = args.next(),
@@ -2158,6 +2512,11 @@ fn main() -> eframe::Result<()> {
             _ => {}
         }
     }
+    let usuario = std::env::var("USER").or_else(|_| std::env::var("USERNAME")).unwrap_or_default();
+    let Some(_cerrojo) = una_sola(&usuario, reinicio) else {
+        eprintln!("Medicci ya está abierta.");
+        return Ok(());
+    };
     // Conectada si el servidor responde; si no, sola con su base, como siempre.
     let red = url.map(|u| Servidor::nuevo(&u)).filter(|s| {
         let si = s.responde();
@@ -2221,6 +2580,36 @@ mod pruebas {
         let mut app = Medicci::nuevo(datos, Some(ident.into()), None);
         app.abre_resumen();
         app
+    }
+
+    #[test]
+    fn conectada_el_resumen_sale_de_las_filas_del_servidor() {
+        use serde_json::json;
+        let f = |r: &str, t: &str, campos: serde_json::Value| FilaRed {
+            referencia: r.into(), tabla: t.into(), texto: format!("Fila {}", r), campos,
+        };
+        let filas = vec![
+            f("F1", "PACIENTES", json!({"edad": 60, "sexo": "F", "contacto": "LLAMADA",
+                                        "accesibilidad": "MOVILIDAD_REDUCIDA"})),
+            f("D1", "DERIVACIONES_AP", json!({"fecha": "2025-04-13 10:31:00", "servicio": "Dermatología",
+                                              "prioridad": "PREFERENTE", "motivo": "Reanudar seguimiento",
+                                              "observaciones": "Perdió la cita de revisión"})),
+            f("C1", "CITAS", json!({"fecha": "2025-06-05", "servicio": "Dermatología", "estado": "NO_REALIZADA"})),
+            f("P1", "PRUEBAS", json!({"tipo": "RADIOGRAFIA", "programada": "2025-05-23 09:45:00",
+                                      "realizada": null, "estado": "PROGRAMADA", "resultado": false})),
+        ];
+        let p = Paciente { id: "P0129798".into(), edad: 60, ..Default::default() };
+        let alertas = [("1 cita se cerró sin atenderle.".to_string(), vec!["C1".to_string()])];
+        let r = resumen_de_red(&p, &filas, &alertas).expect("hay resumen");
+        assert_eq!(r.paciente.sexo, "mujer");
+        assert!(r.motivo.as_ref().unwrap().valor.starts_with("Reanudar seguimiento"));
+        assert_eq!(r.documentos.iter().map(|d| d.id.as_str()).collect::<Vec<_>>(), ["C1", "P1", "D1"]);
+        assert_eq!(r.alertas[0].documento.as_deref(), Some("C1"));
+        assert!(r.marcados.contains(&"C1".to_string()));
+        assert!(r.faltas[0].afirmacion.starts_with("Radiografía programada para el 23/05/2025"));
+        assert!(r.pruebas[0].afirmacion.starts_with("Radiografía · pendiente"));
+        assert!(r.para_la_consulta().iter().any(|c| c.valor == "Movilidad reducida"));
+        assert!(resumen_de_red(&p, &[], &alertas).is_none(), "sin datos no hay resumen");
     }
 
     #[test]

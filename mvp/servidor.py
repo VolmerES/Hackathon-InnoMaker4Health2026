@@ -7,10 +7,15 @@ Solo usa la biblioteca estándar (y duckdb). En producción sería FastAPI detr�
 de Caddy; la API es la misma.
 
 API de Medicci (lo que llamaría la pestaña desde HCIS):
-    POST /api/sesion                    {nhc}    → abre sesión atada a ese paciente
-    GET  /api/sesion/<id>/tarjeta                → «3 cosas antes de que entre»
-    POST /api/sesion/<id>/pregunta      {texto}  → respuesta con sus fuentes
-    GET  /api/estado                             → si el modelo local responde
+    POST /api/sesion                    {nhc, medico}  → abre sesión atada a ese paciente y a ese médico
+    GET  /api/sesion/<id>/tarjeta                      → «3 cosas antes de que entre»
+    GET  /api/sesion/<id>/filas                        → sus datos, para el resumen de la burbuja
+    POST /api/sesion/<id>/pregunta      {texto}        → respuesta con sus fuentes
+    POST /api/sesion/<id>/registro      {accion}       → lo que hace en pantalla (ampliar, copiar…)
+    GET  /api/estado                                   → si el modelo local responde
+
+Sin médico no se abre ningún paciente, y todo lo que ve queda en el registro de
+accesos (mvp/registro.py), encadenado para que no se pueda tocar sin que se note.
 
 Lo que hace de HCIS en la demo (en el hospital es el propio HCIS):
     GET  /api/hcis/agenda                        → la agenda del día
@@ -19,6 +24,9 @@ Lo que hace de HCIS en la demo (en el hospital es el propio HCIS):
 Con --datos hl7 arranca con la copia vacía y un receptor MLLP (puerto 2575):
 los datos llegan como mensajes HL7 (mvp/hl7_emisor.py hace de HCIS).
     GET  /api/hl7/ultimos                        → los últimos mensajes recibidos
+
+Para el panel de la demo (web/registro.html):
+    GET  /api/registro?medico=&paciente=          → el registro de accesos y si la cadena está entera
 """
 
 import argparse
@@ -28,7 +36,9 @@ import threading
 import time
 import urllib.request
 import uuid
+from collections import Counter
 from datetime import datetime
+from urllib.parse import parse_qs, urlparse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -36,12 +46,14 @@ from agenda import elegir_agenda
 from config import valor
 from alertas import tarjeta
 from paciente import cargar, cargar_vacia, datos_del_paciente
+from registro import Registro, comprobar as comprobar_registro, leer as leer_registro
 from responder import MODELO, URL, responder
 
 AQUI = Path(__file__).resolve().parent
 WEB = AQUI / "web"
 FUENTES = AQUI.parent / "medicci-rs" / "fuentes"     # Noto Sans, las mismas que la burbuja
-REGISTRO = AQUI / "resultados" / "registro.jsonl"
+# Lo que se puede apuntar desde la pantalla, además de lo que ya ve el servidor
+ACCIONES = {"ampliar_resumen", "copiar_nota", "ver_pestana", "cerrar"}
 
 
 class Medicci:
@@ -49,7 +61,8 @@ class Medicci:
         print("Cargando los datos…" if datos == "csv" else "Copia vacía: esperando mensajes HL7…", flush=True)
         self.con = cargar() if datos == "csv" else cargar_vacia()
         self.cerrojo = threading.Lock()       # DuckDB: una consulta a la vez en esta conexión
-        self.sesiones: dict[str, str] = {}
+        self.sesiones: dict[str, dict] = {}    # sesión → paciente, médico y lo último que vio
+        self.registro = Registro()
         self.hl7_recibidos: list[dict] = []   # los últimos mensajes, para enseñarlos en la demo
         self._agenda: list[dict] = []
         self._agenda_fija = datos == "csv"
@@ -72,7 +85,7 @@ class Medicci:
             with self.cerrojo:
                 self._version_agenda = self._version
                 self._agenda = elegir_agenda(self.con, lambda n: datos_del_paciente(self.con, n))
-        if len(self._agenda) == 8 and time.monotonic() - self._ultimo_hl7 > 3:
+        if len(self._agenda) >= 8 and time.monotonic() - self._ultimo_hl7 > 3:
             self._agenda_fija = True
         return self._agenda
 
@@ -92,11 +105,10 @@ class Medicci:
         por_ref = {f.ref: f for f in filas}
         return [{"ref": r, "texto": por_ref[r].texto} for r in refs if r in por_ref]
 
-    def registrar(self, **datos):
-        REGISTRO.parent.mkdir(exist_ok=True)
-        with REGISTRO.open("a", encoding="utf-8") as f:
-            f.write(json.dumps({"hora": datetime.now().isoformat(timespec="seconds"), **datos},
-                               ensure_ascii=False) + "\n")
+    def registrar(self, sesion: str, accion: str, **datos):
+        s = self.sesiones.get(sesion, {})
+        self.registro.apunta(medico=s.get("medico"), paciente=s.get("nhc"), sesion=sesion,
+                             origen=s.get("origen"), accion=accion, **datos)
 
 
 class Peticion(SimpleHTTPRequestHandler):
@@ -134,10 +146,11 @@ class Peticion(SimpleHTTPRequestHandler):
         return datos if isinstance(datos, dict) else {}
 
     def _sesion(self, partes):
-        nhc = self.medicci.sesiones.get(partes[2]) if len(partes) > 3 else None
-        if not nhc:
+        s = self.medicci.sesiones.get(partes[2]) if len(partes) > 3 else None
+        if not s:
             self._json(404, {"error": "Sesión desconocida: vuelva a abrir al paciente."})
-        return nhc
+            return None
+        return s["nhc"]
 
     def do_GET(self):
         partes = self.path.split("?")[0].strip("/").split("/")
@@ -155,6 +168,19 @@ class Peticion(SimpleHTTPRequestHandler):
             return self._json(200, m.agenda)
         if partes[1:] == ["hl7", "ultimos"]:
             return self._json(200, m.hl7_recibidos)
+        if partes[1:] == ["registro"]:
+            # Para el panel de la demo. En el hospital solo lo abre quien audita
+            # (el delegado de protección de datos), con su propio usuario.
+            q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+            todas = leer_registro(m.registro.ruta)
+            fallos = comprobar_registro(todas)
+            lineas = [l for l in todas if (not q.get("medico") or l.get("medico") == q["medico"])
+                      and (not q.get("paciente") or l.get("paciente") == q["paciente"])]
+            return self._json(200, {
+                "lineas": lineas[::-1][:int(q.get("limite") or 300)], "total": len(lineas),
+                "medicos": Counter(l.get("medico") for l in todas if l.get("medico")).most_common(),
+                "pacientes": len({l.get("paciente") for l in todas if l.get("paciente")}),
+                "cadena": {"encadenadas": sum("huella" in l for l in todas), "fallos": fallos}})
         if partes[1:3] == ["hcis", "paciente"] and len(partes) == 4:
             filas = m.filas(partes[3])
             if not filas:
@@ -170,22 +196,43 @@ class Peticion(SimpleHTTPRequestHandler):
             t = tarjeta(filas)
             for a in t["alertas"]:
                 a["fuentes"] = m.fuentes(filas, a["fuentes"])
-            m.registrar(sesion=partes[2], paciente=nhc, accion="tarjeta",
-                        alertas=[a["tipo"] for a in t["alertas"]])
+            # se pide cada pocos segundos: se apunta la primera vez y cada vez que cambia
+            vista = [a["texto"] for a in t["alertas"]]
+            if m.sesiones[partes[2]].get("tarjeta") != vista:
+                m.sesiones[partes[2]]["tarjeta"] = vista
+                m.registrar(partes[2], "tarjeta", alertas=vista,
+                            fuentes=[f["ref"] for a in t["alertas"] for f in a["fuentes"]])
             return self._json(200, t)
+        if partes[1] == "sesion" and partes[-1] == "filas":
+            nhc = self._sesion(partes)
+            if not nhc:
+                return
+            filas = [f for f in m.filas(nhc) if not f.campos.get("vacia")]
+            m.registrar(partes[2], "resumen", filas=len(filas))
+            return self._json(200, {"filas": [{"ref": f.ref, "tabla": f.tabla, "texto": f.texto,
+                                               "campos": f.campos} for f in filas]})
         self._json(404, {"error": "No existe"})
 
     def do_POST(self):
         partes = self.path.strip("/").split("/")
         m = self.medicci
         if partes[:2] == ["api", "sesion"] and len(partes) == 2:
-            nhc = str(self._cuerpo().get("nhc", "")).strip()
+            cuerpo = self._cuerpo()
+            nhc = str(cuerpo.get("nhc", "")).strip()
+            # El médico lo pone HCIS (la pestaña) o la sesión de Windows (la burbuja).
+            # En el hospital vendría firmado por el inicio de sesión único, no escrito.
+            medico = str(cuerpo.get("medico") or self.headers.get("X-Medicci-Medico") or "").strip()[:80]
+            if not medico:
+                return self._json(401, {"error": "No sé qué médico es: Medicci solo abre pacientes "
+                                                 "a un usuario identificado en HCIS."})
             filas = m.filas(nhc) if nhc else []
             if not filas:
                 return self._json(404, {"error": f"No hay datos del paciente {nhc or '(vacío)'}."})
             sesion = uuid.uuid4().hex[:12]
-            m.sesiones[sesion] = nhc                  # la sesión queda atada a este paciente
-            m.registrar(sesion=sesion, paciente=nhc, accion="abrir")
+            # la sesión queda atada a este paciente y a este médico
+            m.sesiones[sesion] = {"nhc": nhc, "medico": medico,
+                                  "origen": str(cuerpo.get("origen") or "")[:20] or None}
+            m.registrar(sesion, "abrir", equipo=self.client_address[0])
             ficha = filas[0].campos
             return self._json(200, {"sesion": sesion, "nhc": nhc, "edad": ficha.get("edad"),
                                     "filas": len(filas)})
@@ -202,10 +249,19 @@ class Peticion(SimpleHTTPRequestHandler):
                 r = responder(filas, texto, self.url_modelo, self.modelo)
             except Exception as e:
                 return self._json(503, {"error": f"El modelo local no responde ({e.__class__.__name__})."})
-            m.registrar(sesion=partes[2], paciente=nhc, accion="pregunta", pregunta=texto,
+            m.registrar(partes[2], "pregunta", pregunta=texto, respuesta=r.respuesta, consta=r.consta,
                         fuentes=r.fuentes, segundos=round(time.perf_counter() - inicio, 2))
             return self._json(200, {"respuesta": r.respuesta, "consta": r.consta,
                                     "fuentes": m.fuentes(r.usadas, r.fuentes), "segundos": round(r.segundos, 1)})
+        if partes[:2] == ["api", "sesion"] and partes[-1] == "registro":
+            if not self._sesion(partes):
+                return
+            cuerpo = self._cuerpo()
+            accion = str(cuerpo.get("accion", ""))
+            if accion not in ACCIONES:
+                return self._json(400, {"error": "Acción desconocida"})
+            m.registrar(partes[2], accion, detalle=str(cuerpo.get("detalle") or "")[:200] or None)
+            return self._json(200, {"ok": True})
         self._json(404, {"error": "No existe"})
 
 

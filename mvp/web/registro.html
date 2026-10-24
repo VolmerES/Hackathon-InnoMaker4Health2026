@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medicci · Registro de accesos</title>
+<style>
+@font-face{font-family:Noto;src:url(/fuentes/NotoSans-Regular.ttf)}
+@font-face{font-family:Noto;font-weight:bold;src:url(/fuentes/NotoSans-Bold.ttf)}
+:root{--verde:#1a5c44;--osc:#0e2d20;--crema:#f6f3ec;--oro:#d9a32b;--linea:#e2ddd0;--gris:#6b7280;--rojo:#b42318}
+*{box-sizing:border-box}
+body{margin:0;background:var(--crema);color:#1d2a24;font:13px/1.45 Noto,Verdana,sans-serif}
+header{background:var(--osc);color:#fff;padding:12px 18px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+header b{font-size:15px;letter-spacing:.04em}
+header span{color:#b9d3c6;font-size:12px}
+nav{margin-left:auto;display:flex;gap:14px}
+nav a{color:var(--oro);font-size:12px;text-decoration:none}
+nav a[aria-current]{color:#fff;font-weight:bold}
+main{padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.cifras{display:flex;gap:10px;flex-wrap:wrap}
+.cifra{background:#fff;border:1px solid var(--linea);border-radius:10px;padding:10px 14px;min-width:130px}
+.cifra b{display:block;font-size:22px;color:var(--verde)}
+.cifra small{color:var(--gris)}
+.cadena{border-radius:10px;padding:10px 14px;font-weight:bold;display:flex;gap:8px;align-items:center}
+.cadena.ok{background:#e4f2ea;color:#14532d;border:1px solid #b7dcc6}
+.cadena.mal{background:#fde8e6;color:var(--rojo);border:1px solid #f3b8b1}
+.cadena small{font-weight:normal;color:inherit;opacity:.8}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input,button{font:inherit;padding:6px 10px;border:1px solid var(--linea);border-radius:8px;background:#fff}
+button{cursor:pointer;color:var(--verde);font-weight:bold}
+.tabla{background:#fff;border:1px solid var(--linea);border-radius:10px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{position:sticky;top:0;background:#faf8f3;text-align:left;padding:8px 10px;border-bottom:1px solid var(--linea);color:var(--gris);font-weight:bold;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid #f0ece2;vertical-align:top}
+tr.nuevo td{animation:luz 2.5s ease-out}
+@keyframes luz{from{background:#fdf1d3}to{background:transparent}}
+td.hora{white-space:nowrap;color:var(--gris);font-variant-numeric:tabular-nums}
+td.quien{white-space:nowrap;font-weight:bold}
+td.quien small{display:block;font-weight:normal;color:var(--gris)}
+.accion{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11.5px;font-weight:bold;background:#eef1ef;color:#334;white-space:nowrap}
+.accion.abrir{background:#e4f2ea;color:#14532d}.accion.pregunta{background:#e8f0fb;color:#1e4e8c}
+.accion.tarjeta{background:#fdf1d3;color:#7a5600}.accion.resumen,.accion.ampliar_resumen{background:#efe9fb;color:#4c2c8c}
+.accion.copiar_nota{background:#fde8e6;color:var(--rojo)}
+a.pac{color:var(--verde);font-weight:bold;text-decoration:none;cursor:pointer}
+.det small{color:var(--gris)}
+.ref{font:11px monospace;color:var(--verde);background:#eef5f1;border-radius:3px;padding:0 4px;margin-right:3px}
+.vacio{color:var(--gris);padding:18px}
+.aviso{font-size:12px;color:var(--gris)}
+</style>
+</head>
+<body>
+<header><b>MEDICCI · registro de accesos</b>
+  <span>Quién ha mirado a qué paciente, cuándo y qué vio. Solo se añaden líneas, y cada una lleva la huella de la anterior.</span>
+  <nav><a href="/?paciente=primera">HCIS · pacientes</a><a href="/hl7.html">Mensajes HL7</a><a href="/registro.html" aria-current="page">Registro de accesos</a></nav>
+</header>
+<main>
+  <div class="cifras">
+    <div class="cadena ok" id="cadena">Comprobando la cadena…</div>
+    <div class="cifra"><b id="n-lineas">–</b><small>accesos registrados</small></div>
+    <div class="cifra"><b id="n-medicos">–</b><small>médicos</small></div>
+    <div class="cifra"><b id="n-pacientes">–</b><small>pacientes consultados</small></div>
+    <div class="cifra"><b id="n-preguntas">–</b><small>preguntas a la IA</small></div>
+  </div>
+  <div class="filtros">
+    <select id="f-medico"><option value="">Todos los médicos</option></select>
+    <input id="f-paciente" placeholder="NHC, p. ej. P0129798" size="22">
+    <button type="button" id="f-limpiar">Quitar filtros</button>
+    <span class="aviso" id="f-aviso"></span>
+  </div>
+  <div class="tabla">
+    <table>
+      <thead><tr><th>Hora</th><th>Médico</th><th>Paciente</th><th>Qué hizo</th><th>Qué vio</th></tr></thead>
+      <tbody id="filas"><tr><td colspan="5" class="vacio">Aún no hay accesos: abra un paciente en HCIS.</td></tr></tbody>
+    </table>
+  </div>
+  <p class="aviso">En el hospital este panel solo lo abre quien audita, con su usuario; el médico no puede
+    borrar ni cambiar líneas. <code>python mvp/registro.py --comprobar</code> hace la misma comprobación desde la consola.</p>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const NOMBRE = {abrir: "Abre el paciente", tarjeta: "Ve la tarjeta", resumen: "Abre el resumen",
+                pregunta: "Pregunta a la IA", ampliar_resumen: "Amplía el resumen", copiar_nota: "Copia a la nota clínica",
+                ver_pestana: "Cambia de pestaña", cerrar: "Cierra"};
+const ORIGEN = {pestana: "pestaña en HCIS", burbuja: "burbuja de escritorio", prueba: "comprobación"};
+const refs = l => (l || []).slice(0, 6).map(r => `<span class="ref">${esc(r)}</span>`).join("")
+                  + ((l || []).length > 6 ? `<small>y ${l.length - 6} más</small>` : "");
+
+function vio(l) {
+  switch (l.accion) {
+    case "pregunta": return `«${esc(l.pregunta)}»<br><small>${esc(l.respuesta)}</small><br>${refs(l.fuentes)}`;
+    case "tarjeta": return (l.alertas || []).map(esc).join("<br>") || "<small>Nada que destacar</small>";
+    case "resumen": return `${esc(l.filas)} filas de su historia`;
+    case "abrir": return `<small>desde ${esc(ORIGEN[l.origen] || l.origen || "¿?")} · equipo ${esc(l.equipo)}</small>`;
+    default: return `<small>${esc(l.detalle || "")}</small>`;
+  }
+}
+
+let vistas = new Set(), primera = true;
+async function pinta() {
+  const q = new URLSearchParams();
+  if ($("#f-medico").value) q.set("medico", $("#f-medico").value);
+  if ($("#f-paciente").value.trim()) q.set("paciente", $("#f-paciente").value.trim().toUpperCase());
+  const d = await fetch("/api/registro?" + q).then(r => r.json()).catch(() => null);
+  if (!d) return;
+  const c = d.cadena;
+  $("#cadena").className = "cadena " + (c.fallos.length ? "mal" : "ok");
+  $("#cadena").innerHTML = c.fallos.length
+    ? `✗ ${c.fallos.length} líneas no cuadran <small>${esc(c.fallos[0])}</small>`
+    : `✓ Cadena íntegra <small>${c.encadenadas} líneas, ninguna tocada</small>`;
+  $("#n-lineas").textContent = d.total;
+  $("#n-medicos").textContent = d.medicos.length;
+  $("#n-pacientes").textContent = d.pacientes;
+  $("#n-preguntas").textContent = d.lineas.filter(l => l.accion === "pregunta").length;
+  const sel = $("#f-medico"), elegido = sel.value;
+  sel.innerHTML = `<option value="">Todos los médicos</option>` + d.medicos.map(([m, n]) =>
+    `<option value="${esc(m)}"${m === elegido ? " selected" : ""}>${esc(m)} · ${n}</option>`).join("");
+  $("#f-aviso").textContent = d.total > d.lineas.length ? `Se ven las ${d.lineas.length} más recientes de ${d.total}.` : "";
+  if (!d.lineas.length) {
+    $("#filas").innerHTML = `<tr><td colspan="5" class="vacio">Nada con estos filtros.</td></tr>`;
+    return;
+  }
+  $("#filas").innerHTML = d.lineas.map(l => {
+    const clave = l.huella || l.hora + l.accion;
+    const nueva = !primera && !vistas.has(clave);
+    vistas.add(clave);
+    return `<tr class="${nueva ? "nuevo" : ""}">
+      <td class="hora">${esc(new Date(l.hora).toLocaleString("es-ES"))}</td>
+      <td class="quien">${esc(l.medico || "¿?")}<small>${esc(ORIGEN[l.origen] || l.origen || "")}</small></td>
+      <td><a class="pac" data-nhc="${esc(l.paciente)}">${esc(l.paciente)}</a></td>
+      <td><span class="accion ${esc(l.accion)}">${esc(NOMBRE[l.accion] || l.accion)}</span></td>
+      <td class="det">${vio(l)}</td></tr>`;
+  }).join("");
+  primera = false;
+}
+$("#filas").onclick = e => { const a = e.target.closest(".pac"); if (a) { $("#f-paciente").value = a.dataset.nhc; pinta(); } };
+$("#f-medico").onchange = pinta;
+$("#f-paciente").oninput = pinta;
+$("#f-limpiar").onclick = () => { $("#f-medico").value = ""; $("#f-paciente").value = ""; pinta(); };
+pinta(); setInterval(pinta, 2000);
+</script>
+</body>
+</html>

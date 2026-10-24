@@ -14,12 +14,13 @@ TABLAS = [
 ]
 
 
-def conectar() -> duckdb.DuckDBPyConnection:
+def conectar(extra: tuple[Path, ...] = ()) -> duckdb.DuckDBPyConnection:
+    """Con `extra`, otras carpetas con los mismos CSV se suman a las de DATA."""
     con = duckdb.connect()
     for t in TABLAS:
-        ruta = (DATA / f"{t}.csv").as_posix()
+        rutas = [(d / f"{t}.csv").as_posix() for d in (DATA, *extra)]
         con.execute(
             f"CREATE VIEW {t.lower()} AS "
-            f"SELECT * FROM read_csv('{ruta}', header=true, sample_size=-1)"
+            f"SELECT * FROM read_csv({rutas}, header=true, sample_size=-1, union_by_name=true)"
         )
     return con

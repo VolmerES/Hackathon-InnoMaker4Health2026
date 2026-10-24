@@ -11,6 +11,9 @@ body{margin:0;background:#0e1a24;color:#d7e3ec;font:13px/1.45 Verdana,Tahoma,Ari
 header{background:var(--azul);color:#fff;padding:10px 16px;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
 header b{font-size:15px;letter-spacing:.04em}
 header span{color:#cfe2f1;font-size:12px}
+nav{margin-left:auto;display:flex;gap:14px}
+nav a{color:#f0c060;font-size:12px;text-decoration:none}
+nav a[aria-current]{color:#fff;font-weight:bold}
 main{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
 .m{background:#15263a;border:1px solid #24405e;border-radius:6px;padding:8px 10px}
 .m.nuevo{border-color:#f0a020;box-shadow:0 0 0 1px #f0a020}
@@ -25,7 +28,8 @@ pre{margin:6px 0 0;padding:6px 8px;background:#0b1520;border-radius:4px;overflow
 </head>
 <body>
 <header><b>MEDICCI · mensajes HL7 recibidos</b>
-  <span>HCIS → motor de integración → Medicci (MLLP, puerto 2575) · Medicci solo lee y contesta ACK</span></header>
+  <span>HCIS → motor de integración → Medicci (MLLP, puerto 2575) · Medicci solo lee y contesta ACK</span>
+  <nav><a href="/?paciente=primera">HCIS · pacientes</a><a href="/hl7.html" aria-current="page">Mensajes HL7</a><a href="/registro.html">Registro de accesos</a></nav></header>
 <main id="lista"><p class="vacio">Esperando mensajes… (python mvp/hl7_emisor.py)</p></main>
 <script>
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));

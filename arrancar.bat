@@ -51,6 +51,7 @@ docker compose %COMPOSE% run --rm --no-deps emisor --comprobar
 start "" "http://localhost:8000/?paciente=primera"
 echo.
 echo   Listo: http://localhost:8000   ·   mensajes HL7: http://localhost:8000/hl7.html
+echo          registro de accesos: http://localhost:8000/registro.html
 echo   En directo: docker compose -f mvp\docker-compose.yml run --rm --no-deps emisor --evento resultado
 echo   Para pararlo: docker compose -f mvp\docker-compose.yml down
 echo.

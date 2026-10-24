@@ -4,6 +4,9 @@
 //!
 //! Las llamadas van en otro hilo para que la burbuja no se congele mientras
 //! contesta el modelo; lo que llega se recoge en cada fotograma.
+//!
+//! Cada sesión va a nombre del médico (el usuario de Windows): el servidor
+//! apunta en su registro de accesos todo lo que abre, ve y pregunta.
 
 use eframe::egui;
 use serde_json::{json, Value};
@@ -21,8 +24,17 @@ pub struct Alerta {
     pub fuentes: Vec<Fuente>,
 }
 
+/// Una fila de los datos del paciente, tal como la ve el modelo, con sus campos.
+pub struct FilaRed {
+    pub referencia: String,
+    pub tabla: String,
+    pub texto: String,
+    pub campos: Value,
+}
+
 pub enum Llega {
     Sesion { sesion: String, nhc: String, edad: i64, filas: i64 },
+    Filas { sesion: String, filas: Vec<FilaRed> },
     Tarjeta { sesion: String, alertas: Vec<Alerta>, mas: i64 },
     Respuesta { texto: String, consta: bool, fuentes: Vec<Fuente>, segundos: f64 },
     Fallo(String),
@@ -79,6 +91,28 @@ fn tarjeta(base: &str, sesion: &str) -> Llega {
                 })
                 .unwrap_or_default(),
             mas: v["mas"].as_i64().unwrap_or(0),
+        },
+        Err(e) => Llega::Fallo(e),
+    }
+}
+
+fn filas(base: &str, sesion: &str) -> Llega {
+    match leer(agente(30).get(&format!("{base}/api/sesion/{sesion}/filas")).call()) {
+        Ok(v) => Llega::Filas {
+            sesion: sesion.to_string(),
+            filas: v["filas"]
+                .as_array()
+                .map(|a| {
+                    a.iter()
+                        .map(|f| FilaRed {
+                            referencia: f["ref"].as_str().unwrap_or_default().to_string(),
+                            tabla: f["tabla"].as_str().unwrap_or_default().to_string(),
+                            texto: f["texto"].as_str().unwrap_or_default().to_string(),
+                            campos: f["campos"].clone(),
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
         },
         Err(e) => Llega::Fallo(e),
     }
@@ -142,10 +176,11 @@ impl Servidor {
         });
     }
 
-    /// Abre una sesión atada al paciente y trae su tarjeta.
-    pub fn abrir(&self, ctx: &egui::Context, nhc: String) {
+    /// Abre una sesión atada al paciente y al médico, y trae su tarjeta y sus datos.
+    pub fn abrir(&self, ctx: &egui::Context, nhc: String, medico: String) {
         self.en_hilo(ctx, move |base| {
-            let s = match leer(agente(15).post(&format!("{base}/api/sesion")).send_json(json!({ "nhc": nhc }))) {
+            let cuerpo = json!({ "nhc": nhc, "medico": medico, "origen": "burbuja" });
+            let s = match leer(agente(15).post(&format!("{base}/api/sesion")).send_json(cuerpo)) {
                 Ok(v) => v,
                 Err(e) => return vec![Llega::Fallo(e)],
             };
@@ -158,7 +193,22 @@ impl Servidor {
                     filas: s["filas"].as_i64().unwrap_or(0),
                 },
                 tarjeta(base, &sesion),
+                filas(base, &sesion),
             ]
+        });
+    }
+
+    /// Vuelve a traer los datos: ha llegado algo nuevo por HL7.
+    pub fn filas(&self, ctx: &egui::Context, sesion: String) {
+        self.en_hilo(ctx, move |base| vec![filas(base, &sesion)]);
+    }
+
+    /// Apunta en el registro de accesos lo que el médico hace en pantalla.
+    pub fn registra(&self, ctx: &egui::Context, sesion: String, accion: &'static str) {
+        self.en_hilo(ctx, move |base| {
+            let _ = agente(5).post(&format!("{base}/api/sesion/{sesion}/registro"))
+                .send_json(json!({ "accion": accion }));
+            Vec::new()
         });
     }
 
@@ -198,7 +248,7 @@ mod pruebas {
         let s = Servidor::nuevo(&url);
         assert!(s.responde(), "no hay servidor en {}", url);
         let ctx = egui::Context::default();
-        s.abrir(&ctx, nhc("129798"));
+        s.abrir(&ctx, nhc("129798"), "prueba-burbuja".into());
         let Llega::Sesion { sesion, nhc, edad, .. } = espera(&s) else { panic!("esperaba la sesión") };
         println!("sesión {} · {} · {} años", sesion, nhc, edad);
         let Llega::Tarjeta { alertas, .. } = espera(&s) else { panic!("esperaba la tarjeta") };
@@ -206,6 +256,9 @@ mod pruebas {
             println!("  • {}  [{}]", a.texto, a.fuentes.iter().map(|f| f.referencia.as_str()).collect::<Vec<_>>().join(", "));
         }
         assert!(!alertas.is_empty());
+        let Llega::Filas { filas, .. } = espera(&s) else { panic!("esperaba los datos") };
+        println!("  {} filas", filas.len());
+        assert!(filas.iter().any(|f| f.tabla == "PACIENTES"));
         s.preguntar(&ctx, sesion, "¿Tiene alergias?".into());
         let Llega::Respuesta { texto, consta, .. } = espera(&s) else { panic!("esperaba la respuesta") };
         println!("  ¿Tiene alergias? → {}", texto);
