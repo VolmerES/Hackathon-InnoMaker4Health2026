@@ -17,6 +17,7 @@ import urllib.request
 from datetime import datetime, timedelta
 
 import hl7
+from config import valor
 from agenda import elegir_agenda
 from alertas import tarjeta
 from paciente import cargar, datos_del_paciente
@@ -133,14 +134,14 @@ def evento(con, nhc: str, cual: str) -> str:
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--host", default="localhost")
-    ap.add_argument("--puerto", type=int, default=2575)
+    ap.add_argument("--host", default=valor("MEDICI_HL7_HOST", "localhost"))
+    ap.add_argument("--puerto", type=int, default=int(valor("MEDICI_HL7_PUERTO", "2575")))
     ap.add_argument("--evento", choices=["anular", "resultado"])
     ap.add_argument("--nhc", help="por defecto, la primera de la agenda (María)")
     ap.add_argument("--ver", action="store_true", help="enseña cada mensaje entero")
     ap.add_argument("--pausa", type=float, default=0.0, help="segundos entre mensajes")
     ap.add_argument("--comprobar", action="store_true", help="compara después la tarjeta de Medici con la de los CSV")
-    ap.add_argument("--api", default="http://localhost:8000/api")
+    ap.add_argument("--api", default=valor("MEDICI_SERVIDOR", "http://localhost:8000").rstrip("/") + "/api")
     args = ap.parse_args()
 
     con = cargar()

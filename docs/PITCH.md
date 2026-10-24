@@ -263,6 +263,12 @@ funciona con la estructura de datos del hospital, no para medir el problema.
   los estándar. En el piloto se ajusta al perfil de mensajes de Informática ⚠️.
 - **«¿Y si nuestro HCIS no va en el navegador?»** Entonces Medici es la burbuja
   de escritorio, que se pone encima de cualquier ventana. Es el mismo servidor.
+- **«¿Y si el pliego dice que va en otro sitio?»** Va donde diga: en el CPD del
+  hospital, en el de la Comunidad o en la nube del pliego. El modelo, el
+  servidor y el receptor HL7 se apuntan en un único fichero, sin tocar código.
+  Lo que hay que decir con honestidad: si el pliego pone el modelo fuera del
+  hospital, los datos llegan hasta allí. Nuestra propuesta es que se quede
+  dentro.
 - **«¿Qué servidor hace falta?»** Un Mac mini para un servicio, o un DGX Spark
   de unos 4.700 € para muchos médicos. La capacidad exacta, con una prueba de
   carga antes del piloto ⚠️.

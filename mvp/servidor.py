@@ -23,7 +23,6 @@ los datos llegan como mensajes HL7 (mvp/hl7_emisor.py hace de HCIS).
 
 import argparse
 import json
-import os
 import sys
 import threading
 import time
@@ -34,6 +33,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from agenda import elegir_agenda
+from config import valor
 from alertas import tarjeta
 from paciente import cargar, cargar_vacia, datos_del_paciente
 from responder import MODELO, URL, responder
@@ -212,13 +212,13 @@ class Peticion(SimpleHTTPRequestHandler):
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--puerto", type=int, default=8000)
+    ap.add_argument("--host", default=valor("MEDICI_ESCUCHA", "127.0.0.1"))
+    ap.add_argument("--puerto", type=int, default=int(valor("MEDICI_PUERTO", "8000")))
     ap.add_argument("--url", default=URL, help="servidor del modelo, compatible con OpenAI")
     ap.add_argument("--modelo", default=MODELO)
-    ap.add_argument("--datos", choices=["csv", "hl7"], default=os.environ.get("MEDICI_DATOS", "csv"),
+    ap.add_argument("--datos", choices=["csv", "hl7"], default=valor("MEDICI_DATOS", "csv"),
                     help="csv: lee los CSV; hl7: copia vacía que se llena con mensajes HL7")
-    ap.add_argument("--hl7-puerto", type=int, default=2575)
+    ap.add_argument("--hl7-puerto", type=int, default=int(valor("MEDICI_HL7_PUERTO", "2575")))
     args = ap.parse_args()
 
     Peticion.medici = Medici(args.datos)

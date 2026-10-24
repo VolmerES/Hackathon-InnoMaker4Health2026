@@ -94,6 +94,33 @@ pub fn nhc(ident: &str) -> String {
     }
 }
 
+/// Una clave de medici.conf (CLAVE=valor; # comenta). El fichero lo pone
+/// Informática al lado del ejecutable: así se le dice a la burbuja adónde
+/// mandar las peticiones sin tocar nada más.
+pub fn leer_clave(texto: &str, clave: &str) -> Option<String> {
+    texto.lines().find_map(|linea| {
+        let linea = linea.split(" #").next().unwrap_or("").trim();
+        let (k, v) = linea.split_once('=')?;
+        (k.trim() == clave && !v.trim().is_empty()).then(|| v.trim().to_string())
+    })
+}
+
+/// Busca medici.conf al lado del ejecutable, en la carpeta de arranque y en la
+/// de arriba (la raíz del repositorio, cuando se arranca con just).
+pub fn de_la_configuracion(clave: &str) -> Option<String> {
+    let mut sitios = Vec::new();
+    if let Some(dir) = std::env::current_exe().ok().as_deref().and_then(|e| e.parent()) {
+        sitios.push(dir.join("medici.conf"));
+    }
+    if let Ok(dir) = std::env::current_dir() {
+        sitios.push(dir.join("medici.conf"));
+        sitios.push(dir.join("..").join("medici.conf"));
+    }
+    sitios.iter()
+        .filter_map(|ruta| std::fs::read_to_string(ruta).ok())
+        .find_map(|texto| leer_clave(&texto, clave))
+}
+
 impl Servidor {
     pub fn nuevo(base: &str) -> Self {
         let (tx, rx) = channel();
@@ -191,5 +218,16 @@ mod pruebas {
             assert_eq!(nhc(ident), "P0129798", "{}", ident);
         }
         assert_eq!(nhc("PAC-00417"), "PAC-00417");
+    }
+
+    #[test]
+    fn la_direccion_sale_de_medici_conf() {
+        let texto = "# comentario
+# MEDICI_SERVIDOR=http://no
+MEDICI_URL=http://modelo:11434/v1
+                     MEDICI_SERVIDOR = https://medici.hospital.local  # del pliego
+";
+        assert_eq!(leer_clave(texto, "MEDICI_SERVIDOR").as_deref(), Some("https://medici.hospital.local"));
+        assert_eq!(leer_clave(texto, "MEDICI_CLAVE"), None);
     }
 }

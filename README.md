@@ -47,6 +47,15 @@ tarjetas salen bien y abre el navegador con María. Sin GPU de NVIDIA también
 funciona, pero más lento. Con el modelo ya descargado tarda **unos 30
 segundos**.
 
+**Dónde está cada cosa:** en una licitación, dónde se instala Medici lo decide
+quien licita (el CPD del hospital, el de la Comunidad, la nube del pliego).
+Todas las direcciones van en **un único fichero, `medici.conf`**: el modelo de
+IA (con su clave si la pide), dónde escucha el servidor y el receptor HL7, y
+adónde llaman la burbuja y el emisor. Se copia de
+[`medici.conf.ejemplo`](medici.conf.ejemplo), se cambian las líneas y no se
+toca código. Una variable de entorno con el mismo nombre manda sobre el
+fichero.
+
 La burbuja de escritorio, conectada al mismo servidor: `just conectada 129798`
 (ver [`medicci-rs/`](medicci-rs/README.md)).
 

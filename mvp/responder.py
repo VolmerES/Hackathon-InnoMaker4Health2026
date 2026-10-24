@@ -14,8 +14,12 @@ from dataclasses import dataclass, field
 
 from paciente import Fila, formatear
 
-URL = os.environ.get("MEDICI_URL", "http://localhost:11434/v1")
-MODELO = os.environ.get("MEDICI_MODELO", "qwen3:8b")
+from config import valor
+
+# Adonde diga el hospital o el pliego: medici.conf o variables de entorno.
+URL = valor("MEDICI_URL", "http://localhost:11434/v1")
+MODELO = valor("MEDICI_MODELO", "qwen3:8b")
+CLAVE = valor("MEDICI_CLAVE", "local")      # Ollama no pide clave; otros servidores, sí
 
 SISTEMA = """Eres Medici, el asistente del médico en consultas externas.
 Respondes preguntas sobre UN paciente usando SOLO las filas de datos que se te dan.
@@ -68,7 +72,7 @@ def _llamar(mensajes: list[dict], formato: dict | None, url: str, modelo: str,
     peticion = urllib.request.Request(
         f"{url.rstrip('/')}/chat/completions",
         data=json.dumps(cuerpo).encode(),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {CLAVE}"},
     )
     with urllib.request.urlopen(peticion, timeout=120) as r:
         return json.load(r)["choices"][0]["message"]["content"] or ""

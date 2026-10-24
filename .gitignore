@@ -21,3 +21,6 @@ mvp/resultados/
 .capturas/
 bd/jano.db
 medicci-rs/medicci.db
+
+# Dónde está cada cosa en cada instalación: se copia de medici.conf.ejemplo
+medici.conf

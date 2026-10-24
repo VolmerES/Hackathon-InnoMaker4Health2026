@@ -1369,7 +1369,8 @@ fn main() -> eframe::Result<()> {
 
     let mut ruta: Option<PathBuf> = None;
     let mut paciente: Option<String> = None;
-    let mut url = std::env::var("MEDICI_SERVIDOR").ok();
+    // adónde mandar las peticiones: --servidor, la variable o medici.conf (el que diga el hospital)
+    let mut url = std::env::var("MEDICI_SERVIDOR").ok().or_else(|| servidor::de_la_configuracion("MEDICI_SERVIDOR"));
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {

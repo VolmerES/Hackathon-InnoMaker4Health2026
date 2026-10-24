@@ -66,6 +66,10 @@ base, como siempre.
 |---|---|
 | `src/servidor.rs` | El cliente de la API (`ureq`), en otro hilo para no congelar la burbuja |
 
+**Adónde llama:** `--servidor`, la variable `MEDICI_SERVIDOR` o la línea
+`MEDICI_SERVIDOR=https://…` de un `medici.conf` al lado del ejecutable, que
+pone Informática. Vale `http` o `https`.
+
 Prueba contra un servidor en marcha:
 `MEDICI_SERVIDOR=http://localhost:8000 cargo test --release -- --ignored`.
 
