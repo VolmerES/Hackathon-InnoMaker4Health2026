@@ -1,4 +1,4 @@
-/* Agente flotante de Jano. Compartido por las pantallas de SELENE y HCIS. */
+/* Agente flotante de Medicci. Compartido por las pantallas de SELENE y HCIS. */
 /* ---------- agente flotante (estilo widget web, no SELENE) ---------- */
 #lanzador{position:fixed;right:20px;bottom:20px;width:54px;height:54px;border-radius:3px;
   background:#009b6b;border:1px solid #047a55;box-shadow:0 3px 10px rgba(0,0,0,.3);
@@ -93,7 +93,7 @@
 #modal .fila .src:hover{text-decoration:underline}
 @media (max-width:560px){#chat{right:8px;left:8px;width:auto;bottom:84px}#modal .fila{grid-template-columns:1fr}}
 
-/* ---------- ficha de primera consulta (formato Medici) ---------- */
+/* ---------- ficha de primera consulta (formato Medicci) ---------- */
 .med{--crema:#f7f4ec;--verde-m:#12402f;--verde-2:#1d5a44;--oro:#d9a32b;--menta:#cfe3d8;
   --tinta-m:#1d2a24;--gris-m:#6b7a72;--rojo-m:#9c3b23;--linea-m:#e3ded1;
   background:var(--crema);margin:-14px -16px -18px;padding:16px 18px 22px;

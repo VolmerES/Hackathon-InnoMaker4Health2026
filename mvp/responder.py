@@ -15,12 +15,12 @@ from config import valor
 from paciente import Fila, formatear
 from seleccion import seleccionar
 
-# Adonde diga el hospital o el pliego: medici.conf o variables de entorno.
-URL = valor("MEDICI_URL", "http://localhost:11434/v1")
-MODELO = valor("MEDICI_MODELO", "qwen3:8b")
-CLAVE = valor("MEDICI_CLAVE", "local")      # Ollama no pide clave; otros servidores, sí
+# Adonde diga el hospital o el pliego: medicci.conf o variables de entorno.
+URL = valor("MEDICCI_URL", "http://localhost:11434/v1")
+MODELO = valor("MEDICCI_MODELO", "qwen3:8b")
+CLAVE = valor("MEDICCI_CLAVE", "local")      # Ollama no pide clave; otros servidores, sí
 
-SISTEMA = """Eres Medici, el asistente del médico en consultas externas.
+SISTEMA = """Eres Medicci, el asistente del médico en consultas externas.
 Respondes preguntas sobre UN paciente usando SOLO las filas de datos que se te dan.
 Cada fila empieza con su referencia entre corchetes, por ejemplo [C2].
 

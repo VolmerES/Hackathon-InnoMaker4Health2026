@@ -1,4 +1,4 @@
-"""Servidor de la demo: la réplica de HCIS, la pestaña Medici y su API.
+"""Servidor de la demo: la réplica de HCIS, la pestaña Medicci y su API.
 
     python mvp/servidor.py                 # http://localhost:8000
     python mvp/servidor.py --puerto 8080
@@ -6,7 +6,7 @@
 Solo usa la biblioteca estándar (y duckdb). En producción sería FastAPI detrás
 de Caddy; la API es la misma.
 
-API de Medici (lo que llamaría la pestaña desde HCIS):
+API de Medicci (lo que llamaría la pestaña desde HCIS):
     POST /api/sesion                    {nhc}    → abre sesión atada a ese paciente
     GET  /api/sesion/<id>/tarjeta                → «3 cosas antes de que entre»
     POST /api/sesion/<id>/pregunta      {texto}  → respuesta con sus fuentes
@@ -44,7 +44,7 @@ FUENTES = AQUI.parent / "medicci-rs" / "fuentes"     # Noto Sans, las mismas que
 REGISTRO = AQUI / "resultados" / "registro.jsonl"
 
 
-class Medici:
+class Medicci:
     def __init__(self, datos: str = "csv"):
         print("Cargando los datos…" if datos == "csv" else "Copia vacía: esperando mensajes HL7…", flush=True)
         self.con = cargar() if datos == "csv" else cargar_vacia()
@@ -100,7 +100,7 @@ class Medici:
 
 
 class Peticion(SimpleHTTPRequestHandler):
-    medici: Medici = None
+    medicci: Medicci = None
     url_modelo = URL
     modelo = MODELO
 
@@ -134,7 +134,7 @@ class Peticion(SimpleHTTPRequestHandler):
         return datos if isinstance(datos, dict) else {}
 
     def _sesion(self, partes):
-        nhc = self.medici.sesiones.get(partes[2]) if len(partes) > 3 else None
+        nhc = self.medicci.sesiones.get(partes[2]) if len(partes) > 3 else None
         if not nhc:
             self._json(404, {"error": "Sesión desconocida: vuelva a abrir al paciente."})
         return nhc
@@ -143,7 +143,7 @@ class Peticion(SimpleHTTPRequestHandler):
         partes = self.path.split("?")[0].strip("/").split("/")
         if partes[0] != "api":
             return super().do_GET()
-        m = self.medici
+        m = self.medicci
         if partes[1:] == ["estado"]:
             try:
                 urllib.request.urlopen(f"{self.url_modelo.rstrip('/')}/models", timeout=3).read()
@@ -177,7 +177,7 @@ class Peticion(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         partes = self.path.strip("/").split("/")
-        m = self.medici
+        m = self.medicci
         if partes[:2] == ["api", "sesion"] and len(partes) == 2:
             nhc = str(self._cuerpo().get("nhc", "")).strip()
             filas = m.filas(nhc) if nhc else []
@@ -212,24 +212,24 @@ class Peticion(SimpleHTTPRequestHandler):
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--host", default=valor("MEDICI_ESCUCHA", "127.0.0.1"))
-    ap.add_argument("--puerto", type=int, default=int(valor("MEDICI_PUERTO", "8000")))
+    ap.add_argument("--host", default=valor("MEDICCI_ESCUCHA", "127.0.0.1"))
+    ap.add_argument("--puerto", type=int, default=int(valor("MEDICCI_PUERTO", "8000")))
     ap.add_argument("--url", default=URL, help="servidor del modelo, compatible con OpenAI")
     ap.add_argument("--modelo", default=MODELO)
-    ap.add_argument("--datos", choices=["csv", "hl7"], default=valor("MEDICI_DATOS", "csv"),
+    ap.add_argument("--datos", choices=["csv", "hl7"], default=valor("MEDICCI_DATOS", "csv"),
                     help="csv: lee los CSV; hl7: copia vacía que se llena con mensajes HL7")
-    ap.add_argument("--hl7-puerto", type=int, default=int(valor("MEDICI_HL7_PUERTO", "2575")))
+    ap.add_argument("--hl7-puerto", type=int, default=int(valor("MEDICCI_HL7_PUERTO", "2575")))
     args = ap.parse_args()
 
-    Peticion.medici = Medici(args.datos)
+    Peticion.medicci = Medicci(args.datos)
     if args.datos == "hl7":
         from hl7 import escuchar
-        receptor = escuchar(args.host, args.hl7_puerto, Peticion.medici.recibir_hl7)
+        receptor = escuchar(args.host, args.hl7_puerto, Peticion.medicci.recibir_hl7)
         threading.Thread(target=receptor.serve_forever, daemon=True).start()
         print(f"Receptor HL7 (MLLP) escuchando en el puerto {args.hl7_puerto}", flush=True)
     Peticion.url_modelo, Peticion.modelo = args.url, args.modelo
     servidor = ThreadingHTTPServer((args.host, args.puerto), Peticion)
-    print(f"Medici listo: http://localhost:{args.puerto}  (modelo {args.modelo} en {args.url})", flush=True)
+    print(f"Medicci listo: http://localhost:{args.puerto}  (modelo {args.modelo} en {args.url})", flush=True)
     servidor.serve_forever()
 
 

@@ -1,6 +1,6 @@
 # mvp/
 
-El núcleo de Medici para la demo, **sin agente**: el servidor saca con SQL
+El núcleo de Medicci para la demo, **sin agente**: el servidor saca con SQL
 fijo todo lo que hay del paciente y el modelo local solo lo ordena y contesta
 citando las filas.
 
@@ -16,7 +16,7 @@ resultados/       el detalle de cada prueba (no se sube: lleva filas de los CSV)
 Solo usa la biblioteca estándar y `duckdb`. Los CSV tienen que estar en `data/`.
 Los datos se leen con SQL sobre los CSV; HL7 todavía no se usa.
 
-## La demo: HCIS con la pestaña Medici
+## La demo: HCIS con la pestaña Medicci
 
 ```bash
 docker compose -f mvp/docker-compose.yml up -d            # modelo + servidor
@@ -26,7 +26,7 @@ docker compose -f mvp/docker-compose.yml up -d            # modelo + servidor
 
 Abrir **http://localhost:8000**. Es una réplica de HCIS con la agenda del día
 (8 pacientes de los CSV con nombres inventados). Al abrir un paciente, la
-pestaña Medici de la derecha:
+pestaña Medicci de la derecha:
 
 1. lee el NHC de la cinta del paciente, como haría la extensión del navegador;
 2. abre una sesión atada a ese paciente;
@@ -37,7 +37,7 @@ fila tal cual. Si el modelo no responde, la tarjeta sigue funcionando.
 
 ```text
 servidor.py       API (sesión, tarjeta, pregunta) y la réplica de HCIS; solo biblioteca estándar
-web/index.html    la réplica de HCIS: no sabe nada de Medici
+web/index.html    la réplica de HCIS: no sabe nada de Medicci
 web/pestana.js    la pestaña: solo lee el NHC de la cinta (#c-nhc) y habla con la API
 ```
 
@@ -50,13 +50,13 @@ Cada pregunta queda registrada en `resultados/registro.jsonl`.
 
 ## Los datos por HL7
 
-Así se conectaría Medici en el hospital: **sin tocar la base de datos de HCIS**,
+Así se conectaría Medicci en el hospital: **sin tocar la base de datos de HCIS**,
 recibiendo los mensajes HL7 v2 que HCIS ya manda por el motor de integración.
 En la demo, `hl7_emisor.py` hace de HCIS: lee los CSV y manda cada hecho como
-su mensaje. Medici arranca con la copia vacía y la va llenando.
+su mensaje. Medicci arranca con la copia vacía y la va llenando.
 
 ```bash
-export MEDICI_DATOS=hl7                    # la copia empieza vacía
+export MEDICCI_DATOS=hl7                    # la copia empieza vacía
 docker compose -f mvp/docker-compose.yml up -d
 docker compose -f mvp/docker-compose.yml run --rm --no-deps emisor --comprobar
 # en directo, con María abierta en la pantalla:
@@ -85,7 +85,7 @@ Sin Docker: `python mvp/servidor.py --datos hl7` y `python mvp/hl7_emisor.py
 `hl7.py` es un lector, escritor y transporte MLLP mínimo, con la biblioteca
 estándar. En el hospital se usaría `hl7apy` y el perfil de mensajes que dé
 Informática ⚠️. Con `docker compose run`, poned `--no-deps`: sin él, Compose
-vuelve a crear el servidor en modo CSV si `MEDICI_DATOS` no está en la consola.
+vuelve a crear el servidor en modo CSV si `MEDICCI_DATOS` no está en la consola.
 
 ## La tarjeta «3 cosas antes de que entre»
 
@@ -110,7 +110,7 @@ Hace falta Docker Desktop con la GPU de NVIDIA disponible:
 
 ```bash
 docker compose -f mvp/docker-compose.yml up -d ollama
-docker exec medici-ollama ollama pull qwen3:8b
+docker exec medicci-ollama ollama pull qwen3:8b
 docker compose -f mvp/docker-compose.yml run --rm prueba --semilla 2026
 docker compose -f mvp/docker-compose.yml run --rm prueba --modelo qwen3:4b
 ```
@@ -135,7 +135,7 @@ ollama pull qwen3:8b                                  # Q4_K_M, unos 5 GB
 ```
 
 Para otro servidor (vLLM en un Spark, `llama.cpp`…): `--url http://equipo:8000/v1
---modelo <nombre>`, o las variables `MEDICI_URL` y `MEDICI_MODELO`.
+--modelo <nombre>`, o las variables `MEDICCI_URL` y `MEDICCI_MODELO`.
 
 Al final sale la nota por tipo de pregunta, cuántas veces dice «no consta»
 cuando toca, cuántas filas inexistentes ha citado y los segundos por respuesta.
@@ -144,8 +144,8 @@ cuando toca, cuántas filas inexistentes ha citado y los segundos por respuesta.
 
 ```bash
 .venv/Scripts/python mvp/generar_pacientes.py            # 200 sintéticos en data/generados
-MEDICI_CSV=data/generados .venv/Scripts/python mvp/prueba_acierto.py
-MEDICI_CSV=data/generados .venv/Scripts/python mvp/prueba_alertas.py --n 200
+MEDICCI_CSV=data/generados .venv/Scripts/python mvp/prueba_acierto.py
+MEDICCI_CSV=data/generados .venv/Scripts/python mvp/prueba_alertas.py --n 200
 ```
 
 `generar_pacientes.py` escribe los 11 CSV con el mismo formato que los del reto,
@@ -162,7 +162,7 @@ contaba toda la vida («157 citas sin atender», 43 pruebas desde 2012).
 - **`seleccion.py`:** al modelo no va la historia entera, sino lo que hace falta
   para la pregunta: el tema (pruebas, citas, avisos, derivaciones), lo pendiente
   y lo más reciente primero, hasta un presupuesto que cabe en la memoria del
-  modelo (`MEDICI_CONTEXTO`, 2.048 tokens por defecto). Siempre van la ficha y
+  modelo (`MEDICCI_CONTEXTO`, 2.048 tokens por defecto). Siempre van la ficha y
   un resumen de toda la historia contado con SQL (`[R1]`, con las pruebas
   pendientes por su nombre), y si algo se queda fuera se dice (`[R2]`).
 - **`alertas.py`:** lo ya pasado se mira en el último año de seguimiento, lo

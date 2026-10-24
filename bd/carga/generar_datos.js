@@ -6,7 +6,7 @@ const W = path.join(__dirname, "..", "..", "demo", "web");
 global.window = {};
 require(path.join(W, "historial-datos.js"));
 require(path.join(W, "historial-datos-2.js"));
-require(path.join(W, "ficha-medici.js"));
+require(path.join(W, "ficha-medicci.js"));
 const w = global.window;
 
 const q = v => v === null || v === undefined ? "NULL" : "'" + String(v).replace(/'/g, "''") + "'";
@@ -90,7 +90,7 @@ for (const X of PACS){
 
   añade("fichas_consulta",
     ["id_ficha","id_cita","id_lectura","generada_en","formato","campos_con_dato","campos_sin_dato","vista_por","vista_en"],
-    [[q(X.fichaId), q(X.cita), q(X.lectura), q("2026-10-23 03:10:02"), q("medici-v1"),
+    [[q(X.fichaId), q(X.cita), q(X.lectura), q("2026-10-23 03:10:02"), q("medicci-v1"),
       n(campos.filter(c => c.doc).length), n(campos.filter(c => !c.doc).length), "NULL", "NULL"]]);
 
   let j = 0;

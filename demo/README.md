@@ -1,6 +1,6 @@
 # demo/
 
-La demo de **Medici** (antes «Jano») para el pitch: informes de derivación sintéticos y la
+La demo de **Medicci** para el pitch: informes de derivación sintéticos y la
 pantalla con la que el especialista los valida.
 
 ```text
@@ -26,7 +26,7 @@ de estado.
 
 Abajo a la derecha, **el agente**, como el chat de cualquier web: botón redondo
 con el icono del médico y, al abrirlo, el lector. El HCE queda intacto detrás:
-es la idea, que Medici se acople al sistema que ya usan, no que lo sustituya.
+es la idea, que Medicci se acople al sistema que ya usan, no que lo sustituya.
 
 Dos pacientes en el desplegable de arriba, los dos citados hoy en Digestivo:
 
@@ -68,7 +68,7 @@ campos de `DERIVACIONES_AP`) y debajo va `motivo_derivacion` y
 sin tildes, frases telegráficas, siglas (AP, AF, EF, NAMC, IBP, EC, FID, SOH,
 tto, pcte, s/p, rgo), analíticas pegadas en una línea, un caso en mayúsculas
 enteras y otro casi ilegible. Nada de apartados ordenados: eso es lo que hace
-difícil leer 250 al día y es justo lo que Medici tiene que digerir.
+difícil leer 250 al día y es justo lo que Medicci tiene que digerir.
 
 El registro está tomado de lo que describe la literatura sobre historias
 clínicas españolas (notas escritas deprisa y con gran número de abreviaturas;

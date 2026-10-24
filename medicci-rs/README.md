@@ -44,7 +44,7 @@ qué instalar. En Wayland una ventana
 no puede colocarse sola en la esquina, así que Medicci arranca sobre XWayland
 por su cuenta.
 
-## Conectada al servidor de Medici
+## Conectada al servidor de Medicci
 
 La burbuja es la otra cara del servidor de `mvp/`. La pestaña web va encima de
 HCIS cuando HCIS está en el navegador; la burbuja, cuando no lo está, porque se
@@ -71,12 +71,12 @@ base, como siempre.
 |---|---|
 | `src/servidor.rs` | El cliente de la API (`ureq`), en otro hilo para no congelar la burbuja |
 
-**Adónde llama:** `--servidor`, la variable `MEDICI_SERVIDOR` o la línea
-`MEDICI_SERVIDOR=https://…` de un `medici.conf` al lado del ejecutable, que
+**Adónde llama:** `--servidor`, la variable `MEDICCI_SERVIDOR` o la línea
+`MEDICCI_SERVIDOR=https://…` de un `medicci.conf` al lado del ejecutable, que
 pone Informática. Vale `http` o `https`.
 
 Prueba contra un servidor en marcha:
-`MEDICI_SERVIDOR=http://localhost:8000 cargo test --release -- --ignored`.
+`MEDICCI_SERVIDOR=http://localhost:8000 cargo test --release -- --ignored`.
 
 ## Sin just
 

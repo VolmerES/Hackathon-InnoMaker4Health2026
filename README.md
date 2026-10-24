@@ -33,7 +33,7 @@ El contexto completo, con el modelo de datos transcrito, está en
 **[`docs/CONTEXTO.md`](docs/CONTEXTO.md)**. Empieza por su
 [estado en un minuto](docs/CONTEXTO.md#estado-en-un-minuto-24oct).
 
-## Arrancar Medici con un clic
+## Arrancar Medicci con un clic
 
 Solo hace falta **Docker Desktop** y los 11 CSV del reto en `data/` (no van en
 GitHub).
@@ -47,12 +47,12 @@ tarjetas salen bien y abre el navegador con María. Sin GPU de NVIDIA también
 funciona, pero más lento. Con el modelo ya descargado tarda **unos 30
 segundos**.
 
-**Dónde está cada cosa:** en una licitación, dónde se instala Medici lo decide
+**Dónde está cada cosa:** en una licitación, dónde se instala Medicci lo decide
 quien licita (el CPD del hospital, el de la Comunidad, la nube del pliego).
-Todas las direcciones van en **un único fichero, `medici.conf`**: el modelo de
+Todas las direcciones van en **un único fichero, `medicci.conf`**: el modelo de
 IA (con su clave si la pide), dónde escucha el servidor y el receptor HL7, y
 adónde llaman la burbuja y el emisor. Se copia de
-[`medici.conf.ejemplo`](medici.conf.ejemplo), se cambian las líneas y no se
+[`medicci.conf.ejemplo`](medicci.conf.ejemplo), se cambian las líneas y no se
 toca código. Una variable de entorno con el mismo nombre manda sobre el
 fichero.
 
@@ -67,7 +67,7 @@ docs/
   briefing/       Fotos del material impreso que entregó la organización
   HALLAZGOS.md    Lo que dicen los datos, con cifras
 analisis/         Scripts de exploración (Python + DuckDB)
-mvp/              Núcleo de Medici: chat sin agente, tarjeta «3 cosas» y sus pruebas
+mvp/              Núcleo de Medicci: chat sin agente, tarjeta «3 cosas» y sus pruebas
 demo/             Réplicas de HCIS y SELENE con historias sintéticas (Daniel)
 data/             Los 11 CSV (no se suben: son material de la organización)
 ```
@@ -87,12 +87,12 @@ python -m venv .venv
 - [x] Qué le interesa a cada organizador y [plan del MVP en 24 h](docs/CONTEXTO.md#el-mvp-en-24-horas)
 - [x] Cargar y explorar los 11 CSV: [hallazgos](docs/HALLAZGOS.md)
 - [x] ~~Los huecos vacíos~~: aparcado, porque media sala va a por las faltas. Sus cifras reales siguen en [HALLAZGOS](docs/HALLAZGOS.md)
-- [x] **Idea decidida: Medici, el chatbot copiloto del médico.** El médico le pregunta en el ordenador por el paciente y Medici le contesta, con la fuente de cada dato y con IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-decidida-medici-el-copiloto-del-médico)
-- [x] Hardware decidido: **Mac mini M6** o **NVIDIA DGX Spark**, con una instalación muy sencilla. [Propuesta de infraestructura para todo el hospital](docs/CONTEXTO.md#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo). Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-medici-mac-mini-m6-o-nvidia-dgx-spark)
+- [x] **Idea decidida: Medicci, el chatbot copiloto del médico.** El médico le pregunta en el ordenador por el paciente y Medicci le contesta, con la fuente de cada dato y con IA local. Ver [CONTEXTO](docs/CONTEXTO.md#la-idea-decidida-medicci-el-copiloto-del-médico)
+- [x] Hardware decidido: **Mac mini M6** o **NVIDIA DGX Spark**, con una instalación muy sencilla. [Propuesta de infraestructura para todo el hospital](docs/CONTEXTO.md#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo). Ver [CONTEXTO](docs/CONTEXTO.md#dónde-corre-medicci-mac-mini-m6-o-nvidia-dgx-spark)
 - [x] Ideas que no entran (preparar la consulta, escriba, HL7…): en la [hoja de ruta](docs/CONTEXTO.md#hoja-de-ruta-ideas-no-decididas)
 - [x] Chat sin agente medido con Qwen3‑8B: **29/30** con pacientes nuevos, 0 fuentes inventadas, 0,7 s ([`mvp/`](mvp/README.md))
 - [x] Tarjeta «3 cosas antes de que entre»: alertas por reglas, 0 errores en 2.000 pacientes
-- [ ] Servidor y [pestaña dentro de HCIS](docs/CONTEXTO.md#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo) sobre la réplica de Daniel
+- [ ] Servidor y [pestaña dentro de HCIS](docs/CONTEXTO.md#dentro-de-hcis-la-pestaña-medicci-propuesta-pendiente-del-equipo) sobre la réplica de Daniel
 - [ ] Medir el impacto: minutos liberados, pasos ahorrados
 - [x] [Guion del pitch de 5 minutos](docs/PITCH.md), con las preguntas probables del jurado
 - [ ] Confirmar con los mentores lo marcado con ⚠️ en el guion

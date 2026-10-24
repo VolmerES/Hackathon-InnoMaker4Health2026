@@ -31,14 +31,14 @@ class Fila:
     campos: dict = field(default_factory=dict)   # los datos en bruto, para las alertas
 
 
-TABLAS_MEDICI = ["pacientes", "derivaciones_ap", "citas", "huecos_agenda", "agendas",
+TABLAS_MEDICCI = ["pacientes", "derivaciones_ap", "citas", "huecos_agenda", "agendas",
                  "movimientos_citas", "pruebas", "comunicaciones"]
 
 
 def cargar():
-    """Copia en memoria las tablas que usa Medici: leer los CSV en cada consulta es lento."""
+    """Copia en memoria las tablas que usa Medicci: leer los CSV en cada consulta es lento."""
     con = conectar()
-    for t in TABLAS_MEDICI:
+    for t in TABLAS_MEDICCI:
         con.execute(f"CREATE TABLE {t}_m AS SELECT * FROM {t}")
         con.execute(f"DROP VIEW {t}")
         con.execute(f"ALTER TABLE {t}_m RENAME TO {t}")
@@ -46,13 +46,13 @@ def cargar():
 
 
 def cargar_vacia():
-    """La copia de Medici vacía, para llenarla con mensajes HL7.
+    """La copia de Medicci vacía, para llenarla con mensajes HL7.
 
     Los avisos al paciente no van por HL7 (vienen de la plataforma de SMS):
     esos sí se cargan de su CSV.
     """
     con = conectar()
-    for t in TABLAS_MEDICI:
+    for t in TABLAS_MEDICCI:
         filtro = "" if t == "comunicaciones" else " LIMIT 0"
         con.execute(f"CREATE TABLE {t}_m AS SELECT * FROM {t}{filtro}")
         con.execute(f"DROP VIEW {t}")

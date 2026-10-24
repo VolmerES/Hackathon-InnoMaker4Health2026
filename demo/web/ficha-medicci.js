@@ -1,4 +1,4 @@
-// Ficha de primera consulta con el formato de Medici: lo que hay que saber
+// Ficha de primera consulta con el formato de Medicci: lo que hay que saber
 // antes de entrar, en tarjetas, con la fuente de cada dato y «No consta»
 // cuando la historia no lo tiene. Datos sintéticos.
 

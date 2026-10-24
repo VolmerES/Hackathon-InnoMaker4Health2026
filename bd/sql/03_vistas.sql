@@ -1,5 +1,5 @@
 -- =====================================================================
--- Jano / Medici · 03 · Vistas
+-- Medicci · 03 · Vistas
 -- Lo que consulta la pantalla y lo que mide el piloto.
 -- =====================================================================
 
@@ -96,7 +96,7 @@ SELECT
   SUM(CASE WHEN c.tipo_visita = 'Primera'  THEN 1 ELSE 0 END)        AS primeras,
   SUM(CASE WHEN c.tipo_visita = 'Sucesiva' THEN 1 ELSE 0 END)        AS sucesivas,
   SUM(CASE WHEN cc.resuelta_en_una_visita = 'S' THEN 1 ELSE 0 END)   AS resueltas_una_visita,
-  SUM(CASE WHEN pr.adelantada_por_jano    = 'S' THEN 1 ELSE 0 END)   AS pruebas_adelantadas,
+  SUM(CASE WHEN pr.adelantada_por_medicci    = 'S' THEN 1 ELSE 0 END)   AS pruebas_adelantadas,
   SUM(CASE WHEN pr.evitada_por_duplicidad = 'S' THEN 1 ELSE 0 END)   AS duplicadas_evitadas
 FROM citas c
 LEFT JOIN circuito_consulta cc ON cc.id_cita = c.id_cita

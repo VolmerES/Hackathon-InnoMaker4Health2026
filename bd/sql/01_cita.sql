@@ -1,5 +1,5 @@
 -- =====================================================================
--- Jano / Medici · 01 · El núcleo de la cita
+-- Medicci · 01 · El núcleo de la cita
 -- SQL estándar: funciona en SQLite, PostgreSQL y MySQL sin cambios.
 -- Transcribe el modelo de los 11 CSV del reto (docs/CONTEXTO.md).
 -- Todo gira alrededor de CITAS.
@@ -104,7 +104,7 @@ CREATE TABLE movimientos_citas (
   fecha_hora_movimiento TIMESTAMP   NOT NULL,
   tipo_movimiento       VARCHAR(30) NOT NULL,
   origen_movimiento     VARCHAR(30) CHECK (origen_movimiento IN
-                        ('Paciente','Admisión','Servicio','Jano','Sistema')),
+                        ('Paciente','Admisión','Servicio','Medicci','Sistema')),
   motivo                VARCHAR(400),
   estado_anterior       VARCHAR(30),
   estado_nuevo          VARCHAR(30),
@@ -150,7 +150,7 @@ CREATE TABLE tareas_administrativas (
   fecha_hora_inicio   TIMESTAMP,
   duracion_minutos    DECIMAL(5,1),
   automatizable       CHAR(1) NOT NULL DEFAULT 'N' CHECK (automatizable IN ('S','N')),
-  automatizada_por    VARCHAR(30),      -- NULL = la hizo una persona; 'Jano' = la resolvió el circuito
+  automatizada_por    VARCHAR(30),      -- NULL = la hizo una persona; 'Medicci' = la resolvió el circuito
   incidencia_asociada VARCHAR(200)
 );
 
@@ -181,7 +181,7 @@ CREATE TABLE pruebas (
   estado_prueba          VARCHAR(30)  NOT NULL DEFAULT 'Solicitada'
      CHECK (estado_prueba IN ('Solicitada','Programada','Realizada','Informada','Anulada')),
   resultado_disponible   CHAR(1) NOT NULL DEFAULT 'N' CHECK (resultado_disponible IN ('S','N')),
-  adelantada_por_jano    CHAR(1) NOT NULL DEFAULT 'N' CHECK (adelantada_por_jano IN ('S','N')),
+  adelantada_por_medicci    CHAR(1) NOT NULL DEFAULT 'N' CHECK (adelantada_por_medicci IN ('S','N')),
   evitada_por_duplicidad CHAR(1) NOT NULL DEFAULT 'N' CHECK (evitada_por_duplicidad IN ('S','N'))
 );
 

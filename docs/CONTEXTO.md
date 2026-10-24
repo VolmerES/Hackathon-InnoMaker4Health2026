@@ -5,8 +5,8 @@ Transcripción del material impreso que se entregó el 23‑oct‑2026 (fotos en
 
 ## Estado en un minuto (24‑oct)
 
-**Medici es el copiloto del médico en consultas externas:** el médico abre al
-paciente y Medici le dice lo que no puede pasar por alto y le contesta lo que
+**Medicci es el copiloto del médico en consultas externas:** el médico abre al
+paciente y Medicci le dice lo que no puede pasar por alto y le contesta lo que
 pregunte, con la fuente de cada dato y con IA local. Nada sale del hospital.
 
 | | Qué | Dónde |
@@ -14,10 +14,10 @@ pregunte, con la fuente de cada dato y con IA local. Nada sale del hospital.
 | ✅ **Construido y medido** | **Chat sin agente:** 6 consultas SQL fijas del paciente y una sola llamada al modelo, que solo ordena y redacta citando filas. Con Qwen3‑8B en un portátil (RTX 5060, 8 GB): **29/30** con pacientes nuevos, 6/6 «no consta», 0 fuentes inventadas, 0,7 s por respuesta. **También con crónicos** de cientos o miles de citas: elige lo que hace falta para cada pregunta (30/30 con 200 pacientes sintéticos, 1,5 s con 6.000 filas) | [`mvp/`](../mvp/README.md#pacientes-crónicos-cientos-de-citas-en-un-modelo-pequeño) · [Cómo construirlo](#cómo-construirlo-propuesta-pendiente-del-equipo) |
 | ✅ **Construido y medido** | **Tarjeta «3 cosas antes de que entre»:** alertas por reglas, sin IA, cada una con su fuente. Contrastadas con SQL directo en 2.000 pacientes: 0 errores | [La tarjeta](#la-tarjeta-3-cosas-antes-de-que-entre-construida-el-24oct) |
 | ✅ **Construido** (Daniel) | Réplicas de HCIS y SELENE con dos historias sintéticas y un agente con respuestas **precalculadas** | [`demo/`](../demo/README.md) |
-| ✅ **Construido** (Daniel + integración) | **La burbuja de escritorio** en Rust (`medicci-rs/`): se pone encima de **cualquier** ventana, así que sirve aunque HCIS no sea web. Con `--servidor` es la otra cara del mismo servidor: tarjeta, chat con IA local y fuentes, y avisa de lo que llega por HL7. Sin servidor, funciona sola con sus dos historias de texto libre. `just conectada` | [`medicci-rs/README.md`](../medicci-rs/README.md#conectada-al-servidor-de-medici) |
-| 🟡 **Propuesto, pendiente del equipo** | Medici como **pestaña dentro de HCIS**; infraestructura (1 Mac mini M6 para el piloto, 2 × DGX Spark para todo el hospital); datos por HL7 | [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo) · [Infraestructura](#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo) |
-| ✅ **Construido** | **La demo:** réplica de HCIS con la agenda del día y la **pestaña Medici** (tarjeta + chat + fuentes). La pestaña solo lee el NHC de la cinta, como lo haría la extensión. `docker compose up` y `http://localhost:8000` | [`mvp/README.md`](../mvp/README.md#la-demo-hcis-con-la-pestaña-medici) |
-| ✅ **Construido y comprobado** | **Los datos por HL7:** un emisor hace de HCIS y manda mensajes estándar (`ADT`, `REF`, `SIU`, `OMG`, `ORU`) por MLLP; Medici los guarda en su copia y contesta ACK. 43/43 mensajes aceptados y las 8 tarjetas idénticas a las de los CSV. En directo: se anula una cita y la tarjeta lo dice sola | [`mvp/README.md`](../mvp/README.md#los-datos-por-hl7) |
+| ✅ **Construido** (Daniel + integración) | **La burbuja de escritorio** en Rust (`medicci-rs/`): se pone encima de **cualquier** ventana, así que sirve aunque HCIS no sea web. Con `--servidor` es la otra cara del mismo servidor: tarjeta, chat con IA local y fuentes, y avisa de lo que llega por HL7. Sin servidor, funciona sola con sus dos historias de texto libre. `just conectada` | [`medicci-rs/README.md`](../medicci-rs/README.md#conectada-al-servidor-de-medicci) |
+| 🟡 **Propuesto, pendiente del equipo** | Medicci como **pestaña dentro de HCIS**; infraestructura (1 Mac mini M6 para el piloto, 2 × DGX Spark para todo el hospital); datos por HL7 | [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medicci-propuesta-pendiente-del-equipo) · [Infraestructura](#infraestructura-para-todo-el-hospital-propuesta-de-claude-pendiente-del-equipo) |
+| ✅ **Construido** | **La demo:** réplica de HCIS con la agenda del día y la **pestaña Medicci** (tarjeta + chat + fuentes). La pestaña solo lee el NHC de la cinta, como lo haría la extensión. `docker compose up` y `http://localhost:8000` | [`mvp/README.md`](../mvp/README.md#la-demo-hcis-con-la-pestaña-medicci) |
+| ✅ **Construido y comprobado** | **Los datos por HL7:** un emisor hace de HCIS y manda mensajes estándar (`ADT`, `REF`, `SIU`, `OMG`, `ORU`) por MLLP; Medicci los guarda en su copia y contesta ACK. 43/43 mensajes aceptados y las 8 tarjetas idénticas a las de los CSV. En directo: se anula una cita y la tarjeta lo dice sola | [`mvp/README.md`](../mvp/README.md#los-datos-por-hl7) |
 | ⬜ **Falta para la demo** | Revisarla en el navegador, el vídeo de respaldo y ensayar | |
 | 📍 **Hoja de ruta** | Preparar la consulta antes, escriba, escribir en HCIS, texto libre de las historias… | [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
 
@@ -32,7 +32,7 @@ los mentores**, y dijeron que **sería muy útil**. Para el pitch falta concreta
 **Preguntar a los mentores hoy ⚠️:**
 
 - Cuánto tarda un especialista en revisar la historia antes de cada paciente.
-  Si se puede, cronometrarlo con la réplica de HCIS y con Medici.
+  Si se puede, cronometrarlo con la réplica de HCIS y con Medicci.
 - Si La Princesa ya tiene algo parecido.
 - Cómo se abre HCIS: Chrome o Edge, modo IE o Java, Citrix.
 - Si un chat que solo busca y muestra datos entra en el reglamento de productos
@@ -242,10 +242,10 @@ mínimo de las dos cosas:
   como mucho, un servidor dentro del hospital para la IA local, si su Unidad de
   Análisis de Datos no tiene ya uno ⚠️.
 
-### La idea decidida: Medici, el copiloto del médico
+### La idea decidida: Medicci, el copiloto del médico
 
-**Decidido por el equipo el 23‑oct por la noche:** *Medici es un chatbot copiloto.
-El médico le pregunta en el ordenador por el paciente y Medici le contesta.*
+**Decidido por el equipo el 23‑oct por la noche:** *Medicci es un chatbot copiloto.
+El médico le pregunta en el ordenador por el paciente y Medicci le contesta.*
 
 **También decidido:**
 
@@ -253,11 +253,11 @@ El médico le pregunta en el ordenador por el paciente y Medici le contesta.*
 - Se vende para **Mac mini M6** o **NVIDIA DGX Spark**.
 - Tiene que ser **muy fácil de instalar**.
 
-**Nombre: Medici** (decidido el 23‑oct). Como los Medici de Florencia, que
-impulsaron el Renacimiento. Y en italiano *medici* significa «médicos»: es
-una herramienta para ellos.
+**Nombre: Medicci** (decidido el 23‑oct). Suena a «médicos» en italiano y
+recuerda a la familia de Florencia que impulsó el Renacimiento: es una
+herramienta para ellos.
 
-> ⚠️ Ya existe una app estadounidense llamada **Medici** (Austin, Texas):
+> ⚠️ Ya existe una app estadounidense con un nombre casi igual (Austin, Texas):
 > mensajería entre pacientes y médicos, con unos 22–24 M$ de financiación
 > entre 2018 y 2020. Para el hackathon no importa. Si Wayra quiere seguir
 > adelante, hay que mirar la marca en la OEPM y la EUIPO antes de registrar
@@ -268,7 +268,7 @@ una herramienta para ellos.
 | Estado | Qué |
 |---|---|
 | **Construido y medido** | En `mvp/`: el chat sin agente (29/30 con Qwen3‑8B) y la tarjeta «3 cosas antes de que entre» (0 errores en 2.000 pacientes). En `demo/` (Daniel): réplicas de HCIS y SELENE con historias sintéticas y respuestas precalculadas. En `analisis/`: los scripts de exploración (`lector_ia.py` es de la idea anterior y nunca se ha ejecutado) |
-| **Propuesto por el equipo (24‑oct)** | MVP **sin agente**: SQL fijo y el modelo solo ordena. Medici como **pestaña dentro de HCIS**. La tarjeta «3 cosas» |
+| **Propuesto por el equipo (24‑oct)** | MVP **sin agente**: SQL fijo y el modelo solo ordena. Medicci como **pestaña dentro de HCIS**. La tarjeta «3 cosas» |
 | **Decidido por el equipo** | Chatbot copiloto, IA local, Mac mini M6 o DGX Spark, instalación fácil |
 | **Propuesto por Claude para construirlo** (falta que el equipo lo apruebe) | Todo lo de «Cómo construirlo», más abajo |
 | **Hoja de ruta** (ideas, no decididas) | Lo de la sección [Hoja de ruta](#hoja-de-ruta-ideas-no-decididas) |
@@ -288,7 +288,7 @@ paciente** en la historia clínica.
 - La Princesa tiene **473.257 consultas externas al año** (memoria de 2022).
 
 **¿Es innovador?** *Con honestidad: el chat con la historia clínica ya existe*
-(Epic, Dragon Copilot de Microsoft, Navina en EE. UU.). Medici solo se puede
+(Epic, Dragon Copilot de Microsoft, Navina en EE. UU.). Medicci solo se puede
 diferenciar si lo demuestra:
 
 - **Local**, en un equipo de unos 4.700 €, sin nube y sin cuota por médico.
@@ -387,14 +387,14 @@ Respuesta en español + las filas en las que se basa, debajo
 2. La prueba de acierto con Ollama (`qwen3:8b`, y `qwen3:4b` para comparar) en
    el portátil de la demo. **La nota real es la que va al pitch.**
 3. Un FastAPI con 3 llamadas: abrir sesión con un paciente, resumen y pregunta.
-4. La pantalla: la **pestaña Medici sobre la réplica de HCIS** de Daniel
+4. La pantalla: la **pestaña Medicci sobre la réplica de HCIS** de Daniel
    (`demo/web/hcis.html`), con el resumen arriba, el chat y las filas de origen
    debajo de cada respuesta. Ver
-   [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medici-propuesta-pendiente-del-equipo).
+   [Dentro de HCIS](#dentro-de-hcis-la-pestaña-medicci-propuesta-pendiente-del-equipo).
 5. **Por si falla en directo:** las respuestas de la demo, precalculadas, y un
    vídeo.
 
-> ⚠️ **Decidir en equipo:** ¿Medici lee las tablas de los CSV (lo de arriba) o
+> ⚠️ **Decidir en equipo:** ¿Medicci lee las tablas de los CSV (lo de arriba) o
 > el texto libre de las historias de Daniel (`demo/`)? Con texto libre (18
 > documentos con abreviaturas y contradicciones) un modelo pequeño acierta
 > bastante menos. Además, las respuestas de `demo/web/datos.js` están
@@ -412,7 +412,7 @@ Respuesta en español + las filas en las que se basa, debajo
 **Por qué:** el chat espera a que el médico pregunte. La tarjeta **se adelanta**
 (como 5 de los 7 ganadores anteriores): al abrir al paciente le dice lo que no
 puede pasar por alto. Además responde a «eso ya lo veo en HCIS»: HCIS te
-enseña todo; Medici te dice lo que importa.
+enseña todo; Medicci te dice lo que importa.
 
 **Cómo:** reglas sobre los datos, **sin IA**, así que son siempre ciertas. Cada
 alerta lleva las filas de las que sale. Se ordenan por importancia y se
@@ -485,7 +485,7 @@ El reparto lo decide el equipo.
 
 ## Hoja de ruta (ideas, no decididas)
 
-Son ideas que salieron el 23‑oct y **no forman parte de Medici** mientras el
+Son ideas que salieron el 23‑oct y **no forman parte de Medicci** mientras el
 equipo no lo decida. En el pitch, como mucho, van en una diapositiva de «lo
 siguiente».
 
@@ -534,7 +534,7 @@ clínicas en español. Para el pitch: *IA pública española, dentro del hospita
 | [`Qwen/Qwen3-4B`](https://huggingface.co/Qwen/Qwen3-4B) o [`Qwen3-8B`](https://huggingface.co/Qwen/Qwen3-8B) | Apache 2.0 | Los más descargados. Buenos dando JSON con formato fijo |
 
 Necesita una GPU de gama media o CPU de noche: 250 derivaciones caben de sobra.
-Si no hay presupuesto para GPU, **Medici funciona sin esta capa**.
+Si no hay presupuesto para GPU, **Medicci funciona sin esta capa**.
 
 **Evitar:** `google/medgemma-*` (acceso restringido y licencia propia) y
 `mistralai/Ministral-8B-Instruct-2410` (licencia no comercial). Los dos chocan
@@ -554,7 +554,7 @@ una cifra de acierto, hay que decir que es sobre datos sintéticos.
 
 ### Más usos de la IA local (hoja de ruta)
 
-Ideas para sumar a Medici, ordenadas de más a menos recomendable para estas 24
+Ideas para sumar a Medicci, ordenadas de más a menos recomendable para estas 24
 horas. Todas funcionan dentro del hospital y con licencias que permiten uso
 comercial (comprobadas en Hugging Face el 23‑oct).
 
@@ -620,24 +620,24 @@ que confirmarlo con los mentores.
    existe la **interconsulta no presencial** (e‑consulta): el médico de cabecera
    pregunta por escrito y el especialista responde sin ver al paciente.
 
-**Lo que significa para Medici:**
+**Lo que significa para Medicci:**
 
 - **Entre la cita y la primera consulta pasan semanas.** Esa espera es el hueco
   para hacer las pruebas antes.
-- **Medici lee el parte de interconsulta cuando la cita llega al hospital.** Hay
+- **Medicci lee el parte de interconsulta cuando la cita llega al hospital.** Hay
   que preguntar a Informática cómo llega: si electrónico, por HORUS o en papel ⚠️.
 - **Con la libre elección, cada hospital solo ve a quien lo ha elegido**, y las
-  pruebas se hacen allí mismo. Encaja: Medici funciona en el hospital que recibe.
+  pruebas se hacen allí mismo. Encaja: Medicci funciona en el hospital que recibe.
 - **La vuelta directa tras perder una revisión depende solo del hospital**, que
   es quien gestiona las revisiones. No hay que cambiar nada en Primaria.
 
-## Lo que ya existe y qué aporta Medici
+## Lo que ya existe y qué aporta Medicci
 
 > Escrito para la idea anterior (preparar la consulta y adelantar pruebas). Para
 > el chatbot, la competencia directa es Epic, Dragon Copilot y Navina (ver
-> [La idea decidida](#la-idea-decidida-medici-el-copiloto-del-médico)).
+> [La idea decidida](#la-idea-decidida-medicci-el-copiloto-del-médico)).
 
-**Comprobado el 23‑oct.** Ninguna pieza de Medici es nueva por separado. Lo que no
+**Comprobado el 23‑oct.** Ninguna pieza de Medicci es nueva por separado. Lo que no
 hemos encontrado es **todo junto**: en el hospital, local y para cualquier
 hospital. *No decir nunca «no existe nada parecido».*
 
@@ -651,7 +651,7 @@ gestionado por Quirónsalud
 - **Qué hacía:** desde julio de 2018, «un algoritmo de IA» leía los partes de
   derivación de Primaria, sacaba los motivos más frecuentes y les asignaba **un
   protocolo de pruebas antes de la primera consulta**. Es justo el núcleo de
-  Medici.
+  Medicci.
 - **Resultados:** primer semestre de 2019 frente al primero de 2018.
 
   | Indicador | Con el algoritmo (2019) | 2018 | Vía normal (2019) |
@@ -671,9 +671,9 @@ gestionado por Quirónsalud
 
 1. **Es evidencia en Madrid y en Digestivo**, el mismo servicio de nuestro
    piloto. Las sucesivas por primera bajaron un 24 %.
-2. **Su problema fue el alcance**, y Medici lo resuelve: lee **el 100 %** de las
+2. **Su problema fue el alcance**, y Medicci lo resuelve: lee **el 100 %** de las
    derivaciones al llegar al hospital, sin que nadie cambie su forma de derivar.
-3. **Era de 2018, de un servicio y de un hospital.** Medici usa IA de 2026, cubre
+3. **Era de 2018, de un servicio y de un hospital.** Medicci usa IA de 2026, cubre
    todo el circuito (antes, durante y después), se conecta por HL7 y se instala
    en cualquier hospital.
 4. **El director de La Princesa puede conocerlo.** Mejor citarlo nosotros que
@@ -681,14 +681,14 @@ gestionado por Quirónsalud
 
 ### El resto del mercado
 
-| Pieza | ¿Existe? | Quién | Qué aporta Medici |
+| Pieza | ¿Existe? | Quién | Qué aporta Medicci |
 |---|---|---|---|
 | Leer derivaciones y adelantar pruebas | Sí, en un servicio | Infanta Elena (2018); en Asturias, IA para priorizar dermatología en Primaria (Legit.Health) | El 100 % de las derivaciones, varios servicios, local e instalable |
 | Leer cartas y avisar solo de lo que requiere acción | Sí, en Primaria (Reino Unido) | Docman10X (Advanced + U. de Manchester) | Lo mismo, pero del lado del hospital |
 | Escriba en consulta | Sí, mucho | Dragon Copilot, Abridge, Nabla, Scribe de Quirón, el contrato de Madrid (nube) | Local, y conectado a lo que pasa antes y después |
 | Chat con la historia clínica | Sí | Epic, Dragon Copilot | Local, con la fuente de cada dato y limitado a los pacientes del médico |
 | Alta resolución, e‑consulta | Sí, hechas a mano | Muchos hospitales | Automatizarlo sin añadir personal |
-| **Todo junto, local, por HL7 y fácil de instalar** | **No lo hemos encontrado** | — | **Medici** |
+| **Todo junto, local, por HL7 y fácil de instalar** | **No lo hemos encontrado** | — | **Medicci** |
 
 **Lo primero mañana con los mentores ⚠️:**
 
@@ -716,14 +716,14 @@ Comunidad**, sin importar dónde esté guardada.
 - Las fuentes son oficiales pero algunas son antiguas: hay que confirmar con los
   mentores qué enseña hoy ⚠️.
 
-**Qué significa para Medici:**
+**Qué significa para Medicci:**
 
 - **HORUS es justo lo que el médico tiene que leer.** Junta todos los informes,
-  pero **hay que abrirlos y leerlos uno a uno**. Son los minutos que Medici quiere
+  pero **hay que abrirlos y leerlos uno a uno**. Son los minutos que Medicci quiere
   ahorrar.
-- **La frase:** *«HORUS te enseña todos los papeles del paciente; Medici te los
+- **La frase:** *«HORUS te enseña todos los papeles del paciente; Medicci te los
   lee y te contesta.»*
-- **Sería la mejor fuente de datos para Medici**, porque ya junta Primaria y
+- **Sería la mejor fuente de datos para Medicci**, porque ya junta Primaria y
   hospitales. Pero es de la Consejería, no del hospital: conectarse a él
   requiere el permiso de la Dirección General de Salud Digital, y eso es más
   lento que hacerlo con Informática de La Princesa.
@@ -734,7 +734,7 @@ Comunidad**, sin importar dónde esté guardada.
   - ¿Cuánto tardan?
   - ¿Qué buscan?
 
-## Cómo se conecta Medici al hospital: HCIS y HL7
+## Cómo se conecta Medicci al hospital: HCIS y HL7
 
 > **Propuesta, pendiente de Informática.** El chatbot necesita leer los datos del
 > paciente; esta es la forma que proponemos. No está construida.
@@ -742,10 +742,10 @@ Comunidad**, sin importar dónde esté guardada.
 **Dato del equipo (23‑oct):** la historia clínica de La Princesa es **HCIS**, y
 se comunica con los demás sistemas mediante **HL7**.
 
-**Medici no toca la base de datos de HCIS.** Se conecta como cualquier otro
+**Medicci no toca la base de datos de HCIS.** Se conecta como cualquier otro
 sistema del hospital: recibe los mensajes HL7 que HCIS ya envía, por el motor de
 integración del hospital, y guarda su propia copia de solo lectura. Si un día
-cambia HCIS, Medici sigue funcionando.
+cambia HCIS, Medicci sigue funcionando.
 
 | Tabla de los CSV | Mensaje HL7 v2 que la alimentaría |
 |---|---|
@@ -757,15 +757,15 @@ cambia HCIS, Medici sigue funcionando.
 | COMUNICACIONES | No suele ir por HL7: es la plataforma de SMS |
 
 **Para escribir en HCIS** (citar, pedir una prueba) hace falta que HCIS acepte
-peticiones (`SRM^S01`, `OMG^O19` o FHIR). En el piloto, Medici solo lee y
+peticiones (`SRM^S01`, `OMG^O19` o FHIR). En el piloto, Medicci solo lee y
 propone, y la persona confirma en HCIS. Escribir directamente es la fase 2 ⚠️.
 
 **HL7 no es un lenguaje de base de datos:** son los mensajes que se mandan los
-sistemas del hospital. Medici los recibe, los guarda en su copia y la consulta
+sistemas del hospital. Medicci los recibe, los guarda en su copia y la consulta
 con SQL.
 
 **En la demo (construido el 24‑oct):** `mvp/hl7_emisor.py` hace de HCIS. Lee los
-CSV y manda cada hecho como su mensaje HL7 v2 por MLLP. El servidor de Medici
+CSV y manda cada hecho como su mensaje HL7 v2 por MLLP. El servidor de Medicci
 arranca con la copia vacía, la llena con los mensajes y contesta `ACK`.
 
 - **Comprobado:** 43/43 mensajes aceptados, y las tarjetas y las filas de los 8
@@ -785,25 +785,25 @@ y el perfil de mensajes de Informática ⚠️. Detalle en
 - Si hay FHIR.
 - Cómo llega la derivación de Primaria.
 
-### La pieza innovadora: el escriba escribe, Medici actúa
+### La pieza innovadora: el escriba escribe, Medicci actúa
 
 > **Hoja de ruta, no decidido.** El chatbot no incluye nada del escriba.
 
 La Consejería ya está comprando un escriba con IA para Primaria, y Quirónsalud
 tiene «Scribe» en el Infanta Elena ([fuentes](#fuentes)). **No competimos con
-ellos: nos conectamos a ellos.** Medici recibe la nota de cualquier escriba (HL7
+ellos: nos conectamos a ellos.** Medicci recibe la nota de cualquier escriba (HL7
 `MDM^T02` o FHIR `DocumentReference`), o la que el especialista escribe a mano,
 y la convierte en acciones.
 
-| Momento | Qué hace Medici | De dónde lo saca |
+| Momento | Qué hace Medicci | De dónde lo saca |
 |---|---|---|
 | **Antes** | Ficha de la derivación y pruebas adelantadas | Derivación (`REF`) |
-| **Durante** | **Pregúntale a Medici** (construido): consultas fijas de solo lectura sobre el historial del paciente y el modelo solo ordena. Siempre enseña las filas en las que se basa, y si un dato no está responde «no consta» | Copia HL7 |
-| **Durante** | **Aviso de prueba duplicada**: el médico dice «le pido una analítica» y Medici avisa de que ya tiene una de hace tres semanas | Nota del escriba + `ORU` |
+| **Durante** | **Pregúntale a Medicci** (construido): consultas fijas de solo lectura sobre el historial del paciente y el modelo solo ordena. Siempre enseña las filas en las que se basa, y si un dato no está responde «no consta» | Copia HL7 |
+| **Durante** | **Aviso de prueba duplicada**: el médico dice «le pido una analítica» y Medicci avisa de que ya tiene una de hace tres semanas | Nota del escriba + `ORU` |
 | **Al cerrar** | **Cero clics después de la consulta**: de la nota saca la lista de trámites (pruebas, próxima cita, vuelta a Primaria). El especialista la confirma con un clic | Nota del escriba (`MDM`) |
 | **Después** | La vuelta a Primaria redactada, y la versión del paciente en lectura fácil, en su idioma y en audio | Modelos locales |
 
-**La frase del pitch:** *«El escriba escribe la consulta. Medici hace todo lo que
+**La frase del pitch:** *«El escriba escribe la consulta. Medicci hace todo lo que
 viene antes y después.»*
 
 **Por qué es innovador:**
@@ -827,12 +827,12 @@ puede usar un audio grabado de antemano y pasado por `whisper-large-v3-turbo`,
 
 ## Infraestructura para todo el hospital (propuesta de Claude, pendiente del equipo)
 
-**Lo que se pide:** conectar a todo el hospital a Medici, con un Spark (o
+**Lo que se pide:** conectar a todo el hospital a Medicci, con un Spark (o
 similar) o con Mac mini M6. Solo el chatbot, que es lo decidido.
 
 ### Lo que no cambia en ninguna de las dos vías
 
-- **Los médicos no instalan nada.** Abren `https://medici` en el navegador del
+- **Los médicos no instalan nada.** Abren `https://medicci` en el navegador del
   ordenador de la consulta, con su usuario del hospital.
 - **Todo dentro de la red del hospital, en el CPD.** Nada en las consultas y
   sin salida a internet.
@@ -848,11 +848,11 @@ similar) o con Mac mini M6. Solo el chatbot, que es lo decidido.
             ▼
  ┌──────────────── CPD del hospital, red aislada (VLAN), sin internet ────────────────┐
  │                                                                                    │
- │  Medici · aplicación         ← proxy HTTPS (Caddy) + API (FastAPI) + la web          │
+ │  Medicci · aplicación         ← proxy HTTPS (Caddy) + API (FastAPI) + la web          │
  │     │   · consultas fijas de solo lectura, siempre de UN paciente                  │
  │     │   · registro: quién preguntó qué y cuándo                                    │
  │     │                                                                              │
- │     ├──► Datos de Medici (PostgreSQL): copia de solo lectura con lo justo           │
+ │     ├──► Datos de Medicci (PostgreSQL): copia de solo lectura con lo justo           │
  │     │        ▲  citas, derivaciones, pruebas, avisos, accesibilidad                │
  │     │        └── motor de integración del hospital → mensajes HL7 desde HCIS ⚠️    │
  │     │            (o una exportación nocturna si es más fácil al principio)         │
@@ -900,7 +900,7 @@ similar) o con Mac mini M6. Solo el chatbot, que es lo decidido.
 **Lo que no recomiendo: un M6 en cada servicio o en cada planta.** Cada equipo
 tendría una copia de datos de pacientes fuera del CPD (riesgo de robo y peor
 para la protección de datos), habría que actualizar y vigilar N equipos, y el
-día que falla uno, ese servicio se queda sin Medici. Los M6 siempre en el CPD
+día que falla uno, ese servicio se queda sin Medicci. Los M6 siempre en el CPD
 y repartiéndose el trabajo.
 
 ### Comparación
@@ -923,9 +923,9 @@ y repartiéndose el trabajo.
    con el mejor modelo, 1 Spark.
 2. **Todo el hospital:** **2 × DGX Spark** con el modelo de 30B. El M6 del
    piloto queda **de reserva o para pruebas**.
-3. **Hospitales pequeños o centros de especialidades:** Medici con M6.
+3. **Hospitales pequeños o centros de especialidades:** Medicci con M6.
 
-**Para vender:** *«Medici empieza con un Mac mini y crece a un Spark sin cambiar
+**Para vender:** *«Medicci empieza con un Mac mini y crece a un Spark sin cambiar
 nada, porque el software es el mismo.»*
 
 ### Lo que hace falta del hospital
@@ -936,7 +936,7 @@ nada, porque el software es el mismo.»*
 | Acceso a los datos: mensajes HL7 desde el motor de integración, o una exportación nocturna para empezar | Informática | ⚠️ Es lo que más tarda |
 | Usuarios del Directorio Activo y grupos por servicio | Informática | Cada médico ve solo a sus pacientes |
 | Certificado HTTPS de la autoridad interna | Informática | |
-| Copias de seguridad de la base de Medici en su sistema | Informática | |
+| Copias de seguridad de la base de Medicci en su sistema | Informática | |
 | **Evaluación de impacto de protección de datos (EIPD)** | Delegado de protección de datos | ⚠️ Obligatoria al tratar datos de salud con un sistema nuevo |
 | **Esquema Nacional de Seguridad (ENS)** | Seguridad | ⚠️ Los sistemas del sector público lo tienen que cumplir. Lo ayuda que no tenga internet, que use TLS, que tenga registro y que dé el mínimo acceso |
 | Si entra en el reglamento de productos sanitarios o en el de IA | Mentores / regulatorio | ⚠️ Solo busca y muestra datos: probablemente no, pero hay que confirmarlo |
@@ -974,26 +974,26 @@ Todo es software libre con licencias que permiten venderlo.
 **1. Instalarlo (una vez, Informática):**
 
 1. Se pone el equipo en el CPD, se conecta a la red y se abre
-   `https://medici.local`.
+   `https://medicci.local`.
 2. El asistente pide tres cosas:
    - **de dónde salen los datos:** la dirección del motor HL7 o la carpeta de
      la exportación;
    - **el Directorio Activo;**
    - **los servicios** que van a usarlo.
-3. Medici se prueba solo con un paciente de ejemplo y se pone en verde.
+3. Medicci se prueba solo con un paciente de ejemplo y se pone en verde.
 
 **2. Los datos se mantienen al día (solo, todo el día):**
 
 - HCIS envía un mensaje por cada cita, cambio, prueba o derivación. El receptor
-  de Medici lo guarda en su copia.
+  de Medicci lo guarda en su copia.
 - Si al principio solo hay una exportación nocturna, se carga cada noche.
 
 **3. El médico lo usa (cada día):**
 
-1. Abre `https://medici` en el navegador de su consulta y entra con su usuario
+1. Abre `https://medicci` en el navegador de su consulta y entra con su usuario
    de siempre.
 2. Ve **su agenda del día** y elige al paciente. O lo abre en HCIS como
-   siempre y la pestaña Medici aparece con él (ver «Dentro de HCIS») ⚠️.
+   siempre y la pestaña Medicci aparece con él (ver «Dentro de HCIS») ⚠️.
 3. **Pregunta:** «¿Ha estado antes en Digestivo?»
 
 **4. Lo que pasa por dentro (en 2–5 segundos):**
@@ -1020,18 +1020,18 @@ pregunta ─► API: comprueba que el paciente es de este médico
 - Las 30 preguntas de prueba se repiten antes de cada actualización. Si baja el
   acierto, no se instala.
 
-### Dentro de HCIS: la pestaña Medici (propuesta, pendiente del equipo)
+### Dentro de HCIS: la pestaña Medicci (propuesta, pendiente del equipo)
 
 **La idea** (del equipo, 24‑oct): el médico no abre otra aplicación. Busca al
 paciente en HCIS como siempre y en el borde de la ventana aparece una pestaña
-«Medici» con ese paciente: el resumen arriba y el chat debajo. Los esquemas
-están en el lienzo [Arquitectura Medici](https://claude.ai/artifact/TW3bnQYWKApTGZmtk9sB6d),
+«Medicci» con ese paciente: el resumen arriba y el chat debajo. Los esquemas
+están en el lienzo [Arquitectura Medicci](https://claude.ai/artifact/TW3bnQYWKApTGZmtk9sB6d),
 que es privado: hay que compartirlo desde la página.
 
 **Dos caminos separados:**
 
 - **Los datos** llegan por detrás: HCIS → motor de integración (HL7) o
-  exportación nocturna → copia de Medici. No pasan por la pantalla, así que da
+  exportación nocturna → copia de Medicci. No pasan por la pantalla, así que da
   igual cómo sea HCIS.
 - **Qué paciente está abierto:** es lo único que se saca de la pantalla, y solo
   el NHC.
@@ -1048,8 +1048,8 @@ Java o por Citrix ⚠️. No hay demo ni manual público.
 |---|---|---|---|---|
 | 1. Extensión de Chrome o Edge | HCIS en una pestaña normal | Lee la cinta del paciente en la página | Informática la reparte con una directiva (`ExtensionInstallForcelist`) | Si cambia la pantalla, se ajusta el selector |
 | 2. Programa pequeño de Windows | Java, modo IE o programa nativo | API de accesibilidad de Windows (UI Automation); en Java, Java Access Bridge | Instalador con la herramienta de Informática | Si la ventana no expone el texto, no se puede ⚠️ |
-| 3. Botón dentro de HCIS | Si HCIS admite enlaces externos | HCIS abre `https://medici/abrir?nhc=…` y Medici lo comprueba | Configuración en HCIS | Depende de Informática o de Dedalus ⚠️ |
-| 4. Elegirlo en la agenda de Medici | Siempre | No lo lee: el médico pulsa al paciente en su agenda del día | Ninguna | Un clic más; el nombre va grande arriba |
+| 3. Botón dentro de HCIS | Si HCIS admite enlaces externos | HCIS abre `https://medicci/abrir?nhc=…` y Medicci lo comprueba | Configuración en HCIS | Depende de Informática o de Dedalus ⚠️ |
+| 4. Elegirlo en la agenda de Medicci | Siempre | No lo lee: el médico pulsa al paciente en su agenda del día | Ninguna | Un clic más; el nombre va grande arriba |
 
 - **Si HCIS va por Citrix**, la 2 tendría que publicarse dentro de Citrix. Si
   no se puede, la 3 o la 4.
@@ -1072,7 +1072,7 @@ paso 1, para que nunca se mezclen dos pacientes.
 **Para la demo:** la réplica `demo/web/hcis.html` hace de HCIS. Un script lee
 el NHC de su cinta, como haría la extensión, y el panel de `agente.js` pasa a
 ser una pestaña lateral. Frase para el pitch: *«El médico no abre nada nuevo.
-Busca al paciente en HCIS como siempre, y Medici ya está ahí.»*
+Busca al paciente en HCIS como siempre, y Medicci ya está ahí.»*
 
 **Para preguntar a un mentor de La Princesa ⚠️:** ¿HCIS se abre en Chrome o
 Edge con barra de direcciones? ¿Sale el icono de Internet Explorer o una
@@ -1086,19 +1086,19 @@ ventana de Java? ¿Se entra por Citrix?
 - **Lo mantiene la Unidad de Análisis de Datos o Informática.** No hace falta un
   equipo nuevo.
 
-## Dónde corre Medici: Mac mini M6 o NVIDIA DGX Spark
+## Dónde corre Medicci: Mac mini M6 o NVIDIA DGX Spark
 
 > **Para el chatbot vale la columna «solo chat»:** un Spark aguanta unos
 > 400–500 médicos conectados y un M6 unos 30–50 (estimado ⚠️). Las cifras «con
 > escriba» y las subsecciones sobre escribas son contexto y hoja de ruta.
 
-**Decidido el 23‑oct:** Medici se vende para **dos equipos**, el **Mac mini M6**
+**Decidido el 23‑oct:** Medicci se vende para **dos equipos**, el **Mac mini M6**
 y el **NVIDIA DGX Spark**. Tiene que instalarlo **cualquiera, sin saber
 informática**.
 
 ### Las dos versiones
 
-| | **Medici Mini** · Mac mini M6 | **Medici Spark** · NVIDIA DGX Spark |
+| | **Medicci Mini** · Mac mini M6 | **Medicci Spark** · NVIDIA DGX Spark |
 |---|---|---|
 | Para quién | Un servicio pequeño, un centro de especialidades o un piloto | Un servicio grande o el hospital entero |
 | Precio del equipo | Desde 899 $ (16 GB). **Recomendado 32 GB**, precio en € por confirmar ⚠️ | ~4.600–4.800 € con IVA (subió a 4.699 $ en febrero de 2026) |
@@ -1150,7 +1150,7 @@ segundos (~6 % del tiempo).
   hora por la mañana. Equivale a **unos 60 médicos en consulta a la vez**, el
   10–15 % de la plantilla.
 
-| Montaje | Escriba + chat | Solo Medici (lector + chat + cierre con nota escrita a mano) |
+| Montaje | Escriba + chat | Solo Medicci (lector + chat + cierre con nota escrita a mano) |
 |---|---|---|
 | **1 Mac mini M6** | ~8–10 médicos: piloto pequeño | Un servicio entero |
 | **1 Spark** (piloto en Digestivo) | ~30–50 médicos | **El hospital entero** |
@@ -1169,14 +1169,14 @@ GPU. El software es el mismo.
 - **Los escribas comerciales** (Dragon Copilot, Abridge, Nabla…) mandan el audio
   de la consulta **a la nube**. El de la Consejería (T‑Systems) **también va en la nube
   pública** (ver más abajo). Del de Quirónsalud no sabemos dónde corre ⚠️.
-- **El escriba de Medici** corre en el mismo equipo de Medici:
+- **El escriba de Medicci** corre en el mismo equipo de Medicci:
   1. el micrófono de la consulta envía el audio por la red interna;
   2. Whisper lo transcribe y Qwen3 redacta la nota;
   3. la nota se envía a HCIS como `MDM^T02`.
 
   **No sale nada del hospital.**
 - **No se ejecuta en el PC de la consulta**, porque no tiene GPU.
-- **Si el hospital ya tiene un escriba en la nube**, Medici recibe su nota por HL7 y
+- **Si el hospital ya tiene un escriba en la nube**, Medicci recibe su nota por HL7 y
   hace igualmente los trámites.
 
 ### El escriba que compra la Comunidad de Madrid (T‑Systems, en la nube)
@@ -1234,36 +1234,36 @@ económica, el pliego técnico y la formalización.
 - **Cumplir el Reglamento europeo de IA:** clasificarlo por riesgo y, si hace
   falta, el marcado CE.
 
-**Qué hace Medici que su IA no hace:**
+**Qué hace Medicci que su IA no hace:**
 
-| | Escriba de la Comunidad (T‑Systems) | Medici |
+| | Escriba de la Comunidad (T‑Systems) | Medicci |
 |---|---|---|
 | Dónde trabaja | **Primaria**, dentro de APMadrid | **Hospital**: consultas externas, con HCIS y HL7 |
 | La derivación | **La crea** en Primaria | **La lee al llegar al hospital y prepara la consulta**: pruebas antes de la primera visita, revisión directa o devolución si falta algo |
-| Preguntar al historial | No está en el pliego | «Pregúntale a Medici», con la fuente de cada dato |
+| Preguntar al historial | No está en el pliego | «Pregúntale a Medicci», con la fuente de cada dato |
 | La vuelta a Primaria | No | Redacta qué hacer y qué pruebas no repetir |
 | El paciente | Traduce la conversación | Le da las instrucciones de su prueba en lectura fácil, en su idioma y en audio |
 | Dónde corren los datos | **Nube pública** | **Dentro del hospital** |
 | Coste | Nube presupuestada en **400.000 € por 3 meses**; lo que cueste después no está pagado | Equipo de compra única: **4.700 € el Spark** |
 | Dependencia | Integración a medida en APMadrid hecha por T‑Systems | HL7 estándar: vale para cualquier hospital y cualquier escriba |
 
-**Lo que su IA hace y Medici no** (decirlo si preguntan):
+**Lo que su IA hace y Medicci no** (decirlo si preguntan):
 
 - Escriba en tiempo real con 2.500 micrófonos ya desplegados.
 - Recetas y bajas.
 - Integración nativa en la historia de Primaria.
 
-**Medici no compite con ella: va justo después.** Su IA escribe la derivación en
-Primaria y Medici la lee en el hospital. Si sus derivaciones llegan mejor
-estructuradas, Medici acierta más.
+**Medicci no compite con ella: va justo después.** Su IA escribe la derivación en
+Primaria y Medicci la lee en el hospital. Si sus derivaciones llegan mejor
+estructuradas, Medicci acierta más.
 
 **Comparaciones que aguantan:**
 
 - ✅ *«Solo la nube del escriba de Primaria estaba presupuestada en 400.000 €
-  para tres meses, y lo que cueste mantenerla después no estaba pagado. Medici
+  para tres meses, y lo que cueste mantenerla después no estaba pagado. Medicci
   corre en un equipo que se compra una vez.»*
 - ✅ *«El propio contrato pide un estudio de cuánto costará mantenerlo. A la
-  Consejería le preocupa el coste de seguir; con Medici ese coste se conoce desde
+  Consejería le preocupa el coste de seguir; con Medicci ese coste se conoce desde
   el primer día.»*
 - ❌ *«Pagan 1,1 millones por tres meses de uso.»* Es falso: casi 1 M€ son
   servicios (40 personas para integrarlo y desplegarlo).
@@ -1278,7 +1278,7 @@ estructuradas, Medici acierta más.
 - [Licitación (BOCM 16‑mar‑2026)](https://www.bocm.es/boletin/CM_Orden_BOCM/2026/03/16/BOCM-20260316-29.PDF)
 - [TED 154988‑2026](https://ted.europa.eu/es/notice/154988-2026/pdf)
 
-### Cuánto cuesta un escriba comercial frente a Medici
+### Cuánto cuesta un escriba comercial frente a Medicci
 
 **Los escribas comerciales se pagan por médico y por mes.** Casi ninguno publica
 precios. Las cifras son de comparadores de terceros y del mercado de EE. UU. ⚠️:
@@ -1300,18 +1300,18 @@ plantilla) ⚠️:
 | Escriba barato (110 $) | ~400.000 $ |
 | Escriba de empresa (208 $) | ~750.000 $ |
 | Escriba de gama alta (600 $) | ~2,2 M$ |
-| **Medici entero**: 3 Spark amortizados en 4 años (~3.500 €), luz (~1.000 €) y una licencia anual de hospital (~50.000 €, hipótesis nuestra ⚠️) | **~55.000 €** |
+| **Medicci entero**: 3 Spark amortizados en 4 años (~3.500 €), luz (~1.000 €) y una licencia anual de hospital (~50.000 €, hipótesis nuestra ⚠️) | **~55.000 €** |
 
-- **Por médico:** unos **15 € al mes** con Medici, frente a **110–600 $** de un
+- **Por médico:** unos **15 € al mes** con Medicci, frente a **110–600 $** de un
   escriba.
-- **Y Medici hace más que escribir:** lee las derivaciones, responde a preguntas
+- **Y Medicci hace más que escribir:** lee las derivaciones, responde a preguntas
   sobre el historial y cierra la consulta.
 
 **Con cuidado:**
 
 - Los precios de los escribas son **estimaciones de terceros en EE. UU.**; en
   España se negocian por volumen.
-- **Los escribas comerciales llevan años de producto y Medici es un piloto.** Si
+- **Los escribas comerciales llevan años de producto y Medicci es un piloto.** Si
   el jurado pregunta por la calidad, la respuesta es el mes en paralelo midiendo
   el acierto, no prometer que somos igual de buenos.
 - **La integración HL7 y la formación del piloto** cuestan aparte y hay que
@@ -1340,7 +1340,7 @@ plantilla) ⚠️:
 4. **Fase 2:** ajuste fino (LoRA) de Whisper con audio del hospital, con
    consentimiento y aprobación de protección de datos ⚠️.
 
-**La frase:** *«Lo que Medici aprende se queda en el hospital.»* Con las
+**La frase:** *«Lo que Medicci aprende se queda en el hospital.»* Con las
 correcciones de vuestros médicos no se entrena el modelo de ninguna empresa.
 
 ### Sabe quién es cada médico
@@ -1353,7 +1353,7 @@ correcciones de vuestros médicos no se entrena el modelo de ninguna empresa.
   sala. En los CSV es `AGENDAS.profesional_ficticio`.
 - **Para qué sirve:**
   - su glosario y su estilo de nota;
-  - «Pregúntale a Medici» solo le enseña **sus pacientes del día**;
+  - «Pregúntale a Medicci» solo le enseña **sus pacientes del día**;
   - cada pregunta queda registrada con su nombre.
 - **Separar las voces** (médico, paciente, acompañante) con
   `pyannote/speaker-diarization-3.1` (MIT) queda para la fase 2.
@@ -1369,7 +1369,7 @@ navegador y se siguen tres pasos. Nadie del hospital toca la línea de comandos.
 **Cómo llega:**
 
 - **Opción A (la buena): el equipo llega ya preparado.** Mac mini o Spark con
-  Medici y los modelos ya instalados.
+  Medicci y los modelos ya instalados.
 - **Opción B: el hospital ya tiene el equipo.** Se le pasa un instalador:
   - en el Mac, un `.pkg` con doble clic;
   - en el Spark, que trae DGX OS, basado en Ubuntu, un `.deb` o un
@@ -1378,7 +1378,7 @@ navegador y se siguen tres pasos. Nadie del hospital toca la línea de comandos.
   Los modelos van dentro del instalador, porque **no hace falta internet**
   (`HF_HUB_OFFLINE=1`) y llevan sumas de comprobación.
 
-**El primer arranque, en `http://medici.local`:**
+**El primer arranque, en `http://medicci.local`:**
 
 1. **Conectar con HCIS.** Informática escribe la IP y el puerto del motor de
    integración HL7. Hay un botón «Probar conexión» que se pone en verde.
@@ -1386,7 +1386,7 @@ navegador y se siguen tres pasos. Nadie del hospital toca la línea de comandos.
    para Digestivo, Cardiología…
 3. **Usuarios.** Se conecta al directorio del hospital o se crean a mano.
 
-Al terminar, Medici se prueba solo con una derivación de ejemplo y enseña el
+Al terminar, Medicci se prueba solo con una derivación de ejemplo y enseña el
 resultado.
 
 **Qué hay debajo** (el instalador lo decide solo; nadie lo ve):
@@ -1395,10 +1395,10 @@ resultado.
 |---|---|---|
 | Modelo de texto | Ollama (Metal) | vLLM (contenedor de NVIDIA), que aguanta muchas peticiones a la vez |
 | Transcripción | `whisper.cpp` (Metal) | `whisper.cpp` (CUDA) |
-| Medici (API + web) | Servicio de `launchd`, arranca solo | Servicio de `systemd` o Docker, arranca solo |
+| Medicci (API + web) | Servicio de `launchd`, arranca solo | Servicio de `systemd` o Docker, arranca solo |
 | Perfil de modelos | Lo elige solo según la memoria: 16 GB → Qwen3‑4B, 32 GB → Qwen3‑8B | 128 GB → Qwen3‑30B‑A3B |
 
-Medici habla con los dos motores por la misma API compatible con OpenAI, así que
+Medicci habla con los dos motores por la misma API compatible con OpenAI, así que
 **el código es el mismo en los dos equipos**.
 
 **Para el día a día:**
@@ -1414,7 +1414,7 @@ Medici habla con los dos motores por la misma API compatible con OpenAI, así qu
 
 ### Qué entra en las 24 h
 
-- **Que funcione igual en los dos equipos:** Medici usa la API compatible con
+- **Que funcione igual en los dos equipos:** Medicci usa la API compatible con
   OpenAI y el motor de IA se elige en un `.env`.
 - **El asistente de los tres pasos** como pantallas diseñadas por UI/UX. Se puede
   enseñar en el pitch en 15 segundos.

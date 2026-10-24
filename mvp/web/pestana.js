@@ -1,6 +1,6 @@
-// Medici en la web. Escrita como lo haría la extensión del navegador: no sabe
+// Medicci en la web. Escrita como lo haría la extensión del navegador: no sabe
 // nada de la página salvo dónde está el NHC en la cinta del paciente. Lo lee,
-// abre una sesión en el servidor de Medici y enseña la tarjeta y el chat de ese
+// abre una sesión en el servidor de Medicci y enseña la tarjeta y el chat de ese
 // paciente. Si el médico cambia de paciente, borra todo y empieza de nuevo.
 // El aspecto es el de la burbuja de escritorio de medicci-rs.
 (function () {
@@ -25,12 +25,12 @@
   let nhcActual = null, sesion = null, pidiendo = false, tarjetaActual = "";
 
   document.body.insertAdjacentHTML("beforeend", `
-    <div id="medici">
-      <section class="panel" aria-label="Medici" id="m-panel">
+    <div id="medicci">
+      <section class="panel" aria-label="Medicci" id="m-panel">
         <header>
           <span class="av">${MEDICO}</span>
-          <span class="tit"><b>Medici</b><small><span class="led" id="m-led"></span><span id="m-estado">IA local · nada sale del hospital</span></small></span>
-          <button class="x" type="button" aria-label="Plegar Medici"><i></i></button>
+          <span class="tit"><b>Medicci</b><small><span class="led" id="m-led"></span><span id="m-estado">IA local · nada sale del hospital</span></small></span>
+          <button class="x" type="button" aria-label="Plegar Medicci"><i></i></button>
         </header>
         <div class="pac"><b id="m-nombre">Abra un paciente en HCIS</b><small id="m-sub"></small></div>
         <div class="hilo" id="m-hilo" aria-live="polite"></div>
@@ -42,12 +42,12 @@
           </form>
         </div>
       </section>
-      <button class="bola" type="button" aria-label="Abrir Medici" aria-controls="m-panel" aria-expanded="false">
+      <button class="bola" type="button" aria-label="Abrir Medicci" aria-controls="m-panel" aria-expanded="false">
         ${MEDICO}${PLEGAR}<span class="num"></span></button>
     </div>`);
 
   const $ = s => document.querySelector(s);
-  const raiz = $("#medici");
+  const raiz = $("#medicci");
 
   function abrir(si) {
     raiz.classList.toggle("abierto", si);
@@ -128,7 +128,7 @@
     $("#m-nombre").textContent = nombre ? nombre.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase())
                                         : (nhc ? `Paciente ${nhc}` : "Abra un paciente en HCIS");
     $("#m-sub").textContent = nhc ? `NHC ${nhc}` : "";
-    if (!nhc) return vaciar("Medici se activa cuando abre un paciente en HCIS.");
+    if (!nhc) return vaciar("Medicci se activa cuando abre un paciente en HCIS.");
     vaciar("Leyendo sus datos…");
     try {
       const s = await pide("/sesion", {nhc});

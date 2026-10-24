@@ -9,7 +9,7 @@
 //!     medicci --db ruta.db --paciente 417
 //!     medicci --servidor http://localhost:8000 --paciente P0129798
 //!
-//! Con --servidor, la burbuja es la otra cara del servidor de Medici: la
+//! Con --servidor, la burbuja es la otra cara del servidor de Medicci: la
 //! tarjeta «antes de que entre» y las respuestas de la IA local llegan de allí.
 //! Si el servidor no responde, sigue sola con su base.
 
@@ -226,7 +226,7 @@ struct Medicci {
     resumen_t: f32,
     resumen_pos: Option<Pos2>,
     pendiente: Option<String>,      // un tema pulsado en el resumen
-    // conectada al servidor de Medici (con --servidor)
+    // conectada al servidor de Medicci (con --servidor)
     red: Option<Servidor>,
     sesion: Option<String>,
     filas: i64,
@@ -960,7 +960,7 @@ impl Medicci {
         p.text(pos2(c.x + 28.0, caja.center().y - 9.0), egui::Align2::LEFT_CENTER, "Medicci",
                FontId::new(16.0, negrita()), BLANCO);
         p.text(pos2(c.x + 28.0, caja.center().y + 10.0), egui::Align2::LEFT_CENTER,
-               if self.red.is_some() { "IA local · conectada a Medici" } else { "Lee la historia y cita la fuente" },
+               if self.red.is_some() { "IA local · conectada a Medicci" } else { "Lee la historia y cita la fuente" },
                FontId::proportional(11.5), VERDE_CLARO);
 
         let b = Rect::from_center_size(pos2(caja.right() - 28.0, caja.center().y), Vec2::splat(30.0));
@@ -2143,8 +2143,8 @@ fn main() -> eframe::Result<()> {
 
     let mut ruta: Option<PathBuf> = None;
     let mut paciente: Option<String> = None;
-    // adónde mandar las peticiones: --servidor, la variable o medici.conf (el que diga el hospital)
-    let mut url = std::env::var("MEDICI_SERVIDOR").ok().or_else(|| servidor::de_la_configuracion("MEDICI_SERVIDOR"));
+    // adónde mandar las peticiones: --servidor, la variable o medicci.conf (el que diga el hospital)
+    let mut url = std::env::var("MEDICCI_SERVIDOR").ok().or_else(|| servidor::de_la_configuracion("MEDICCI_SERVIDOR"));
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
@@ -2162,7 +2162,7 @@ fn main() -> eframe::Result<()> {
     let red = url.map(|u| Servidor::nuevo(&u)).filter(|s| {
         let si = s.responde();
         if !si {
-            eprintln!("El servidor de Medici no responde: la burbuja usa su base local.");
+            eprintln!("El servidor de Medicci no responde: la burbuja usa su base local.");
         }
         si
     });
@@ -2171,8 +2171,8 @@ fn main() -> eframe::Result<()> {
         for base in [exe.parent().map(|p| p.to_path_buf()), std::env::current_dir().ok()]
             .into_iter().flatten()
         {
-            for candidata in [base.join("medicci.db"), base.join("bd/jano.db"),
-                              base.join("../bd/jano.db"), base.join("../../bd/jano.db")] {
+            for candidata in [base.join("medicci.db"), base.join("bd/medicci.db"),
+                              base.join("../bd/medicci.db"), base.join("../../bd/medicci.db")] {
                 if candidata.exists() {
                     return candidata;
                 }

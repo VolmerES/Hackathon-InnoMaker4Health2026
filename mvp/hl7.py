@@ -1,4 +1,4 @@
-"""HL7 v2 mínimo: escribir y leer mensajes, el transporte MLLP y el receptor de Medici.
+"""HL7 v2 mínimo: escribir y leer mensajes, el transporte MLLP y el receptor de Medicci.
 
 Solo biblioteca estándar, para que la demo se instale sin nada más. En el
 hospital se usaría una librería completa (hl7apy) y el perfil de mensajes que
@@ -10,7 +10,7 @@ dé Informática ⚠️. Aquí van los mensajes estándar:
     SIU^S26  cita no realizada           OMG^O19  petición de prueba
     ORU^R01  resultado de prueba
 
-Medici solo recibe: guarda cada mensaje en su copia y contesta ACK.
+Medicci solo recibe: guarda cada mensaje en su copia y contesta ACK.
 """
 
 import socket
@@ -48,7 +48,7 @@ def segmento(nombre: str, *campos) -> str:
 
 
 def mensaje(tipo: str, evento: str, estructura: str, control: str, cuando: datetime, *segmentos) -> str:
-    msh = (f"MSH|^~\\&|HCIS|HUP|MEDICI|HUP|{ts(cuando)}||{tipo}^{evento}^{estructura}|"
+    msh = (f"MSH|^~\\&|HCIS|HUP|MEDICCI|HUP|{ts(cuando)}||{tipo}^{evento}^{estructura}|"
            f"{escapar(control)}|P|2.5")
     return "\r".join([msh, *segmentos])
 
@@ -100,7 +100,7 @@ def fecha(valor: str):
 
 def ack(m: Mensaje, codigo: str = "AA", texto: str = "") -> str:
     return "\r".join([
-        f"MSH|^~\\&|MEDICI|HUP|HCIS|HUP|{ts(datetime.now())}||ACK^{m.campo('MSH', 9, 2)}|A{m.control}|P|2.5",
+        f"MSH|^~\\&|MEDICCI|HUP|HCIS|HUP|{ts(datetime.now())}||ACK^{m.campo('MSH', 9, 2)}|A{m.control}|P|2.5",
         f"MSA|{codigo}|{m.control}|{escapar(texto)}"])
 
 
@@ -154,17 +154,17 @@ def escuchar(host: str, puerto: int, manejar) -> socketserver.ThreadingTCPServer
     return servidor
 
 
-# ---------------------------------------------------------------- receptor de Medici
+# ---------------------------------------------------------------- receptor de Medicci
 
 def _guardar(con, tabla: str, clave: str, fila: dict) -> None:
-    """Sustituye la fila con esa clave (la copia de Medici no lleva claves primarias)."""
+    """Sustituye la fila con esa clave (la copia de Medicci no lleva claves primarias)."""
     con.execute(f"DELETE FROM {tabla} WHERE {clave} = ?", [fila[clave]])
     columnas = ", ".join(fila)
     con.execute(f"INSERT INTO {tabla} ({columnas}) VALUES ({', '.join('?' * len(fila))})", list(fila.values()))
 
 
 def aplicar(con, m: Mensaje) -> str:
-    """Guarda el mensaje en la copia de Medici. Devuelve un resumen de una línea."""
+    """Guarda el mensaje en la copia de Medicci. Devuelve un resumen de una línea."""
     nhc = m.campo("PID", 3)
     tipo = m.tipo
 

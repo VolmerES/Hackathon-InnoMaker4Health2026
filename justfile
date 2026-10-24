@@ -3,7 +3,7 @@
 #   just              revisa que todo está instalado, pasa las pruebas y abre la burbuja
 #   just abre 417     igual, con el paciente ya cargado
 #   just rapido       abre sin revisar (cuando ya se ha revisado)
-#   just conectada    abre conectada al servidor de Medici (mvp/servidor.py en marcha)
+#   just conectada    abre conectada al servidor de Medicci (mvp/servidor.py en marcha)
 #   just compila      deja el ejecutable listo y dice dónde está
 #
 # Para tener just: cargo install just
@@ -29,7 +29,7 @@ abre paciente="": revisa
 rapido paciente="":
     cargo run --release --quiet -- {{ if paciente == "" { "" } else { "--paciente " + paciente } }}
 
-# Abre conectada al servidor de Medici: tarjeta e IA local (opcional: NHC, p. ej. 129798)
+# Abre conectada al servidor de Medicci: tarjeta e IA local (opcional: NHC, p. ej. 129798)
 conectada paciente="" servidor="http://localhost:8000":
     cargo run --release --quiet -- --servidor {{ servidor }} {{ if paciente == "" { "" } else { "--paciente " + paciente } }}
 
@@ -59,7 +59,7 @@ _sistema:
     if command -v cc >/dev/null 2>&1; then bien "compilador de C (para SQLite)"
     else mal "compilador de C" "sudo apt install build-essential"; fi
     sueltos=""
-    for f in ../bd/sql/01_cita.sql ../bd/sql/02_jano.sql ../bd/sql/03_vistas.sql ../bd/sql/04_datos.sql \
+    for f in ../bd/sql/01_cita.sql ../bd/sql/02_medicci.sql ../bd/sql/03_vistas.sql ../bd/sql/04_datos.sql \
              fuentes/NotoSans-Regular.ttf fuentes/NotoSans-Bold.ttf fuentes/NotoSansMono-Regular.ttf; do
         [ -f "$f" ] || sueltos="$sueltos ${f#../}"
     done
@@ -83,4 +83,4 @@ _sistema:
     Write-Host "Revisando lo necesario para Medicci"
     if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) { Write-Host "  falta  Rust (cargo): winget install Rustlang.Rustup   y abre otra terminal" -ForegroundColor Red; exit 1 } else { Write-Host "  ok  $(cargo --version)" -ForegroundColor Green }
     if ((rustc -vV | Out-String) -match 'host: \S*msvc') { $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"; $vs = if (Test-Path $vswhere) { & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath } else { $null }; if (-not $vs) { Write-Host "  falta  herramientas de C++ de Visual Studio: winget install Microsoft.VisualStudio.2022.BuildTools --override `"--quiet --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended`"" -ForegroundColor Red; exit 1 } else { Write-Host "  ok  herramientas de C++ de Visual Studio" -ForegroundColor Green } }
-    $f = @('..\bd\sql\01_cita.sql','..\bd\sql\02_jano.sql','..\bd\sql\03_vistas.sql','..\bd\sql\04_datos.sql','fuentes\NotoSans-Regular.ttf','fuentes\NotoSans-Bold.ttf','fuentes\NotoSansMono-Regular.ttf') | Where-Object { -not (Test-Path $_) }; if ($f) { Write-Host "  falta  $($f -join ', '): git pull" -ForegroundColor Red; exit 1 } else { Write-Host "  ok  SQL de la base y fuentes" -ForegroundColor Green }
+    $f = @('..\bd\sql\01_cita.sql','..\bd\sql\02_medicci.sql','..\bd\sql\03_vistas.sql','..\bd\sql\04_datos.sql','fuentes\NotoSans-Regular.ttf','fuentes\NotoSans-Bold.ttf','fuentes\NotoSansMono-Regular.ttf') | Where-Object { -not (Test-Path $_) }; if ($f) { Write-Host "  falta  $($f -join ', '): git pull" -ForegroundColor Red; exit 1 } else { Write-Host "  ok  SQL de la base y fuentes" -ForegroundColor Green }

@@ -1,5 +1,5 @@
 -- =====================================================================
--- Jano / Medici · 02 · Lo que añade el proyecto
+-- Medicci · 02 · Lo que añade el proyecto
 -- La historia que se lee, lo que el modelo extrae de ella, la ficha que
 -- se genera para la cita, lo que pregunta el médico y lo que valida.
 -- Regla de oro: ningún dato extraído existe sin la frase literal y el
@@ -76,7 +76,7 @@ CREATE TABLE fichas_consulta (
   id_cita       VARCHAR(20) NOT NULL REFERENCES citas (id_cita),
   id_lectura    VARCHAR(24) NOT NULL REFERENCES lecturas (id_lectura),
   generada_en   TIMESTAMP   NOT NULL,
-  formato       VARCHAR(30) NOT NULL DEFAULT 'medici-v1',
+  formato       VARCHAR(30) NOT NULL DEFAULT 'medicci-v1',
   campos_con_dato INTEGER,
   campos_sin_dato INTEGER,
   vista_por     VARCHAR(60),             -- usuario del HCE que la abrió

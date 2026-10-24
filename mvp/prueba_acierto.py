@@ -1,4 +1,4 @@
-"""Prueba de acierto de Medici: 30 preguntas con la respuesta correcta sacada de los CSV.
+"""Prueba de acierto de Medicci: 30 preguntas con la respuesta correcta sacada de los CSV.
 
     python mvp/prueba_acierto.py --solo-preguntas        # ver las preguntas y su respuesta correcta
     python mvp/prueba_acierto.py                         # Ollama en localhost con qwen3:8b
@@ -243,7 +243,7 @@ def main() -> None:
         except Exception as e:                      # se cuenta como fallo y se sigue
             r = Respuesta(False, f"ERROR: {e}", [], segundos=120.0)
             ok, motivo = False, "sin respuesta"
-        print(f"    Medici ({r.segundos:.1f} s): {r.respuesta}  {r.fuentes}")
+        print(f"    Medicci ({r.segundos:.1f} s): {r.respuesta}  {r.fuentes}")
         print(f"    {'✅' if ok else '❌'} {motivo}")
         resultados.append({**caso, "filas": len(filas), "esperado": esp, "respuesta": r.respuesta,
                            "consta": r.consta, "fuentes": r.fuentes, "inventadas": r.inventadas,

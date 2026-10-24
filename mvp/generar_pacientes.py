@@ -1,8 +1,8 @@
-"""Genera pacientes sintéticos para probar Medici con crónicos: años de
+"""Genera pacientes sintéticos para probar Medicci con crónicos: años de
 seguimiento y cientos de citas, con sus pruebas, avisos, cambios y faltas.
 
 Escribe los 11 CSV con el mismo formato que los del reto en otra carpeta, para
-no mezclarlos. Para usarlos: MEDICI_CSV=data/generados.
+no mezclarlos. Para usarlos: MEDICCI_CSV=data/generados.
 
     python mvp/generar_pacientes.py                       # 200 pacientes en data/generados
     python mvp/generar_pacientes.py --cronicos 100 --semilla 7
@@ -187,7 +187,7 @@ class Generador:
             with open(carpeta / f"{tabla}.csv", "w", newline="", encoding="utf-8") as f:
                 w = csv.writer(f)
                 w.writerow(cabecera)
-                w.writerows(self.filas.get(tabla, []))         # las tres que Medici no usa van vacías
+                w.writerows(self.filas.get(tabla, []))         # las tres que Medicci no usa van vacías
 
 
 def main():
@@ -214,7 +214,7 @@ def main():
             print(f"  {perfil:12} {len(lista):4} pacientes · citas por paciente: "
                   f"mín {min(lista)}, mediana {sorted(lista)[len(lista) // 2]}, máx {max(lista)}")
     print("  filas:", ", ".join(f"{t.lower()} {len(f)}" for t, f in g.filas.items()))
-    print(f"\nPara usarlos: MEDICI_CSV={args.carpeta}")
+    print(f"\nPara usarlos: MEDICCI_CSV={args.carpeta}")
 
 
 if __name__ == "__main__":

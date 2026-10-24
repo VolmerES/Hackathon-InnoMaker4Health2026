@@ -1,4 +1,4 @@
-"""Hace de HCIS y del motor de integración: manda mensajes HL7 v2 a Medici por MLLP.
+"""Hace de HCIS y del motor de integración: manda mensajes HL7 v2 a Medicci por MLLP.
 
     python mvp/hl7_emisor.py                          # la historia de los 8 pacientes de la agenda
     python mvp/hl7_emisor.py --ver                    # y enseña cada mensaje
@@ -6,7 +6,7 @@
     python mvp/hl7_emisor.py --evento anular          # en directo: anula la próxima cita de María
     python mvp/hl7_emisor.py --evento resultado       # en directo: llega el resultado de su prueba
 
-Medici tiene que estar arrancado con --datos hl7 (receptor en el puerto 2575).
+Medicci tiene que estar arrancado con --datos hl7 (receptor en el puerto 2575).
 """
 
 import argparse
@@ -134,14 +134,14 @@ def evento(con, nhc: str, cual: str) -> str:
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--host", default=valor("MEDICI_HL7_HOST", "localhost"))
-    ap.add_argument("--puerto", type=int, default=int(valor("MEDICI_HL7_PUERTO", "2575")))
+    ap.add_argument("--host", default=valor("MEDICCI_HL7_HOST", "localhost"))
+    ap.add_argument("--puerto", type=int, default=int(valor("MEDICCI_HL7_PUERTO", "2575")))
     ap.add_argument("--evento", choices=["anular", "resultado"])
     ap.add_argument("--nhc", help="por defecto, la primera de la agenda (María)")
     ap.add_argument("--ver", action="store_true", help="enseña cada mensaje entero")
     ap.add_argument("--pausa", type=float, default=0.0, help="segundos entre mensajes")
-    ap.add_argument("--comprobar", action="store_true", help="compara después la tarjeta de Medici con la de los CSV")
-    ap.add_argument("--api", default=valor("MEDICI_SERVIDOR", "http://localhost:8000").rstrip("/") + "/api")
+    ap.add_argument("--comprobar", action="store_true", help="compara después la tarjeta de Medicci con la de los CSV")
+    ap.add_argument("--api", default=valor("MEDICCI_SERVIDOR", "http://localhost:8000").rstrip("/") + "/api")
     args = ap.parse_args()
 
     con = cargar()
@@ -174,7 +174,7 @@ def main() -> None:
     print(f"\n{ok}/{total} mensajes aceptados (ACK AA).")
 
     if args.comprobar:
-        print("\nTarjeta de Medici (datos por HL7) frente a la de los CSV:")
+        print("\nTarjeta de Medicci (datos por HL7) frente a la de los CSV:")
         iguales = 0
         for p in agenda:
             pet = urllib.request.Request(f"{args.api}/sesion", data=json.dumps({"nhc": p["nhc"]}).encode(),

@@ -1,6 +1,6 @@
 // Segundo paciente de la demo + los hallazgos clave de los dos.
 // Los "hallazgos" son la lista contra la que se compara lo que saca el médico
-// leyendo y lo que saca preguntando a Jano. Todo sintético.
+// leyendo y lo que saca preguntando a Medicci. Todo sintético.
 
 window.P2 = {
  paciente: {
@@ -197,7 +197,7 @@ rgo valoracion. gracias`}
  ]
 };
 
-// Hallazgos clave: la lista con la que se compara al médico contra Jano.
+// Hallazgos clave: la lista con la que se compara al médico contra Medicci.
 // `peso` es lo que cuesta si se pasa por alto: alto, medio.
 window.HALLAZGOS = {
  P1: [

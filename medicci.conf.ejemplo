@@ -1,25 +1,25 @@
-# Dónde está cada cosa. Copiar como medici.conf y poner lo que diga el hospital
+# Dónde está cada cosa. Copiar como medicci.conf y poner lo que diga el hospital
 # o el pliego. Lo leen el servidor (mvp/servidor.py), el emisor HL7 y la burbuja
 # (medicci-rs). Una variable de entorno con el mismo nombre manda sobre esto.
 
 # --- El modelo de IA: cualquier servidor compatible con la API de OpenAI -------
 # Ollama en el mismo equipo, vLLM en un Spark del CPD, o el que diga el pliego.
-MEDICI_URL=http://localhost:11434/v1
-MEDICI_MODELO=qwen3:8b
+MEDICCI_URL=http://localhost:11434/v1
+MEDICCI_MODELO=qwen3:8b
 # Si ese servidor pide clave:
-# MEDICI_CLAVE=
+# MEDICCI_CLAVE=
 
-# --- El servidor de Medici -----------------------------------------------------
+# --- El servidor de Medicci -----------------------------------------------------
 # Dónde escucha (0.0.0.0 para que lleguen otros equipos) y en qué puerto.
-MEDICI_ESCUCHA=127.0.0.1
-MEDICI_PUERTO=8000
+MEDICCI_ESCUCHA=127.0.0.1
+MEDICCI_PUERTO=8000
 # Dónde lo buscan la burbuja y el emisor: http(s)://nombre-o-ip:puerto
-MEDICI_SERVIDOR=http://localhost:8000
+MEDICCI_SERVIDOR=http://localhost:8000
 
 # --- Los datos -----------------------------------------------------------------
 # csv: lee data/; hl7: copia vacía que se llena con mensajes HL7.
-MEDICI_DATOS=csv
-# Puerto donde el receptor HL7 de Medici escucha al motor de integración.
-MEDICI_HL7_PUERTO=2575
+MEDICCI_DATOS=csv
+# Puerto donde el receptor HL7 de Medicci escucha al motor de integración.
+MEDICCI_HL7_PUERTO=2575
 # Solo para la demo: a qué equipo manda el emisor que hace de HCIS.
-MEDICI_HL7_HOST=localhost
+MEDICCI_HL7_HOST=localhost

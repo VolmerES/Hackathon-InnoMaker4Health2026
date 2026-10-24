@@ -1,11 +1,11 @@
 @echo off
-rem Medici con un doble clic. Solo hace falta Docker Desktop y los CSV en data\.
+rem Medicci con un doble clic. Solo hace falta Docker Desktop y los CSV en data\.
 rem Levanta el modelo y el servidor, manda la historia por HL7 y abre el navegador.
 chcp 65001 >nul
 cd /d "%~dp0"
-title Medici
+title Medicci
 echo.
-echo   MEDICI · arrancando
+echo   MEDICCI · arrancando
 echo.
 
 docker info >nul 2>&1
@@ -27,17 +27,17 @@ if errorlevel 1 (
   echo   Sin GPU de NVIDIA: el modelo irá por el procesador, más lento.
   set "COMPOSE=-f mvp\docker-compose.yml -f mvp\docker-compose.sin-gpu.yml"
 )
-set "MEDICI_DATOS=hl7"
+set "MEDICCI_DATOS=hl7"
 
 echo   1/4  Modelo y servidor...
-docker compose %COMPOSE% up -d --build --force-recreate ollama medici
+docker compose %COMPOSE% up -d --build --force-recreate ollama medicci
 if errorlevel 1 ( pause & exit /b 1 )
 
 echo   2/4  Modelo de IA...
-docker exec medici-ollama ollama list | findstr /c:"qwen3:8b" >nul
+docker exec medicci-ollama ollama list | findstr /c:"qwen3:8b" >nul
 if errorlevel 1 (
   echo        Descargando qwen3:8b, unos 5 GB, solo la primera vez...
-  docker exec medici-ollama ollama pull qwen3:8b
+  docker exec medicci-ollama ollama pull qwen3:8b
 )
 
 echo   3/4  Esperando al servidor...

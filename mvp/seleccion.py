@@ -22,7 +22,7 @@ from paciente import ESPECIALIDADES, Fila
 
 # Memoria del modelo, en tokens (Ollama corta en ~2.048 si no se le dice otra
 # cosa). Del total se reservan unos 700 para instrucciones, pregunta y respuesta.
-CONTEXTO = int(os.environ.get("MEDICI_CONTEXTO", "2048"))
+CONTEXTO = int(os.environ.get("MEDICCI_CONTEXTO", "2048"))
 CARACTERES_POR_TOKEN = 3
 
 TEMAS = {

@@ -1,4 +1,4 @@
-// Datos sintéticos de la demo de Jano. Generado desde demo/derivaciones/.
+// Datos sintéticos de la demo de Medicci. Generado desde demo/derivaciones/.
 window.CASOS = [
  {
   "id": "DER-2026-04871",
@@ -358,7 +358,7 @@ window.CASOS = [
    ],
    "evita": [],
    "protocolo": "Digestivo · Banderas rojas → revisión por facultativo de guardia de consulta",
-   "nota": "Las banderas rojas no se encaminan solas. Jano lo pone primero en la lista y avisa al Servicio el mismo día."
+   "nota": "Las banderas rojas no se encaminan solas. Medicci lo pone primero en la lista y avisa al Servicio el mismo día."
   },
   "texto": "=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===\nid_derivacion ........ DER-2026-04877\nid_paciente .......... PAC-02771        edad 69      sexo Hombre\nfecha_solicitud ...... 12/10/2026 15:30\norigen ............... C.S. Montesa · Dra. E. Nogueira Sáez\nespecialidad_destino . APARATO DIGESTIVO\nprioridad ............ Preferente\nestado_solicitud ..... Pendiente de validar\n--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---\n\nMOTIVO: DISFAGIA PROGRESIVA + PERDIDA DE PESO - PREFERENTE\n\nVaron 69a, fumador de 20 cig/dia desde los 18, bebedor de 2-3 cervezas al dia.\nDesde agosto disfagia, primero con solidos y en las ultimas 2 semanas tb con triturados.\nSensacion de atascamiento retroesternal. Ha perdido 6 kg (de 78 a 72) sin hacer dieta.\nAstenia importante.\nEF: delgadez llamativa, no adenopatias cervicales palpables, abdomen sin masas.\nAnalitica 11/10: Hb 11.2 VCM 82, albumina 3.4, resto normal.\nDisfagia organica progresiva con sindrome constitucional y factores de riesgo.\nALTA SOSPECHA DE NEOPLASIA ESOFAGICA. Derivo preferente y llamo yo al servicio.\nVive solo y no tiene internet, avisar por telefono.\n"
  },
@@ -458,7 +458,7 @@ window.CASOS = [
    "pruebas": [],
    "evita": [],
    "protocolo": "Umbral de confianza del Servicio: 0,75",
-   "nota": "Texto abreviado y con referencias a documentos que no vienen. Jano no encamina: lo pasa a la administrativa de consultas con lo poco que ha podido extraer."
+   "nota": "Texto abreviado y con referencias a documentos que no vienen. Medicci no encamina: lo pasa a la administrativa de consultas con lo poco que ha podido extraer."
   },
   "texto": "=== EXPORTACION NOCTURNA HIS · TABLA DERIVACIONES_AP · DATOS SINTETICOS ===\nid_derivacion ........ DER-2026-04879\nid_paciente .......... PAC-03012        edad 52      sexo Hombre\nfecha_solicitud ...... 12/10/2026 17:03\norigen ............... C.S. Embajadores · Dr. S. Quintanar Ruano\nespecialidad_destino . APARATO DIGESTIVO\nprioridad ............ Normal\nestado_solicitud ..... Pendiente de validar\n--- motivo_derivacion y observaciones_medico (texto libre, tal cual lo escribio el medico de familia) ---\n\nMOTIVO: vto estudio dig\n\npcte c/ molestias abd inespecificas ds \"hace tiempo\". ya comentado en IC no presencial (ver\nIC 09/26). pdte completar estudio s/ indicacion previa. resto s/p. no AP relevantes\nconocidos. tto actual: ver hoja de medicacion. analitica ant (no se adjunta). Rx abd en urg\n08/26, informe en HCE. dolor abd a estudio, rgo valoracion.\n"
  },

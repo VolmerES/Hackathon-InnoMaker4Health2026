@@ -1,11 +1,11 @@
-# Medici en local: el modelo (Ollama con la GPU), la demo y la prueba de acierto.
+# Medicci en local: el modelo (Ollama con la GPU), la demo y la prueba de acierto.
 #
 #   docker compose -f mvp/docker-compose.yml up -d                                # modelo + demo
-#   docker exec medici-ollama ollama pull qwen3:8b                                # la primera vez
+#   docker exec medicci-ollama ollama pull qwen3:8b                                # la primera vez
 #   abrir http://localhost:8000
 #
 # Con los datos llegando por HL7 (la copia empieza vacía):
-#   MEDICI_DATOS=hl7 docker compose -f mvp/docker-compose.yml up -d
+#   MEDICCI_DATOS=hl7 docker compose -f mvp/docker-compose.yml up -d
 #   docker compose -f mvp/docker-compose.yml run --rm emisor --comprobar        # la historia
 #   docker compose -f mvp/docker-compose.yml run --rm emisor --evento anular    # en directo
 #   abrir http://localhost:8000/hl7.html para ver los mensajes
@@ -17,11 +17,11 @@
 services:
   ollama:
     image: ollama/ollama:0.40.4
-    container_name: medici-ollama
+    container_name: medicci-ollama
     ports:
       - "11434:11434"
     volumes:
-      - medici-modelos:/root/.ollama
+      - medicci-modelos:/root/.ollama
     environment:
       - OLLAMA_KEEP_ALIVE=30m
     deploy:
@@ -32,19 +32,19 @@ services:
               count: all
               capabilities: [gpu]
 
-  medici:
+  medicci:
     build: .
-    container_name: medici-servidor
+    container_name: medicci-servidor
     working_dir: /app
     volumes:
       - ..:/app
     ports:
       - "8000:8000"
-      - "2575:2575"                       # receptor HL7 (MLLP), con MEDICI_DATOS=hl7
+      - "2575:2575"                       # receptor HL7 (MLLP), con MEDICCI_DATOS=hl7
     environment:
-      - MEDICI_URL=http://ollama:11434/v1
-      - MEDICI_MODELO=qwen3:8b
-      - MEDICI_DATOS=${MEDICI_DATOS:-csv}
+      - MEDICCI_URL=http://ollama:11434/v1
+      - MEDICCI_MODELO=qwen3:8b
+      - MEDICCI_DATOS=${MEDICCI_DATOS:-csv}
     entrypoint: ["python", "mvp/servidor.py", "--host", "0.0.0.0"]
     depends_on:
       - ollama
@@ -54,24 +54,24 @@ services:
     working_dir: /app
     volumes:
       - ..:/app
-    entrypoint: ["python", "mvp/hl7_emisor.py", "--host", "medici", "--api", "http://medici:8000/api"]
+    entrypoint: ["python", "mvp/hl7_emisor.py", "--host", "medicci", "--api", "http://medicci:8000/api"]
     depends_on:
-      - medici
+      - medicci
     profiles: ["hl7"]
 
   prueba:
     build: .
-    container_name: medici-prueba
+    container_name: medicci-prueba
     working_dir: /app
     volumes:
       - ..:/app
     environment:
-      - MEDICI_URL=http://ollama:11434/v1
-      - MEDICI_MODELO=qwen3:8b
+      - MEDICCI_URL=http://ollama:11434/v1
+      - MEDICCI_MODELO=qwen3:8b
     entrypoint: ["python", "mvp/prueba_acierto.py"]
     depends_on:
       - ollama
     profiles: ["prueba"]
 
 volumes:
-  medici-modelos:
+  medicci-modelos:

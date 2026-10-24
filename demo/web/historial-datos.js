@@ -1,4 +1,4 @@
-// Historia clínica sintética completa de un paciente de la demo de Jano.
+// Historia clínica sintética completa de un paciente de la demo de Medicci.
 // NADA de esto es de una persona real: está escrito para el hackathon imitando
 // el registro de las notas clínicas españolas (abreviaturas, prisa, copia-pega).
 // Cada "hecho" del agente lleva la cita literal del documento del que sale.

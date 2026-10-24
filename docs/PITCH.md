@@ -14,18 +14,18 @@ personas de Pfizer. Cada uno escucha una cosa distinta (ver
 
 | Jurado | Lo que tiene que llevarse |
 |---|---|
-| Dirección de La Princesa | Medici entra en su hospital **sin tocar HCIS** (HL7) y **sin sacar nada fuera** (IA local). Sus médicos dejan de buscar |
+| Dirección de La Princesa | Medicci entra en su hospital **sin tocar HCIS** (HL7) y **sin sacar nada fuera** (IA local). Sus médicos dejan de buscar |
 | Wayra | Un equipo de unos 4.700 €, sin cuota por médico, que vale para cualquier hospital con HCIS, web o no |
 | Pfizer | IA responsable: cada dato con su fuente, «no consta» cuando no está, y medido: 29 de 30 |
 
-**Nombre: Medici** (decidido el 23‑oct). Como los Medici de Florencia, que
-impulsaron el Renacimiento. Y en italiano *medici* significa «médicos».
+**Nombre: Medicci** (decidido el 23‑oct). Suena a «médicos» en italiano y
+recuerda a la familia de Florencia que impulsó el Renacimiento.
 
-> ⚠️ Existe una app estadounidense llamada **Medici** (Austin, Texas). Para el
+> ⚠️ Existe una app estadounidense con un nombre casi igual (Austin, Texas). Para el
 > hackathon no importa; si Wayra quiere seguir, hay que mirar la marca en la
 > OEPM y la EUIPO.
 
-**La frase:** *Medici le dice al médico lo que no puede pasar por alto antes de
+**La frase:** *Medicci le dice al médico lo que no puede pasar por alto antes de
 que entre el paciente, y le contesta lo que pregunte, con la fuente y sin que
 nada salga del hospital.*
 
@@ -33,7 +33,7 @@ nada salga del hospital.*
 >
 > - **Una cifra de La Princesa:** cuántos documentos tiene un paciente típico de
 >   consultas externas y cuánto tarda un especialista en revisarlo. Mejor aún,
->   cronometrar a un médico con la réplica de HCIS y con Medici.
+>   cronometrar a un médico con la réplica de HCIS y con Medicci.
 > - **La frase de los médicos** que se llamaron, con el cargo y sin el nombre.
 > - Si **La Princesa ya tiene** algo parecido.
 > - Cómo se abre **HCIS** en La Princesa: navegador, Java o Citrix.
@@ -46,18 +46,18 @@ nada salga del hospital.*
 | Tramo | Quién | Tiempo |
 |---|---|---|
 | 1. Cientos de notas, unos minutos | Biomédica | 0:00 – 0:45 |
-| 2. Medici, en directo | UI/UX (habla) y Dev 2 (maneja) | 0:45 – 2:30 |
+| 2. Medicci, en directo | UI/UX (habla) y Dev 2 (maneja) | 0:45 – 2:30 |
 | 3. Por qué es viable | Dev 1 | 2:30 – 3:40 |
 | 4. Impacto y piloto | Dev 1 | 3:40 – 4:30 |
 | 5. Cierre | Biomédica | 4:30 – 5:00 |
 
 ## Diapositivas
 
-1. **Portada:** Medici y la frase.
+1. **Portada:** Medicci y la frase.
 2. **Cientos de notas, unos minutos:** «359 notas · 58.000 palabras · 4 horas
    de lectura» frente a «5 minutos». Debajo, «la mitad, copiada».
 3. **Demo** en directo, con el vídeo de respaldo preparado.
-4. **Cómo funciona:** HCIS → mensajes HL7 → Medici en el CPD → la pestaña (HCIS
+4. **Cómo funciona:** HCIS → mensajes HL7 → Medicci en el CPD → la pestaña (HCIS
    en el navegador) o la burbuja (HCIS de escritorio). Un dibujo.
 5. **Viable y barato:** un portátil con una GPU de 8 GB; 29 de 30, 0 fuentes
    inventadas, 0,7 s. Al lado, lo que cuesta: «nube, 0,7–1,4 M$ al año por
@@ -88,14 +88,14 @@ Unas 580 palabras. **Ensayar con cronómetro.**
 > hemos preguntado a médicos y a los mentores: les sería muy útil ⚠️ *(la frase
 > real, con el cargo)*.
 
-### 2. Medici, en directo · UI/UX · 0:45
+### 2. Medicci, en directo · UI/UX · 0:45
 
 > Esto es HCIS, con la agenda de hoy. El médico abre a su paciente como siempre.
 > No abre nada nuevo.
 >
 > *(Dev 2 abre a María Alonso.)*
 >
-> Y Medici ya está aquí. Sin preguntarle nada, le dice **tres cosas antes de que
+> Y Medicci ya está aquí. Sin preguntarle nada, le dice **tres cosas antes de que
 > entre**: tiene **movilidad reducida**; tiene una **radiografía pendiente**; y
 > la deriva su médico de cabecera, **con prioridad preferente**, para retomar el
 > seguimiento en Dermatología. Cada cosa con su fuente: si pulso, veo el dato
@@ -110,10 +110,10 @@ Unas 580 palabras. **Ensayar con cronómetro.**
 > correctas, **ninguna fuente inventada**.
 >
 > Y mientras María espera fuera, llega el resultado de su radiografía. HCIS
-> manda el mensaje, como manda tantos al día… *(la tarjeta cambia)* …y Medici lo
+> manda el mensaje, como manda tantos al día… *(la tarjeta cambia)* …y Medicci lo
 > pone arriba: **nuevo, ya tiene la radiografía hecha**.
 >
-> Medici solo lee. No decide nada clínico. Y solo ve al paciente que el médico
+> Medicci solo lee. No decide nada clínico. Y solo ve al paciente que el médico
 > tiene abierto.
 
 ### 3. Por qué es viable · Dev 1 · 2:30
@@ -122,11 +122,11 @@ Unas 580 palabras. **Ensayar con cronómetro.**
 > de 8 GB y sin internet. Ningún dato sale del hospital. Responde en **menos de
 > un segundo**.
 >
-> **No tocamos HCIS.** Medici recibe los datos por **HL7**, el estándar con el
+> **No tocamos HCIS.** Medicci recibe los datos por **HL7**, el estándar con el
 > que ya se hablan los sistemas del hospital. En la demo, HCIS es simulado, pero
 > los mensajes son los estándar.
 >
-> Y funciona **sea como sea su HCIS**: si va en el navegador, Medici es una
+> Y funciona **sea como sea su HCIS**: si va en el navegador, Medicci es una
 > pestaña; si es un programa de escritorio, una burbuja encima, que es la que ha
 > hecho Daniel. El mismo cerebro detrás.
 >
@@ -135,12 +135,12 @@ Unas 580 palabras. **Ensayar con cronómetro.**
 >
 > Y la IA **no cuesta por uso**. Un asistente en la nube cobra por médico: para
 > los 558 de La Princesa, entre **700.000 y 1,4 millones de dólares al año**.
-> Medici, en local, es el equipo una vez y la luz: cada respuesta gasta unas
+> Medicci, en local, es el equipo una vez y la luz: cada respuesta gasta unas
 > **dos centésimas de vatio-hora**.
 
 ### 4. Impacto y piloto · Dev 1 · 3:40
 
-> Si Medici le ahorra al médico **un solo minuto** por consulta, en La Princesa
+> Si Medicci le ahorra al médico **un solo minuto** por consulta, en La Princesa
 > son **casi 8.000 horas al año**: como **cinco especialistas más**, sin
 > contratar a nadie.
 >
@@ -150,7 +150,7 @@ Unas 580 palabras. **Ensayar con cronómetro.**
 
 ### 5. Cierre · Biomédica · 4:30
 
-> Medici es **viable**: entra por HL7, sin tocar HCIS, y cabe encima de una
+> Medicci es **viable**: entra por HL7, sin tocar HCIS, y cabe encima de una
 > mesa. Es **accesible**: el médico sabe antes de que entre la paciente que
 > tiene movilidad reducida. Y es **personalizado**: habla de esta paciente, no
 > de un protocolo.
@@ -165,12 +165,12 @@ Unas 580 palabras. **Ensayar con cronómetro.**
 | Tiempo | Dev 2 hace | Se ve | UI/UX dice |
 |---|---|---|---|
 | 0:00 | Pantalla en `http://localhost:8000`, agenda de hoy | La réplica de HCIS | «Esto es HCIS, con la agenda de hoy» |
-| 0:08 | Pulsa **María Alonso** (09:00) | La historia en tablas y, a la derecha, Medici con su tarjeta | «Y Medici ya está aquí… tres cosas antes de que entre» |
+| 0:08 | Pulsa **María Alonso** (09:00) | La historia en tablas y, a la derecha, Medicci con su tarjeta | «Y Medicci ya está aquí… tres cosas antes de que entre» |
 | 0:30 | Pulsa la fuente `¹ P1` de la radiografía | La fila tal cual, como cita | «Cada cosa con su fuente» |
 | 0:40 | Pulsa la sugerencia **«¿Por qué lo manda su médico de cabecera?»** | Respuesta con `¹ D1`, en un segundo | «Porque perdió la cita de revisión…» |
 | 0:55 | Escribe **«¿Tiene alergias?»** | «No consta en los datos disponibles.» | «Pregunta trampa… 29 de 30» |
 | 1:05 | **En la terminal:** `docker compose -f mvp/docker-compose.yml run --rm --no-deps emisor --evento resultado` | — | «Y mientras María espera fuera…» |
-| 1:20 | Nada: espera | La tarjeta se ilumina; arriba, **«Nuevo: ya tiene hecha la radiografía…»** | «…y Medici lo pone arriba» |
+| 1:20 | Nada: espera | La tarjeta se ilumina; arriba, **«Nuevo: ya tiene hecha la radiografía…»** | «…y Medicci lo pone arriba» |
 | 1:35 | (Opcional) Pasa a `/hl7.html` | El mensaje `ORU^R01` con su `ACK` | «Este es el mensaje que ha mandado HCIS» |
 
 - **El mensaje HL7 tarda unos 15 segundos** en llegar: el emisor carga los
@@ -196,7 +196,7 @@ María es una paciente de los CSV sintéticos, con un nombre inventado.
 Es el argumento más fuerte para Wayra y para la dirección: **la IA local no
 cuesta por uso, y funciona**.
 
-| | En la nube, con cuota por médico | Medici, en local |
+| | En la nube, con cuota por médico | Medicci, en local |
 |---|---|---|
 | Qué se paga | Una cuota al mes por cada médico | El equipo, una vez, y la luz |
 | Para los 558 médicos de La Princesa | **0,74–1,39 M$ al año**: 558 × 110–208 $/mes × 12 (precios de Heidi y Abridge, en CONTEXTO) | **4.700 €** un Spark, o **9.400 €** dos para tener reserva |
@@ -206,7 +206,7 @@ cuesta por uso, y funciona**.
 | ¿Se puede en local? | — | **Medido:** 29/30 con un modelo de 8B en una GPU de portátil de 8 GB |
 
 - **Las cuotas son de escribas** (Heidi, Abridge), que no hacen lo mismo que
-  Medici. Sirven como orden de magnitud de lo que cuesta la IA clínica cuando
+  Medicci. Sirven como orden de magnitud de lo que cuesta la IA clínica cuando
   se paga por médico.
 - **El consumo es una estimación:** no lo hemos medido con un vatímetro. Lo
   medido es el tiempo, 0,7 s. Aunque fuera diez veces más, seguirían siendo
@@ -232,7 +232,7 @@ cuesta por uso, y funciona**.
 | 700.000–1,4 M$ al año en la nube | 558 médicos de plantilla (La Princesa, abr‑2024) × 110–208 $/mes (Heidi y Abridge; fuentes en CONTEXTO) × 12. Son escribas: orden de magnitud |
 | Dos centésimas de vatio-hora por respuesta | **Estimado:** 0,7 s medidos × unos 100 W de GPU de portátil (supuesto) ≈ 0,02 Wh. Ver [Lo que cuesta la IA](#lo-que-cuesta-la-ia) |
 
-Si os preguntan por los CSV: **son sintéticos.** Sirven para enseñar que Medici
+Si os preguntan por los CSV: **son sintéticos.** Sirven para enseñar que Medicci
 funciona con la estructura de datos del hospital, no para medir el problema.
 
 ## Lo que la demo tiene que enseñar
@@ -261,7 +261,7 @@ funciona con la estructura de datos del hospital, no para medir el problema.
   escucha los mensajes **HL7** que HCIS ya manda por el motor de integración,
   sin tocar su base de datos. En la demo, HCIS es simulado y los mensajes son
   los estándar. En el piloto se ajusta al perfil de mensajes de Informática ⚠️.
-- **«¿Y si nuestro HCIS no va en el navegador?»** Entonces Medici es la burbuja
+- **«¿Y si nuestro HCIS no va en el navegador?»** Entonces Medicci es la burbuja
   de escritorio, que se pone encima de cualquier ventana. Es el mismo servidor.
 - **«¿Y si el pliego dice que va en otro sitio?»** Va donde diga: en el CPD del
   hospital, en el de la Comunidad o en la nube del pliego. El modelo, el
@@ -276,7 +276,7 @@ funciona con la estructura de datos del hospital, no para medir el problema.
   a un paciente, el modelo no puede consultar a otro, y cada pregunta queda
   registrada con quién la hizo.
 - **«La Comunidad ya ha comprado un escriba.»** Es otra cosa: el escriba de
-  T‑Systems escribe la nota en Primaria. Medici avisa y responde en el
+  T‑Systems escribe la nota en Primaria. Medicci avisa y responde en el
   hospital, antes de que entre el paciente. Se pueden complementar.
 
 ### Wayra

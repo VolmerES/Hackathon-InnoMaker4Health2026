@@ -7,7 +7,7 @@ use rusqlite::{Connection, Row};
 use std::path::{Path, PathBuf};
 
 const SQL_CITA: &str = include_str!("../../bd/sql/01_cita.sql");
-const SQL_JANO: &str = include_str!("../../bd/sql/02_jano.sql");
+const SQL_MEDICCI: &str = include_str!("../../bd/sql/02_medicci.sql");
 const SQL_VISTAS: &str = include_str!("../../bd/sql/03_vistas.sql");
 const SQL_DATOS: &str = include_str!("../../bd/sql/04_datos.sql");
 
@@ -70,7 +70,7 @@ impl Datos {
         }
         let cx = Connection::open(ruta).map_err(|e| e.to_string())?;
         if nueva {
-            for guion in [SQL_CITA, SQL_JANO, SQL_VISTAS, SQL_DATOS] {
+            for guion in [SQL_CITA, SQL_MEDICCI, SQL_VISTAS, SQL_DATOS] {
                 cx.execute_batch(guion).map_err(|e| e.to_string())?;
             }
         }

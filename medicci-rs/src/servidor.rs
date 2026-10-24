@@ -1,4 +1,4 @@
-//! Medicci conectada: la burbuja habla con el servidor de Medici, el mismo que
+//! Medicci conectada: la burbuja habla con el servidor de Medicci, el mismo que
 //! usa la pestaña web (mvp/servidor.py). Un cerebro y dos caras: la pestaña,
 //! cuando HCIS va en el navegador, y la burbuja, cuando no.
 //!
@@ -43,9 +43,9 @@ fn leer(r: Result<ureq::Response, ureq::Error>) -> Result<Value, String> {
         Ok(resp) => resp.into_json::<Value>().map_err(|e| e.to_string()),
         Err(ureq::Error::Status(_, resp)) => {
             let v: Value = resp.into_json().unwrap_or(Value::Null);
-            Err(v["error"].as_str().unwrap_or("El servidor de Medici ha dado un error.").to_string())
+            Err(v["error"].as_str().unwrap_or("El servidor de Medicci ha dado un error.").to_string())
         }
-        Err(e) => Err(format!("No llego al servidor de Medici ({}).", e)),
+        Err(e) => Err(format!("No llego al servidor de Medicci ({}).", e)),
     }
 }
 
@@ -94,7 +94,7 @@ pub fn nhc(ident: &str) -> String {
     }
 }
 
-/// Una clave de medici.conf (CLAVE=valor; # comenta). El fichero lo pone
+/// Una clave de medicci.conf (CLAVE=valor; # comenta). El fichero lo pone
 /// Informática al lado del ejecutable: así se le dice a la burbuja adónde
 /// mandar las peticiones sin tocar nada más.
 pub fn leer_clave(texto: &str, clave: &str) -> Option<String> {
@@ -105,16 +105,16 @@ pub fn leer_clave(texto: &str, clave: &str) -> Option<String> {
     })
 }
 
-/// Busca medici.conf al lado del ejecutable, en la carpeta de arranque y en la
+/// Busca medicci.conf al lado del ejecutable, en la carpeta de arranque y en la
 /// de arriba (la raíz del repositorio, cuando se arranca con just).
 pub fn de_la_configuracion(clave: &str) -> Option<String> {
     let mut sitios = Vec::new();
     if let Some(dir) = std::env::current_exe().ok().as_deref().and_then(|e| e.parent()) {
-        sitios.push(dir.join("medici.conf"));
+        sitios.push(dir.join("medicci.conf"));
     }
     if let Ok(dir) = std::env::current_dir() {
-        sitios.push(dir.join("medici.conf"));
-        sitios.push(dir.join("..").join("medici.conf"));
+        sitios.push(dir.join("medicci.conf"));
+        sitios.push(dir.join("..").join("medicci.conf"));
     }
     sitios.iter()
         .filter_map(|ruta| std::fs::read_to_string(ruta).ok())
@@ -190,11 +190,11 @@ mod pruebas {
         s.rx.recv_timeout(Duration::from_secs(60)).expect("el servidor contesta")
     }
 
-    /// Contra un servidor de verdad: `MEDICI_SERVIDOR=http://localhost:8000 cargo test -- --ignored`
+    /// Contra un servidor de verdad: `MEDICCI_SERVIDOR=http://localhost:8000 cargo test -- --ignored`
     #[test]
     #[ignore]
     fn contra_el_servidor() {
-        let url = std::env::var("MEDICI_SERVIDOR").unwrap_or("http://localhost:8000".into());
+        let url = std::env::var("MEDICCI_SERVIDOR").unwrap_or("http://localhost:8000".into());
         let s = Servidor::nuevo(&url);
         assert!(s.responde(), "no hay servidor en {}", url);
         let ctx = egui::Context::default();
@@ -221,13 +221,13 @@ mod pruebas {
     }
 
     #[test]
-    fn la_direccion_sale_de_medici_conf() {
+    fn la_direccion_sale_de_medicci_conf() {
         let texto = "# comentario
-# MEDICI_SERVIDOR=http://no
-MEDICI_URL=http://modelo:11434/v1
-                     MEDICI_SERVIDOR = https://medici.hospital.local  # del pliego
+# MEDICCI_SERVIDOR=http://no
+MEDICCI_URL=http://modelo:11434/v1
+                     MEDICCI_SERVIDOR = https://medicci.hospital.local  # del pliego
 ";
-        assert_eq!(leer_clave(texto, "MEDICI_SERVIDOR").as_deref(), Some("https://medici.hospital.local"));
-        assert_eq!(leer_clave(texto, "MEDICI_CLAVE"), None);
+        assert_eq!(leer_clave(texto, "MEDICCI_SERVIDOR").as_deref(), Some("https://medicci.hospital.local"));
+        assert_eq!(leer_clave(texto, "MEDICCI_CLAVE"), None);
     }
 }

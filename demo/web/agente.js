@@ -1,4 +1,4 @@
-// Agente flotante de Jano: lector de la historia, resumen y ficha de contexto.
+// Agente flotante de Medicci: lector de la historia, resumen y ficha de contexto.
 // Lo usan las dos pantallas (SELENE y HCIS). Cada pantalla aporta su contexto:
 //   window.HCE = { paciente(), docs(), porId(), iraDoc(id, cita) }
 (function(){
@@ -50,7 +50,7 @@ const MARKUP = `<!-- agente flotante -->
         <path d="M5.5 29c0-6 5.2-9.5 11.5-9.5S28.5 23 28.5 29z" fill="#047a55"/>
       </svg>
     </span>
-    <span><b>Jano · lector de historia</b><small id="chat-sub"></small></span>
+    <span><b>Medicci · lector de historia</b><small id="chat-sub"></small></span>
     <button class="x" id="chat-cerrar" aria-label="Cerrar">×</button>
   </div>
   <div class="cuerpo" id="chat-cuerpo" aria-live="polite"></div>
