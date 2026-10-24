@@ -25,6 +25,9 @@ ESPECIALIDADES = {
     "DIG": "Aparato digestivo",
 }
 TIPO_VISITA = {"P": "primera", "S": "sucesiva"}
+# Lo que quiere decir cada estado de una prueba, con la palabra de la pregunta
+ESTADO_PRUEBA = {"PROGRAMADA": " (PENDIENTE: aún no se ha hecho)",
+                 "NO_REALIZADA": " (no se llegó a hacer y no está pendiente)"}
 
 
 @dataclass
@@ -149,7 +152,10 @@ def datos_del_paciente(con, id_paciente: str) -> list[Fila]:
         "FROM pruebas WHERE id_paciente = ? ORDER BY fecha_solicitud", [id_paciente]).fetchall()
     filas += _numerar("P", "PRUEBAS", [(p[0],
         f"Prueba {p[1]}: solicitada el {_fecha(p[2])}, programada el {_fecha(p[3])}, "
-        f"realizada {'el ' + _fecha(p[4]) if p[4] else 'no'}, estado {p[5]}, "
+        # «PROGRAMADA» a secas no le basta al modelo: a «¿tiene pruebas pendientes?»
+        # contestaba que no. Se dice con la palabra de la pregunta.
+        f"realizada {'el ' + _fecha(p[4]) if p[4] else 'no'}, estado {p[5]}"
+        f"{ESTADO_PRUEBA.get(p[5], '')}, "
         f"resultado disponible: {'sí' if p[6] else 'no'} (el valor del resultado no está en estos datos).",
         {"tipo": p[1], "programada": p[3], "realizada": p[4], "estado": p[5], "resultado": bool(p[6])})
         for p in pruebas])
