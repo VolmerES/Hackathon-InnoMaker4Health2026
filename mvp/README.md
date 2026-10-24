@@ -64,7 +64,8 @@ toca en cada paso, que le llega por `/api/simulacion`. Graba con ffmpeg
 ## Dictar la pregunta
 
 En la burbuja, junto a la caja de la pregunta, hay un **micrófono**: se graba
-**solo mientras se mantiene pulsado**. Al soltarlo, el audio va a
+**un clic empieza a grabar y otro termina** (como mucho, un minuto). Mientras
+graba se pone terracota y cuenta los segundos. Al terminar, el audio va a
 `POST /api/sesion/<id>/voz`, el servidor lo transcribe con **Whisper en local**
 (`voz.py`, con faster-whisper) y el texto vuelve a la caja. **El médico lo
 revisa y pulsa enviar**: al modelo de lenguaje le sigue llegando texto, y las

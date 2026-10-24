@@ -262,7 +262,7 @@ struct Medicci {
     paso_n: Option<i64>,
     paso_mirado: f64,
     escribiendo: Option<(String, f64)>, // una pregunta que se va escribiendo sola
-    // dictado: se graba solo mientras se mantiene pulsado el micrófono (src/voz.rs)
+    // dictado: un clic en el micrófono empieza a grabar y otro termina (src/voz.rs)
     grabacion: Option<voz::Grabacion>,
     transcribiendo: bool,
     aviso_voz: Option<String>,      // por qué no se ha podido dictar, debajo de la caja
@@ -1507,7 +1507,7 @@ impl Medicci {
         // dictado: solo conectada al servidor, que es quien transcribe
         let puede_dictar = hay && self.red.is_some() && self.sesion.is_some();
         let grabando = self.grabacion.as_ref().map(|g| g.segundos());
-        let mut pulsado = false;
+        let mut clic_micro = false;
         let dentro = caja.shrink2(vec2(12.0, 12.0));
         let (arriba, abajo) = dentro.split_top_bottom_at_y(dentro.top() + 34.0);
         // acciones rápidas: Resumen es la principal
@@ -1529,7 +1529,7 @@ impl Medicci {
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
                         let pista = match (grabando, &self.aviso_voz) {
-                            (Some(s), _) => format!("Escuchando… {:.0} s · suelte para transcribir", s),
+                            (Some(s), _) => format!("Escuchando… {:.0} s · pulse el micrófono para terminar", s),
                             _ if self.transcribiendo => "Transcribiendo…".to_string(),
                             (_, Some(aviso)) => aviso.clone(),
                             _ if hay => "Pregunte a la historia".to_string(),
@@ -1552,11 +1552,12 @@ impl Medicci {
                             enviar = true;
                             r.request_focus();
                         }
-                        // el micrófono: graba mientras se mantiene pulsado
-                        let (bm, pm) = ui.allocate_painter(Vec2::splat(28.0), Sense::click_and_drag());
-                        pulsado = puede_dictar && bm.is_pointer_button_down_on();
+                        // el micrófono: un clic empieza a grabar y otro termina
+                        let (bm, pm) = ui.allocate_painter(Vec2::splat(28.0), Sense::click());
+                        clic_micro = puede_dictar && bm.clicked();
                         microfono(&pm, bm.rect.center(), grabando.is_some(), self.transcribiendo, puede_dictar);
-                        let ayuda = if puede_dictar { "Mantenga pulsado para dictar la pregunta" }
+                        let ayuda = if grabando.is_some() { "Pulse para terminar y transcribir" }
+                                    else if puede_dictar { "Pulse para dictar la pregunta; otra vez para terminar" }
                                     else { "El dictado necesita el servidor de Medicci" };
                         bm.on_hover_text(ayuda).on_hover_cursor(if puede_dictar { egui::CursorIcon::PointingHand }
                                                                 else { egui::CursorIcon::NotAllowed });
@@ -1574,7 +1575,7 @@ impl Medicci {
                     });
                 });
         });
-        self.dicta(ui.ctx(), pulsado);
+        self.dicta(ui.ctx(), clic_micro);
         if resumen {
             self.resumen_flotante();
         }
@@ -1592,10 +1593,10 @@ impl Medicci {
 }
 
 impl Medicci {
-    /// Empieza a grabar al pulsar el micrófono; al soltarlo (o al llegar al
-    /// minuto) manda el audio a transcribir. El texto vuelve a la caja.
-    fn dicta(&mut self, ctx: &egui::Context, pulsado: bool) {
-        match (&self.grabacion, pulsado) {
+    /// Un clic en el micrófono empieza a grabar; otro (o llegar al minuto)
+    /// termina y manda el audio a transcribir. El texto vuelve a la caja.
+    fn dicta(&mut self, ctx: &egui::Context, clic: bool) {
+        match (&self.grabacion, clic) {
             (None, true) if !self.transcribiendo => match voz::Grabacion::empezar() {
                 Ok(g) => {
                     self.grabacion = Some(g);
@@ -1603,10 +1604,10 @@ impl Medicci {
                 }
                 Err(e) => self.aviso_voz = Some(e),
             },
-            (Some(g), _) if !pulsado || g.segundos() >= voz::MAX_SEGUNDOS => {
+            (Some(g), _) if clic || g.segundos() >= voz::MAX_SEGUNDOS => {
                 let Some(g) = self.grabacion.take() else { return };
                 if g.segundos() < 0.4 {
-                    self.aviso_voz = Some("Mantenga pulsado el micrófono mientras habla.".into());
+                    self.aviso_voz = Some("No ha dado tiempo a oír nada: pulse, hable y pulse otra vez.".into());
                     return;
                 }
                 self.transcribiendo = true;
@@ -1615,7 +1616,7 @@ impl Medicci {
             _ => {}
         }
         if self.grabacion.is_some() {
-            ctx.request_repaint();              // el contador de segundos y soltar el botón
+            ctx.request_repaint();              // el contador de segundos y el tope del minuto
         }
         if !self.entrada.trim().is_empty() {
             self.aviso_voz = None;

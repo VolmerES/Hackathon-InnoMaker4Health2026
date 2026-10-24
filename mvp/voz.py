@@ -1,7 +1,7 @@
 """Dictado: de la voz del médico al texto de la pregunta, con Whisper en local.
 
-La burbuja graba solo mientras el médico mantiene pulsado el micrófono y manda
-el audio aquí. Se transcribe en memoria y no se guarda nunca: ni en disco ni en
+La burbuja graba desde que el médico pulsa el micrófono hasta que lo vuelve a
+pulsar, y manda el audio aquí. Se transcribe en memoria y no se guarda nunca: ni en disco ni en
 el registro, donde queda solo el texto. El texto vuelve a la burbuja, el médico
 lo revisa y la pregunta sigue el camino de siempre: el modelo no oye nada.
 

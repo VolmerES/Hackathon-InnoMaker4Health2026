@@ -1,6 +1,6 @@
-//! Dictado: el micrófono se escucha solo mientras el médico mantiene pulsado el
-//! botón. En la consulta está el paciente hablando de su salud: nada se graba
-//! sin que el médico lo pida. El audio va al servidor de Medicci, que lo
+//! Dictado: el micrófono se escucha solo desde que el médico pulsa el botón
+//! hasta que lo vuelve a pulsar (o pasa un minuto). En la consulta está el
+//! paciente hablando de su salud: nada se graba sin que el médico lo pida. El audio va al servidor de Medicci, que lo
 //! transcribe con Whisper en local (mvp/voz.py) y no lo guarda.
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};

@@ -13,7 +13,7 @@ regex = "1.10.4"
 # Medicci conectada al servidor de Medicci, esté donde esté: http o https, sin async
 ureq = { version = "2.10", default-features = false, features = ["json", "tls"] }
 serde_json = "1"
-# dictado: el micrófono, solo mientras se mantiene pulsado el botón (src/voz.rs)
+# dictado: el micrófono, de un clic a otro (src/voz.rs)
 cpal = "0.18"
 
 [profile.release]
