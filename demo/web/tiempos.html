@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiempos de lectura</title>
+<style>
+/* Cuánto tarda un médico en sacar lo útil de un paciente: leyendo la historia
+   (HCIS o SELENE) a mano o con Medicci. Los tiempos se escriben a mano y la
+   página los compara. Se guardan en este navegador y se descargan en CSV. */
+:root{
+  --fondo:#ececec; --hoja:#ffffff; --linea:#d7d7d7; --linea-suave:#ececec;
+  --tinta:#222222; --tinta-2:#444a4d; --gris:#6e7477;
+  --manual:#7a3268;   /* solo la historia: el ciruela de los botones de HCIS */
+  --ia:#009b6b;       /* con Medicci: el verde de la burbuja */
+  --barra:#00704d; --mal:#a01b1b; --foco:#1a4fa0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);font:13px/1.45 Verdana,Tahoma,"Noto Sans",sans-serif}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+header{background:var(--barra);color:#fff;padding:10px 16px}
+header h1{font-size:14px;margin:0}
+main{max-width:960px;margin:0 auto;padding:16px}
+.hoja{background:var(--hoja);border:1px solid var(--linea);border-radius:4px;padding:16px 18px;margin-bottom:16px}
+h2{font-size:13px;margin:0 0 10px}
+.suave{color:var(--gris)}
+.llave{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.llave.manual{background:var(--manual)} .llave.ia{background:var(--ia)}
+
+/* ---------- apuntar ---------- */
+form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+label{display:flex;flex-direction:column;gap:4px;font-weight:bold;font-size:12px}
+input,select{font-weight:normal;font-size:13px;border:1px solid #a9a9a9;border-radius:3px;padding:6px 8px;background:#fff}
+#medico,#paciente{width:190px}
+.tiempo{display:flex;align-items:center;gap:4px;font-weight:normal}
+.tiempo input{width:62px;text-align:right;font-variant-numeric:tabular-nums}
+.forma{display:flex;gap:6px}
+.forma label{flex-direction:row;align-items:center;gap:6px;font-weight:normal;font-size:13px;border:1px solid var(--linea);
+  border-radius:3px;padding:6px 10px;cursor:pointer}
+.forma label:has(input:checked){border-color:var(--tinta-2);box-shadow:inset 0 0 0 1px var(--tinta-2)}
+.forma input{margin:0}
+.b{border:1px solid #a9a9a9;background:#f5f5f5;border-radius:3px;padding:7px 14px;cursor:pointer}
+.b:hover{background:#ececec}
+.b.principal{background:var(--barra);border-color:var(--barra);color:#fff;font-weight:bold}
+.b.principal:hover{background:#005c3f}
+.b.peligro{color:var(--mal);border-color:#e2b3b3;background:#fff}
+.error{color:var(--mal);font-size:12px;min-height:1.45em;margin:8px 0 0;width:100%}
+
+/* ---------- comparar ---------- */
+.titular{font-size:19px;line-height:1.35;margin:0 0 14px;max-width:62ch}
+.grafico{position:relative}
+.grafico svg{display:block;width:100%;height:auto;overflow:visible}
+.grafico text{font:11px Verdana,Tahoma,sans-serif;fill:var(--gris)}
+.grafico text.fila{font-size:12px;fill:var(--tinta)}
+.grafico text.valor{font-size:12px;fill:var(--tinta);font-weight:bold}
+.globo{position:absolute;pointer-events:none;background:#fff;border:1px solid var(--linea);border-radius:4px;padding:6px 9px;
+  font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.12);white-space:nowrap;transform:translate(-50%,calc(-100% - 10px))}
+.globo b{display:block}
+.oculto{display:none}
+.nota{font-size:12px;color:var(--gris);margin:8px 0 0}
+
+/* ---------- tabla ---------- */
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--linea-suave)}
+th{font-size:12px;color:var(--tinta-2);border-bottom-color:var(--linea)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.x{border:0;background:transparent;color:var(--gris);cursor:pointer;padding:2px 6px}
+.x:hover{color:var(--mal)}
+.botones{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.vacio{color:var(--gris);padding:14px 0}
+
+@media (max-width:600px){
+  main{padding:10px}
+  .hoja{padding:12px}
+  #medico,#paciente{width:100%}
+  form label{width:100%}
+  .forma{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<header><h1>Tiempos de lectura</h1></header>
+<main>
+  <section class="hoja">
+    <h2>Apuntar un tiempo</h2>
+    <form id="apuntar" novalidate>
+      <label>Médico <input id="medico" list="medicos" autocomplete="off" placeholder="p. ej. Dra. Sanz"></label>
+      <label>Paciente <input id="paciente" list="pacientes" autocomplete="off" placeholder="p. ej. María Alonso"></label>
+      <div class="forma" role="radiogroup" aria-label="Cómo leyó">
+        <label><input type="radio" name="forma" value="manual" checked><span class="llave manual"></span>Solo la historia</label>
+        <label><input type="radio" name="forma" value="ia"><span class="llave ia"></span>Con Medicci</label>
+      </div>
+      <label>Tiempo
+        <span class="tiempo"><input id="min" type="number" min="0" max="180" inputmode="numeric" placeholder="0" aria-label="Minutos"> min
+          <input id="seg" type="number" min="0" max="59" inputmode="numeric" placeholder="0" aria-label="Segundos"> s</span>
+      </label>
+      <button class="b principal" type="submit">Añadir</button>
+      <p class="error" id="error" role="alert"></p>
+    </form>
+    <datalist id="medicos"></datalist>
+    <datalist id="pacientes"><option value="María Alonso Vega"><option value="Ramón Esteve Gálvez"></datalist>
+  </section>
+
+  <section class="hoja">
+    <p class="titular" id="titular"></p>
+    <div class="grafico" id="grafico"></div>
+    <p class="nota">Cada punto es un tiempo; la barra llega a la mediana. Si el mismo médico lee dos veces al mismo
+      paciente, la segunda tarda menos porque ya conoce el caso: mejor un paciente con cada forma de leer.</p>
+  </section>
+
+  <section class="hoja">
+    <h2>Todos los tiempos</h2>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Médico</th><th>Paciente</th><th>Cómo leyó</th><th class="num">Tiempo</th><th></th></tr></thead>
+      <tbody id="tabla"></tbody>
+    </table></div>
+    <div class="botones">
+      <button class="b" id="csv">Descargar CSV</button>
+      <button class="b peligro" id="borrar" style="margin-left:auto">Borrar todos</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const CLAVE = "medicci-tiempos-v1";
+const FORMAS = {manual: "Solo la historia", ia: "Con Medicci"};
+
+let tiempos = [];
+try { tiempos = JSON.parse(localStorage.getItem(CLAVE)) || []; } catch {}
+const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(tiempos)); } catch {} };
+
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+const mediana = xs => { if (!xs.length) return null; const a = xs.slice().sort((x, y) => x - y), m = a.length >> 1;
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+
+/* ---------- apuntar ---------- */
+$("#apuntar").onsubmit = e => {
+  e.preventDefault();
+  const medico = $("#medico").value.trim(), paciente = $("#paciente").value.trim();
+  const min = +$("#min").value || 0, seg = +$("#seg").value || 0;
+  const falta = !medico ? "Falta el médico." : !paciente ? "Falta el paciente." :
+    (min < 0 || seg < 0 || seg > 59 || !Number.isFinite(min + seg)) ? "Los segundos van de 0 a 59." :
+    min * 60 + seg <= 0 ? "Falta el tiempo." : "";
+  $("#error").textContent = falta;
+  if (falta) return;
+  tiempos.push({id: Date.now().toString(36), medico, paciente,
+    forma: document.querySelector("input[name=forma]:checked").value, segundos: min * 60 + seg,
+    fecha: new Date().toISOString()});
+  guarda();
+  $("#min").value = ""; $("#seg").value = ""; $("#min").focus();
+  pinta();
+};
+
+/* ---------- comparar ---------- */
+function pintaTitular(){
+  const a = mediana(tiempos.filter(t => t.forma === "manual").map(t => t.segundos));
+  const b = mediana(tiempos.filter(t => t.forma === "ia").map(t => t.segundos));
+  $("#titular").textContent =
+    !tiempos.length ? "Apunte un tiempo leyendo solo la historia y otro con Medicci para compararlos." :
+    a == null || b == null ? `Falta algún tiempo ${a == null ? "leyendo solo la historia" : "con Medicci"} para comparar.` :
+    b <= a ? `Con Medicci, el médico tiene lo que necesita en ${mmss(b)} en vez de ${mmss(a)}: un ${Math.round((1 - b / a) * 100)} % menos de tiempo.`
+           : `Con Medicci tarda ${mmss(b)} frente a ${mmss(a)} leyendo la historia: un ${Math.round((b / a - 1) * 100)} % más.`;
+}
+
+function pintaGrafico(){
+  const caja = $("#grafico");
+  if (!tiempos.length) { caja.innerHTML = ""; return; }
+  const W = Math.max(300, caja.clientWidth || 600), estrecho = W < 520;
+  const m = {l: estrecho ? 8 : 150, r: 70, t: 8, b: 30}, alto = 64, cabeza = estrecho ? 22 : 0;
+  const bloque = cabeza + alto, H = m.t + bloque * 2 + m.b;
+  const maxS = Math.max(...tiempos.map(t => t.segundos));
+  const maxMin = Math.max(1, Math.ceil(maxS / 60));
+  const paso = maxMin <= 5 ? 1 : maxMin <= 12 ? 2 : maxMin <= 30 ? 5 : 10;
+  const tope = Math.ceil(maxMin / paso) * paso;
+  const x = s => m.l + s / (tope * 60) * (W - m.l - m.r);
+  const ancho = W - m.l - m.r;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tiempos leyendo solo la historia y con Medicci">`;
+  const base = H - m.b;
+  for (let mi = 0; mi <= tope; mi += paso) {
+    svg += `<line x1="${x(mi * 60)}" x2="${x(mi * 60)}" y1="${m.t - 4}" y2="${base}" stroke="#ececec"/>` +
+      `<text x="${x(mi * 60)}" y="${base + 18}" text-anchor="middle">${mi} min</text>`;
+  }
+  const puntos = [];
+  ["manual", "ia"].forEach((forma, fila) => {
+    const xs = tiempos.filter(t => t.forma === forma);
+    const yc = m.t + fila * bloque + cabeza + alto / 2;
+    const color = `var(--${forma})`;
+    const rotulo = `${FORMAS[forma]} · ${xs.length} ${xs.length === 1 ? "tiempo" : "tiempos"}`;
+    svg += estrecho
+      ? `<circle cx="${m.l + 5}" cy="${yc - alto / 2 - 4}" r="5" fill="${color}"/><text class="fila" x="${m.l + 16}" y="${yc - alto / 2}">${rotulo}</text>`
+      : `<circle cx="${8}" cy="${yc}" r="5" fill="${color}"/><text class="fila" x="20" y="${yc - 2}">${FORMAS[forma]}</text>` +
+        `<text x="20" y="${yc + 13}">${xs.length} ${xs.length === 1 ? "tiempo" : "tiempos"}</text>`;
+    const med = mediana(xs.map(t => t.segundos));
+    if (med == null) {
+      svg += `<text x="${m.l + 6}" y="${yc + 4}">Sin tiempos todavía</text>`;
+      return;
+    }
+    // barra hasta la mediana: lavada, con el final redondeado; los puntos encima
+    const w = Math.max(x(med) - m.l, 2);
+    svg += `<path d="M${m.l},${yc - 12} h${w - 4} a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h${-(w - 4)} z" fill="${color}" opacity=".2"/>` +
+      `<line x1="${x(med)}" x2="${x(med)}" y1="${yc - 16}" y2="${yc + 16}" stroke="${color}" stroke-width="2"/>` +
+      `<text class="valor" x="${Math.min(x(med) + 8, m.l + ancho + 4)}" y="${yc + 4}">${mmss(med)}</text>`;
+    xs.slice().sort((a, b) => a.segundos - b.segundos).forEach((t, i) => {
+      const cy = yc + ((i % 3) - 1) * 7;   // un poco de separación para que no se tapen
+      svg += `<circle cx="${x(t.segundos)}" cy="${cy}" r="4.5" fill="${color}" stroke="#fff" stroke-width="2"/>`;
+      puntos.push({cx: x(t.segundos), cy, t});
+    });
+  });
+  svg += `<line x1="${m.l}" x2="${m.l}" y1="${m.t - 4}" y2="${base}" stroke="#c6c6c6"/></svg><div class="globo oculto" id="globo"></div>`;
+  caja.innerHTML = svg;
+  const el = caja.querySelector("svg"), globo = $("#globo");
+  el.onmousemove = ev => {
+    const r = el.getBoundingClientRect(), k = W / r.width;
+    const px = (ev.clientX - r.left) * k, py = (ev.clientY - r.top) * k;
+    let mejor = null, dist = 14 * k;
+    puntos.forEach(p => { const d = Math.hypot(p.cx - px, p.cy - py); if (d < dist) { dist = d; mejor = p; } });
+    if (!mejor) { globo.classList.add("oculto"); return; }
+    globo.innerHTML = `<b>${mmss(mejor.t.segundos)} · ${FORMAS[mejor.t.forma]}</b>${esc(mejor.t.medico)} · ${esc(mejor.t.paciente)}`;
+    globo.style.left = mejor.cx / k + "px"; globo.style.top = mejor.cy / k + "px";
+    globo.classList.remove("oculto");
+  };
+  el.onmouseleave = () => globo.classList.add("oculto");
+}
+
+/* ---------- tabla ---------- */
+function pintaTabla(){
+  $("#tabla").innerHTML = tiempos.length ? tiempos.slice().reverse().map(t => `<tr>
+    <td>${esc(t.medico)}</td><td>${esc(t.paciente)}</td>
+    <td><span class="llave ${t.forma}"></span>${FORMAS[t.forma]}</td><td class="num">${mmss(t.segundos)}</td>
+    <td><button class="x" data-quita="${t.id}" aria-label="Borrar este tiempo">✕</button></td></tr>`).join("")
+    : `<tr><td colspan="5" class="vacio">Sin tiempos todavía.</td></tr>`;
+  $("#medicos").innerHTML = [...new Set(tiempos.map(t => t.medico))].map(n => `<option value="${esc(n)}">`).join("");
+}
+$("#tabla").onclick = e => {
+  const b = e.target.closest("[data-quita]"); if (!b) return;
+  tiempos = tiempos.filter(t => t.id !== b.dataset.quita); guarda(); pinta();
+};
+$("#borrar").onclick = () => {
+  if (!tiempos.length || !confirm(`¿Borrar los ${tiempos.length} tiempos? Descargue antes el CSV si los quiere.`)) return;
+  tiempos = []; guarda(); pinta();
+};
+$("#csv").onclick = () => {
+  const q = v => /[;"\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+  const filas = tiempos.map(t => [t.fecha, t.medico, t.paciente, FORMAS[t.forma], t.segundos, mmss(t.segundos)].map(q).join(";"));
+  // punto y coma y BOM: Excel en español lo abre bien a la primera
+  const texto = "﻿" + ["fecha;medico;paciente;como_leyo;segundos;tiempo", ...filas].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([texto], {type: "text/csv;charset=utf-8"}));
+  a.download = `tiempos-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
+function pinta(){ pintaTitular(); pintaGrafico(); pintaTabla(); }
+window.addEventListener("resize", pintaGrafico);
+pinta();
+</script>
+</body>
+</html>
