@@ -19,6 +19,8 @@ mod datos;
 mod hcis;
 mod lector;
 mod servidor;
+mod transparencia;
+mod voz;
 
 use datos::{CampoFicha, Datos, Documento, Hecho, Paciente};
 use eframe::egui;
@@ -44,39 +46,40 @@ const PIE: f32 = 104.0;                     // acciones rápidas y redactor, al 
 /// Cada cuánto se pinta durante una animación (sin vsync, ~60 por segundo).
 const FOTOGRAMA: std::time::Duration = std::time::Duration::from_millis(16);
 
-// la paleta de Medicci
-const VERDE: Color32 = Color32::from_rgb(0x00, 0x9b, 0x6b);
-const VERDE_OSC: Color32 = Color32::from_rgb(0x00, 0x70, 0x4d);
-const VERDE_2: Color32 = Color32::from_rgb(0x0a, 0x6b, 0x4a);
-const VERDE_CLARO: Color32 = Color32::from_rgb(0xbf, 0xe6, 0xd3);
-const FONDO: Color32 = Color32::from_rgb(0xf5, 0xf5, 0xf5);
+// la paleta de Medicci: la de su identidad (marca/IDENTIDAD.md, marca/tokens.json)
+const VERDE: Color32 = Color32::from_rgb(0x1f, 0x6b, 0x61);        // verde claustro: acento, botones, el bocadillo
+const VERDE_OSC: Color32 = Color32::from_rgb(0x0e, 0x3b, 0x36);    // verde Medicci: el color de la marca
+const VERDE_2: Color32 = Color32::from_rgb(0x1f, 0x6b, 0x61);      // enlaces y fuentes
+const VERDE_CLARO: Color32 = Color32::from_rgb(0xbf, 0xd3, 0xce);  // texto suave sobre verde Medicci
+const MARFIL: Color32 = Color32::from_rgb(0xf6, 0xf1, 0xe6);       // fondo; y el texto sobre verde Medicci
+const FONDO: Color32 = MARFIL;
 const BLANCO: Color32 = Color32::from_rgb(0xff, 0xff, 0xff);
-const LINEA: Color32 = Color32::from_rgb(0xd7, 0xd7, 0xd7);
-const LINEA_SUAVE: Color32 = Color32::from_rgb(0xec, 0xec, 0xec);
-const ORO: Color32 = Color32::from_rgb(0xf3, 0xc4, 0x18);
-const ORO_SUAVE: Color32 = Color32::from_rgb(0xff, 0xf8, 0xe1);
-const ROJO: Color32 = Color32::from_rgb(0xa0, 0x1b, 0x1b);
-const GRIS: Color32 = Color32::from_rgb(0x6e, 0x74, 0x77);
-const TINTA: Color32 = Color32::from_rgb(0x22, 0x22, 0x22);
-const TINTA_2: Color32 = Color32::from_rgb(0x44, 0x4a, 0x4d);
-const MIO: Color32 = Color32::from_rgb(0xe5, 0xf1, 0xe9);
-const CITA_FONDO: Color32 = Color32::from_rgb(0xff, 0xfb, 0xea);
-const FICHA_FONDO: Color32 = Color32::from_rgb(0xf3, 0xf3, 0xf3);
+const LINEA: Color32 = Color32::from_rgb(0xd9, 0xcf, 0xba);
+const LINEA_SUAVE: Color32 = Color32::from_rgb(0xec, 0xe4, 0xd3);
+const ORO: Color32 = Color32::from_rgb(0xd4, 0xaf, 0x37);          // el punto de la marca
+const ORO_SUAVE: Color32 = Color32::from_rgb(0xf4, 0xeb, 0xcb);
+const ROJO: Color32 = Color32::from_rgb(0xa3, 0x4a, 0x24);         // terracota: «No consta» y avisos
+const GRIS: Color32 = Color32::from_rgb(0x4b, 0x5a, 0x57);         // tinta suave
+const TINTA: Color32 = Color32::from_rgb(0x16, 0x21, 0x1f);
+const TINTA_2: Color32 = Color32::from_rgb(0x3a, 0x47, 0x44);
+const MIO: Color32 = Color32::from_rgb(0xcf, 0xe0, 0xd9);          // salvia
+const CITA_FONDO: Color32 = Color32::from_rgb(0xf7, 0xf0, 0xdd);
+const FICHA_FONDO: Color32 = Color32::from_rgb(0xec, 0xe4, 0xd3);  // fondo alternativo
 
 // colores con significado: cada tipo de dato, el suyo, y siempre con título
-const ALERTA: Color32 = Color32::from_rgb(0x9b, 0x1c, 0x1c);
-const ALERTA_TITULO: Color32 = Color32::from_rgb(0x7a, 0x14, 0x14);
-const ALERTA_FONDO: Color32 = Color32::from_rgb(0xfd, 0xed, 0xed);
-const ALERTA_BORDE: Color32 = Color32::from_rgb(0xf3, 0xc4, 0xc4);
-const CHOQUE: Color32 = Color32::from_rgb(0x8a, 0x4b, 0x00);       // no coincide con la derivación
-const CHOQUE_TACHADO: Color32 = Color32::from_rgb(0x6b, 0x55, 0x36);
-const CHOQUE_FONDO: Color32 = Color32::from_rgb(0xff, 0xf6, 0xe8);
-const CHOQUE_BORDE: Color32 = Color32::from_rgb(0xf1, 0xd3, 0xa8);
-const PENDIENTE: Color32 = Color32::from_rgb(0x1e, 0x4e, 0x8c);
-const PENDIENTE_FONDO: Color32 = Color32::from_rgb(0xee, 0xf4, 0xfc);
-const PENDIENTE_BORDE: Color32 = Color32::from_rgb(0xc9, 0xda, 0xf0);
-const NO_CONSTA_FONDO: Color32 = Color32::from_rgb(0xf7, 0xf8, 0xfa);
-const NO_CONSTA_BORDE: Color32 = Color32::from_rgb(0x9a, 0xa6, 0xb2);
+const ALERTA: Color32 = Color32::from_rgb(0xa3, 0x4a, 0x24);       // avisos: terracota
+const ALERTA_TITULO: Color32 = Color32::from_rgb(0x7e, 0x35, 0x18);
+const ALERTA_FONDO: Color32 = Color32::from_rgb(0xf7, 0xe7, 0xde);
+const ALERTA_BORDE: Color32 = Color32::from_rgb(0xe8, 0xc2, 0xae);
+const CHOQUE: Color32 = Color32::from_rgb(0x7a, 0x5c, 0x0e);       // no coincide con la derivación: oro hondo
+const CHOQUE_TACHADO: Color32 = Color32::from_rgb(0x6b, 0x5a, 0x2e);
+const CHOQUE_FONDO: Color32 = Color32::from_rgb(0xf7, 0xef, 0xd6);
+const CHOQUE_BORDE: Color32 = Color32::from_rgb(0xe3, 0xcf, 0x91);
+const PENDIENTE: Color32 = Color32::from_rgb(0x1f, 0x6b, 0x61);    // pendiente: verde claustro
+const PENDIENTE_FONDO: Color32 = Color32::from_rgb(0xe4, 0xef, 0xea);
+const PENDIENTE_BORDE: Color32 = Color32::from_rgb(0xbc, 0xd5, 0xcb);
+const NO_CONSTA_FONDO: Color32 = Color32::from_rgb(0xf3, 0xee, 0xe3);
+const NO_CONSTA_BORDE: Color32 = Color32::from_rgb(0xc9, 0x9a, 0x84);
 
 /// Las pestañas de la tarjeta de resumen del chat.
 #[derive(Clone, Copy, PartialEq)]
@@ -297,6 +300,10 @@ struct Medicci {
     paso_n: Option<i64>,
     paso_mirado: f64,
     escribiendo: Option<(String, f64)>, // una pregunta que se va escribiendo sola
+    // dictado: un clic en el micrófono empieza a grabar y otro termina (src/voz.rs)
+    grabacion: Option<voz::Grabacion>,
+    transcribiendo: bool,
+    aviso_voz: Option<String>,      // por qué no se ha podido dictar, debajo de la caja
 }
 
 /// Lo que la burbuja le pide al servidor.
@@ -307,6 +314,7 @@ enum Pedido {
     Filas,
     Registro(&'static str),         // lo que hace el médico en pantalla, para el registro
     Paso,                           // simulación: qué toca ahora
+    Dictar(Vec<u8>),                // el audio dictado (WAV), para transcribirlo
 }
 
 /// Quita las referencias del texto («[C3]»): ya van debajo, como fuentes.
@@ -320,6 +328,11 @@ fn recorta(t: &str, max: usize) -> String {
 
 fn trazo(ancho: f32, color: Color32) -> Stroke {
     Stroke::new(ancho, color)
+}
+
+/// EB Garamond: el nombre de Medicci y los titulares.
+fn garamond() -> FontFamily {
+    FontFamily::Name("garamond".into())
 }
 
 fn negrita() -> FontFamily {
@@ -496,6 +509,9 @@ impl Medicci {
             paso_n: None,
             paso_mirado: f64::NEG_INFINITY,
             escribiendo: None,
+            grabacion: None,
+            transcribiendo: false,
+            aviso_voz: None,
         };
         app.saludo();
         if let Some(id) = inicial {
@@ -641,6 +657,9 @@ impl Medicci {
         self.filas_red.clear();
         self.alertas_red.clear();
         self.esperando = false;
+        self.grabacion = None;          // lo que se estuviera dictando no sigue al otro paciente
+        self.transcribiendo = false;
+        self.aviso_voz = None;
         self.entrada.clear();
         self.saludo();
         self.foco_ident = true;
@@ -883,6 +902,7 @@ impl Medicci {
                     (Pedido::Filas, Some(s)) => red.filas(ctx, s.clone()),
                     (Pedido::Registro(a), Some(s)) => red.registra(ctx, s.clone(), a),
                     (Pedido::Paso, _) => red.paso(ctx),
+                    (Pedido::Dictar(audio), Some(s)) => red.dictar(ctx, s.clone(), audio),
                     _ => {}
                 }
             }
@@ -1001,6 +1021,19 @@ impl Medicci {
                     self.haz_paso(&accion, texto);
                 }
             }
+            Llega::Dictado(r) => {
+                self.transcribiendo = false;
+                match r {
+                    Ok(t) if t.is_empty() => self.aviso_voz = Some("No he entendido nada: pruebe otra vez.".into()),
+                    Ok(t) => {
+                        // a la caja, no al modelo: el médico lo revisa y pulsa enviar
+                        self.entrada = if self.entrada.trim().is_empty() { t } else { format!("{} {}", self.entrada.trim(), t) };
+                        self.aviso_voz = None;
+                        self.foco_chat = true;
+                    }
+                    Err(e) => self.aviso_voz = Some(e),
+                }
+            }
             Llega::Fallo(e) => {
                 self.resumen_auto = false;
                 if std::mem::take(&mut self.esperando) {
@@ -1018,21 +1051,30 @@ impl Medicci {
 // =====================================================================
 
 fn fuentes(ctx: &egui::Context) {
+    // las de la identidad (marca/IDENTIDAD.md): IBM Plex Sans para el texto,
+    // Plex Mono para las filas de origen y EB Garamond para el nombre
     let mut f = egui::FontDefinitions::default();
-    f.font_data.insert("noto".into(),
-        egui::FontData::from_static(include_bytes!("../fuentes/NotoSans-Regular.ttf")));
-    f.font_data.insert("noto_negrita".into(),
-        egui::FontData::from_static(include_bytes!("../fuentes/NotoSans-Bold.ttf")));
-    f.font_data.insert("noto_mono".into(),
-        egui::FontData::from_static(include_bytes!("../fuentes/NotoSansMono-Regular.ttf")));
-    // detrás, la Mono (tiene las flechas que a Noto Sans le faltan: «↑», «→»)
-    // y las de egui, para los demás símbolos
+    for (nombre, datos) in [
+        ("plex", &include_bytes!("../fuentes/IBMPlexSans-Regular.ttf")[..]),
+        ("plex_negrita", &include_bytes!("../fuentes/IBMPlexSans-SemiBold.ttf")[..]),
+        ("plex_mono", &include_bytes!("../fuentes/IBMPlexMono-Regular.ttf")[..]),
+        ("garamond", &include_bytes!("../fuentes/EBGaramond-SemiBold.ttf")[..]),
+        ("noto", &include_bytes!("../fuentes/NotoSans-Regular.ttf")[..]),
+        ("noto_mono", &include_bytes!("../fuentes/NotoSansMono-Regular.ttf")[..]),
+    ] {
+        f.font_data.insert(nombre.into(), egui::FontData::from_static(datos));
+    }
+    // detrás, Noto (tiene las flechas y los símbolos que a Plex le faltan) y las de egui
     let resto = f.families[&FontFamily::Proportional].clone();
-    f.families.get_mut(&FontFamily::Proportional).unwrap().splice(0..0, ["noto".into(), "noto_mono".into()]);
-    f.families.get_mut(&FontFamily::Monospace).unwrap().insert(0, "noto_mono".into());
-    let mut gruesa = vec!["noto_negrita".to_string(), "noto_mono".to_string()];
-    gruesa.extend(resto);
-    f.families.insert(negrita(), gruesa);
+    let detras = |primera: &str| {
+        let mut v = vec![primera.to_string(), "noto".into(), "noto_mono".into()];
+        v.extend(resto.iter().cloned());
+        v
+    };
+    f.families.insert(FontFamily::Proportional, detras("plex"));
+    f.families.insert(FontFamily::Monospace, detras("plex_mono"));
+    f.families.insert(negrita(), detras("plex_negrita"));
+    f.families.insert(garamond(), detras("garamond"));
     ctx.set_fonts(f);
 }
 
@@ -1082,36 +1124,32 @@ fn estilo(ctx: &egui::Context) {
     });
 }
 
-/// El logo: un médico con bata y fonendo, dibujado dentro de un círculo de radio `r`.
-fn medico(p: &egui::Painter, c: Pos2, r: f32, fondo: Color32, alfa: f32) {
+/// El isotipo de Medicci (marca/isotipo.svg), dentro de un círculo de radio `r`:
+/// un bocadillo en verde claustro con la «m» que se convierte en pulso, en
+/// verde Medicci, y el punto de oro. Se dibuja con las mismas medidas del SVG.
+fn isotipo(p: &egui::Painter, c: Pos2, r: f32, alfa: f32) {
     if alfa <= 0.01 {
         return;
     }
-    let k = r / 28.0;
-    let blanco = BLANCO.gamma_multiply(alfa);
-    let oro = ORO.gamma_multiply(alfa);
-    // cabeza
-    p.circle_filled(c + vec2(0.0, -7.5 * k), 6.6 * k, blanco);
-    // hombros: media elipse
-    let base = c + vec2(0.0, 14.5 * k);
-    let hombros: Vec<Pos2> = (0..=28)
-        .map(|i| {
-            let a = std::f32::consts::PI * (1.0 + i as f32 / 28.0);
-            base + vec2(13.5 * k * a.cos(), 11.5 * k * a.sin())
-        })
-        .collect();
-    p.add(Shape::convex_polygon(hombros, blanco, Stroke::NONE));
-    // cuello de la bata
-    p.add(Shape::convex_polygon(
-        vec![c + vec2(-4.6 * k, 3.2 * k), c + vec2(4.6 * k, 3.2 * k), c + vec2(0.0, 10.0 * k)],
-        fondo.gamma_multiply(alfa), Stroke::NONE));
-    // fonendo: el tubo baja por la izquierda y acaba en la campana
-    p.add(egui::epaint::CubicBezierShape::from_points_stroke(
-        [c + vec2(-6.2 * k, 4.4 * k), c + vec2(-7.6 * k, 13.8 * k),
-         c + vec2(2.6 * k, 14.6 * k), c + vec2(6.4 * k, 9.4 * k)],
-        false, Color32::TRANSPARENT, trazo(1.8 * k, oro)));
-    p.circle_filled(c + vec2(6.6 * k, 9.0 * k), 2.5 * k, oro);
-    p.circle_filled(c + vec2(6.6 * k, 9.0 * k), 1.0 * k, blanco);
+    let k = 0.95 * r / 64.0;                    // el bocadillo cabe en el círculo
+    let en = move |x: f32, y: f32| c + vec2(x - 64.0, y - 64.0) * k;
+    let claustro = VERDE.gamma_multiply(alfa);
+    p.rect_filled(Rect::from_min_max(en(14.0, 16.0), en(114.0, 96.0)), 14.0 * k, claustro);
+    p.add(Shape::convex_polygon(vec![en(30.0, 95.0), en(50.0, 95.0), en(30.0, 112.0)], claustro, Stroke::NONE));
+    // los arcos de la «m», por arriba, de izquierda a derecha
+    let arco = move |cx: f32| (0..=12).map(move |i| {
+        let a = std::f32::consts::PI * (1.0 + i as f32 / 12.0);
+        en(cx + 9.0 * a.cos(), 58.0 + 9.0 * a.sin())
+    });
+    let tinta = trazo(5.0 * k, VERDE_OSC.gamma_multiply(alfa));
+    let mut m = vec![en(30.0, 72.0)];
+    m.extend(arco(39.0));
+    m.push(en(48.0, 72.0));
+    p.add(Shape::line(m, tinta));
+    let mut pulso: Vec<Pos2> = arco(57.0).collect();
+    pulso.extend([en(66.0, 66.0), en(74.0, 66.0), en(80.0, 44.0), en(87.0, 80.0), en(91.0, 66.0), en(96.0, 66.0)]);
+    p.add(Shape::line(pulso, tinta));
+    p.circle_filled(en(103.0, 66.0), 4.5 * k, ORO.gamma_multiply(alfa));
 }
 
 /// Sombra suave hecha con anillos: no necesita nada fuera de la ventana.
@@ -1308,11 +1346,11 @@ impl Medicci {
             let radio = BOLA / 2.0 - 1.5 + encima * 1.5;
             let p = ui.painter();
             sombra_redonda(p, c, radio, 1.0);
-            p.circle_filled(c, radio, VERDE);
+            p.circle_filled(c, radio, VERDE_OSC);
             p.circle_stroke(c, radio - 0.75, trazo(1.5, ORO));
-            // el médico se va y aparece la flecha de plegar
+            // el isotipo se va y aparece la flecha de plegar
             let e = easing::cubic_out(self.t);
-            medico(p, c, radio * 0.94, VERDE, 1.0 - e);
+            isotipo(p, c, radio * 0.94, 1.0 - e);
             if e > 0.01 {
                 let s = trazo(2.4, BLANCO.gamma_multiply(e));
                 let d = 7.0;
@@ -1366,11 +1404,11 @@ impl Medicci {
         let p = ui.painter().clone();
         p.rect_filled(caja, Rounding { nw: 16.0, ne: 16.0, sw: 0.0, se: 0.0 }, VERDE_OSC);
         let c = pos2(caja.left() + 34.0, caja.center().y);
-        p.circle_filled(c, 17.0, VERDE);
+        p.circle_filled(c, 17.0, VERDE_OSC);
         p.circle_stroke(c, 16.5, trazo(1.0, ORO));
-        medico(&p, c, 16.0, VERDE, 1.0);
+        isotipo(&p, c, 16.0, 1.0);
         p.text(pos2(c.x + 28.0, caja.center().y - 9.0), egui::Align2::LEFT_CENTER, "Medicci",
-               FontId::new(16.0, negrita()), BLANCO);
+               FontId::new(20.0, garamond()), MARFIL);
         p.text(pos2(c.x + 28.0, caja.center().y + 10.0), egui::Align2::LEFT_CENTER,
                if self.red.is_some() { "IA local · conectada a Medicci" } else { "Lee la historia y cita la fuente" },
                FontId::proportional(11.5), VERDE_CLARO);
@@ -1543,6 +1581,10 @@ impl Medicci {
         let mut enviar = false;
         let mut ir: Option<Pestana> = None;
         let mut falta = false;
+        // dictado: solo conectada al servidor, que es quien transcribe
+        let puede_dictar = hay && self.red.is_some() && self.sesion.is_some();
+        let grabando = self.grabacion.as_ref().map(|g| g.segundos());
+        let mut clic_micro = false;
         let dentro = caja.shrink2(vec2(12.0, 12.0));
         let (arriba, abajo) = dentro.split_top_bottom_at_y(dentro.top() + 34.0);
         // acciones rápidas: Resumen es la principal
@@ -1563,14 +1605,21 @@ impl Medicci {
                 .inner_margin(egui::Margin { left: 12.0, right: 3.0, top: 3.0, bottom: 3.0 })
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
-                        let pista = if hay { "Pregunte a la historia" } else { "Primero, el paciente" };
+                        let pista = match (grabando, &self.aviso_voz) {
+                            (Some(s), _) => format!("Escuchando… {:.0} s · pulse el micrófono para terminar", s),
+                            _ if self.transcribiendo => "Transcribiendo…".to_string(),
+                            (_, Some(aviso)) => aviso.clone(),
+                            _ if hay => "Pregunte a la historia".to_string(),
+                            _ => "Primero, el paciente".to_string(),
+                        };
+                        let color_pista = if grabando.is_some() { ROJO } else { GRIS };
                         let campo = egui::TextEdit::singleline(&mut self.entrada)
-                            .hint_text(texto(pista, 13.0, GRIS, false))
+                            .hint_text(texto(pista, 13.0, color_pista, false))
                             .frame(false)
                             .text_color(TINTA)
                             .font(FontId::proportional(13.0))
                             .margin(vec2(0.0, 4.0))
-                            .desired_width(ui.available_width() - 28.0 - ui.spacing().item_spacing.x - 4.0);
+                            .desired_width(ui.available_width() - 2.0 * (28.0 + ui.spacing().item_spacing.x) - 4.0);
                         let r = ui.add_enabled(hay, campo);
                         if self.foco_chat && hay {
                             r.request_focus();
@@ -1580,6 +1629,15 @@ impl Medicci {
                             enviar = true;
                             r.request_focus();
                         }
+                        // el micrófono: un clic empieza a grabar y otro termina
+                        let (bm, pm) = ui.allocate_painter(Vec2::splat(28.0), Sense::click());
+                        clic_micro = puede_dictar && bm.clicked();
+                        microfono(&pm, bm.rect.center(), grabando.is_some(), self.transcribiendo, puede_dictar);
+                        let ayuda = if grabando.is_some() { "Pulse para terminar y transcribir" }
+                                    else if puede_dictar { "Pulse para dictar la pregunta; otra vez para terminar" }
+                                    else { "El dictado necesita el servidor de Medicci" };
+                        bm.on_hover_text(ayuda).on_hover_cursor(if puede_dictar { egui::CursorIcon::PointingHand }
+                                                                else { egui::CursorIcon::NotAllowed });
                         let (b, pintor) = ui.allocate_painter(Vec2::splat(28.0), Sense::click());
                         let lleno = hay && !self.entrada.trim().is_empty();
                         let c = b.rect.center();
@@ -1594,6 +1652,7 @@ impl Medicci {
                     });
                 });
         });
+        self.dicta(ui.ctx(), clic_micro);
         if resumen {
             self.resumen_flotante();
         }
@@ -1608,6 +1667,59 @@ impl Medicci {
             self.preguntar();
         }
     }
+}
+
+impl Medicci {
+    /// Un clic en el micrófono empieza a grabar; otro (o llegar al minuto)
+    /// termina y manda el audio a transcribir. El texto vuelve a la caja.
+    fn dicta(&mut self, ctx: &egui::Context, clic: bool) {
+        match (&self.grabacion, clic) {
+            (None, true) if !self.transcribiendo => match voz::Grabacion::empezar() {
+                Ok(g) => {
+                    self.grabacion = Some(g);
+                    self.aviso_voz = None;
+                }
+                Err(e) => self.aviso_voz = Some(e),
+            },
+            (Some(g), _) if clic || g.segundos() >= voz::MAX_SEGUNDOS => {
+                let Some(g) = self.grabacion.take() else { return };
+                if g.segundos() < 0.4 {
+                    self.aviso_voz = Some("No ha dado tiempo a oír nada: pulse, hable y pulse otra vez.".into());
+                    return;
+                }
+                self.transcribiendo = true;
+                self.pedidos.push(Pedido::Dictar(g.terminar()));
+            }
+            _ => {}
+        }
+        if self.grabacion.is_some() {
+            ctx.request_repaint();              // el contador de segundos y el tope del minuto
+        }
+        if !self.entrada.trim().is_empty() {
+            self.aviso_voz = None;
+        }
+    }
+}
+
+/// El botón del micrófono: terracota mientras graba, gris mientras transcribe.
+fn microfono(p: &egui::Painter, c: Pos2, grabando: bool, transcribiendo: bool, activo: bool) {
+    let (fondo, tinta) = match (grabando, transcribiendo, activo) {
+        (true, _, _) => (ROJO, BLANCO),
+        (_, true, _) => (LINEA, GRIS),
+        (_, _, true) => (MIO, VERDE_OSC),
+        _ => (LINEA_SUAVE, LINEA),
+    };
+    p.circle_filled(c, 14.0, fondo);
+    let s = trazo(1.6, tinta);
+    p.rect_stroke(Rect::from_center_size(c + vec2(0.0, -2.5), vec2(6.0, 10.0)), 3.0, s);
+    let arco: Vec<Pos2> = (0..=12)
+        .map(|i| {
+            let a = std::f32::consts::PI * i as f32 / 12.0;
+            c + vec2(-6.0 * a.cos(), 0.5 + 5.5 * a.sin())
+        })
+        .collect();
+    p.add(Shape::line(arco, s));
+    p.line_segment([c + vec2(0.0, 6.0), c + vec2(0.0, 8.5)], s);
 }
 
 /// Un botón secundario de acción rápida: blanco, con borde.
@@ -2813,9 +2925,9 @@ impl Medicci {
                         ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
                     }
                     let c = pos2(cabeza.left() + 38.0, cabeza.center().y);
-                    p.circle_filled(c, 19.0, VERDE);
+                    p.circle_filled(c, 19.0, VERDE_OSC);
                     p.circle_stroke(c, 18.5, trazo(1.0, ORO));
-                    medico(&p, c, 18.0, VERDE, 1.0);
+                    isotipo(&p, c, 18.0, 1.0);
                     let pac = &resumen.paciente;
                     p.text(pos2(c.x + 31.0, cabeza.center().y - 10.0), egui::Align2::LEFT_CENTER,
                            format!("Resumen ampliado · {}", pac.id),
@@ -2937,6 +3049,8 @@ impl eframe::App for Medicci {
         self.burbuja(ctx);
         self.ventana_chat(ctx);
         self.ventana_resumen(ctx);
+        // en Windows, lo que no se pinta en esas dos ventanas sale negro (transparencia.rs)
+        transparencia::negro_transparente(&["Medicci · Chat", "Medicci · Resumen"]);
 
         if let Some(tema) = self.pendiente.take() {
             self.abierto = true;

@@ -45,11 +45,14 @@
     .sim-login div{padding:16px;display:grid;gap:10px;font-size:13px}
     .sim-login span{border:1px solid #c6c6c6;border-radius:4px;padding:7px 9px;min-height:32px;background:#fafafa}
     .sim-login button{background:#009b6b;color:#fff;border:0;border-radius:4px;padding:9px;font-weight:bold}
-    #sim-rotulo{position:fixed;left:24px;bottom:84px;z-index:60;max-width:760px;background:#0e2d20ee;color:#fff;
-      border-left:6px solid #f3c418;border-radius:10px;padding:14px 20px;font:17px/1.4 "Segoe UI",Verdana,sans-serif;
+    /* los rótulos, con la identidad de Medicci (marca/IDENTIDAD.md) */
+    @font-face{font-family:"IBM Plex Sans";src:url(/fuentes/IBMPlexSans-Regular.ttf)}
+    @font-face{font-family:"IBM Plex Sans";font-weight:600;src:url(/fuentes/IBMPlexSans-SemiBold.ttf)}
+    #sim-rotulo{position:fixed;left:24px;bottom:84px;z-index:60;max-width:760px;background:#0E3B36f2;color:#F6F1E6;
+      border-left:6px solid #D4AF37;border-radius:12px;padding:14px 20px;font:17px/1.45 "IBM Plex Sans",Arial,sans-serif;
       box-shadow:0 8px 30px #0005;transition:opacity .4s,transform .4s}
     #sim-rotulo.oculto{opacity:0;transform:translateY(12px)}
-    #sim-rotulo .hora{display:block;font-size:13px;letter-spacing:.08em;color:#f3c418;font-weight:bold;margin-bottom:3px}
+    #sim-rotulo .hora{display:block;font-size:13px;letter-spacing:.08em;color:#D4AF37;font-weight:600;margin-bottom:3px}
   </style>`);
   document.body.insertAdjacentHTML("beforeend", `<div id="sim-tapa" class="negro"></div>
     <div id="sim-rotulo" class="oculto"><span class="hora"></span><span class="texto"></span></div>`);

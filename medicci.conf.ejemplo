@@ -29,3 +29,10 @@ MEDICCI_HL7_PUERTO=2575
 MEDICCI_HL7_HOST=localhost
 # Solo para la demo: suma los crónicos sintéticos de data/generados a la agenda.
 MEDICCI_GENERADOS=si
+
+# --- El dictado por voz (mvp/voz.py) --------------------------------------------
+# Whisper en local: small (rápido), medium o large-v3-turbo (acierta más con
+# términos médicos, más lento en procesador). O la ruta de un modelo descargado.
+MEDICCI_VOZ_MODELO=small
+# cpu deja la VRAM para el modelo de lenguaje; cuda solo si sobra memoria.
+MEDICCI_VOZ_DISPOSITIVO=cpu

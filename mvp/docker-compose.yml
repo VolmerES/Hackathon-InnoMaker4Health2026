@@ -38,6 +38,7 @@ services:
     working_dir: /app
     volumes:
       - ..:/app
+      - medicci-voz:/root/.cache/huggingface   # el modelo de Whisper, descargado una vez
     ports:
       - "8000:8000"
       - "2575:2575"                       # receptor HL7 (MLLP), con MEDICCI_DATOS=hl7
@@ -46,6 +47,8 @@ services:
       - MEDICCI_MODELO=qwen3:8b
       - MEDICCI_DATOS=${MEDICCI_DATOS:-csv}
       - MEDICCI_GENERADOS=${MEDICCI_GENERADOS:-si}   # suma los crónicos de data/generados
+      - MEDICCI_VOZ_MODELO=${MEDICCI_VOZ_MODELO:-small}           # dictado (mvp/voz.py)
+      - MEDICCI_VOZ_DISPOSITIVO=${MEDICCI_VOZ_DISPOSITIVO:-cpu}   # la VRAM, para el modelo de lenguaje
     entrypoint: ["python", "mvp/servidor.py", "--host", "0.0.0.0"]
     depends_on:
       - ollama
@@ -78,3 +81,4 @@ services:
 
 volumes:
   medicci-modelos:
+  medicci-voz:

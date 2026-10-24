@@ -69,6 +69,8 @@ docs/
 analisis/         Scripts de exploración (Python + DuckDB)
 mvp/              Núcleo de Medicci: chat sin agente, tarjeta «3 cosas» y sus pruebas
 demo/             Réplicas de HCIS y SELENE con historias sintéticas (Daniel)
+medicci-rs/       La burbuja de escritorio: el asistente que ve el médico
+marca/            La identidad de Medicci: colores, letra, isotipo y reglas (IDENTIDAD.md)
 data/             Los 11 CSV (no se suben: son material de la organización)
 ```
 
