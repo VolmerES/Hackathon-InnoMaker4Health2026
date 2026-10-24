@@ -246,6 +246,7 @@ struct Medicci {
     filas_red: Vec<FilaRed>,            // los datos del paciente, del servidor
     alertas_red: Vec<(String, Vec<String>)>, // la tarjeta del servidor: texto y sus fuentes
     resumen_auto: bool,             // al abrir el paciente, el resumen sale solo
+    subir: bool,                    // el chat se enseña desde arriba (el resumen recién abierto)
 }
 
 /// Lo que la burbuja le pide al servidor.
@@ -430,6 +431,7 @@ impl Medicci {
             filas_red: Vec::new(),
             alertas_red: Vec::new(),
             resumen_auto: false,
+            subir: false,
         };
         app.saludo();
         if let Some(id) = inicial {
@@ -855,7 +857,7 @@ impl Medicci {
                         self.pestana = Pestana::Resumen;
                         self.hilo.push(Mensaje::suyo(vec![Parte::Texto(
                             "Pregunte lo que necesite: contesta solo con sus datos y cita la fila                              de la que sale.".into())]));
-                        self.bajar = true;
+                        self.subir = true;              // que se vea desde «Por qué viene hoy»
                     } else {
                         self.tarjeta_vista = None;      // sin datos: la tarjeta de siempre
                         self.pedidos.push(Pedido::Tarjeta);
@@ -1298,13 +1300,17 @@ impl Medicci {
 
     fn conversacion(&mut self, ui: &mut egui::Ui, caja: Rect) {
         let bajar = std::mem::take(&mut self.bajar);
+        let subir = std::mem::take(&mut self.subir);
         let mut accion = None;
         ui.allocate_new_ui(UiBuilder::new().max_rect(caja.shrink2(vec2(12.0, 0.0))), |ui| {
-            egui::ScrollArea::vertical()
+            let mut hilo = egui::ScrollArea::vertical()
                 .id_salt("hilo")
                 .auto_shrink([false, false])
-                .stick_to_bottom(true)
-                .show(ui, |ui| {
+                .stick_to_bottom(!subir);
+            if subir {
+                hilo = hilo.vertical_scroll_offset(0.0);
+            }
+            hilo.show(ui, |ui| {
                     ui.add_space(12.0);
                     let ancho = ui.available_width();
                     for m in &self.hilo {
@@ -2686,6 +2692,11 @@ impl eframe::App for Medicci {
         }
         self.red(ctx);
         self.coloca(ctx);
+        if std::env::var_os("MEDICCI_DEPURA").is_some() {
+            let (monitor, real) = ctx.input(|i| (i.viewport().monitor_size, i.viewport().outer_rect));
+            eprintln!("abierto={} t={:.2} lista={} intentos={} monitor={:?} real={:?} pedido={:?}",
+                      self.abierto, self.t, self.lista, self.intentos, monitor, real, self.pedido);
+        }
         self.burbuja(ctx);
         self.ventana_chat(ctx);
         self.ventana_resumen(ctx);
@@ -2744,15 +2755,17 @@ fn main() -> eframe::Result<()> {
     // adónde mandar las peticiones: --servidor, la variable o medicci.conf (el que diga el hospital)
     let mut url = std::env::var("MEDICCI_SERVIDOR").ok().or_else(|| servidor::de_la_configuracion("MEDICCI_SERVIDOR"));
     let mut reinicio = false;
+    let mut abierta = false;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
             "--reinicio" => reinicio = true,
+            "--abierta" => abierta = true,        // con el chat ya desplegado: para la demo
             "--db" => ruta = args.next().map(PathBuf::from),
             "--paciente" => paciente = args.next(),
             "--servidor" => url = args.next(),
             "--ayuda" | "-h" | "--help" => {
-                println!("medicci [--db ruta.db] [--paciente 417] [--servidor http://localhost:8000]");
+                println!("medicci [--db ruta.db] [--paciente 417] [--servidor http://localhost:8000] [--abierta]");
                 return Ok(());
             }
             _ => {}
@@ -2816,7 +2829,9 @@ fn main() -> eframe::Result<()> {
         Box::new(move |cc| {
             fuentes(&cc.egui_ctx);
             estilo(&cc.egui_ctx);
-            Ok(Box::new(Medicci::nuevo(datos, paciente, red)))
+            let mut app = Medicci::nuevo(datos, paciente, red);
+            app.abierto = abierta;
+            Ok(Box::new(app))
         }),
     )
 }
