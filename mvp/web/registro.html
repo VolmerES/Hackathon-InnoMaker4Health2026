@@ -81,7 +81,7 @@ a.pac{color:var(--verde);font-weight:bold;text-decoration:none;cursor:pointer}
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const NOMBRE = {abrir: "Abre el paciente", tarjeta: "Ve la tarjeta", resumen: "Abre el resumen",
-                pregunta: "Pregunta a la IA", ampliar_resumen: "Amplía el resumen", copiar_nota: "Copia a la nota clínica",
+                pregunta: "Pregunta a la IA", dictado: "Dicta por voz", ampliar_resumen: "Amplía el resumen", copiar_nota: "Copia a la nota clínica",
                 ver_pestana: "Cambia de pestaña", cerrar: "Cierra"};
 const ORIGEN = {pestana: "pestaña en HCIS", burbuja: "burbuja de escritorio", prueba: "comprobación"};
 const refs = l => (l || []).slice(0, 6).map(r => `<span class="ref">${esc(r)}</span>`).join("")
@@ -92,6 +92,7 @@ function vio(l) {
     case "pregunta": return `«${esc(l.pregunta)}»<br><small>${esc(l.respuesta)}</small><br>${refs(l.fuentes)}`;
     case "tarjeta": return (l.alertas || []).map(esc).join("<br>") || "<small>Nada que destacar</small>";
     case "resumen": return `${esc(l.filas)} filas de su historia`;
+    case "dictado": return `«${esc(l.texto)}»<br><small>el audio no se guarda: solo el texto</small>`;
     case "abrir": return `<small>desde ${esc(ORIGEN[l.origen] || l.origen || "¿?")} · equipo ${esc(l.equipo)}</small>`;
     default: return `<small>${esc(l.detalle || "")}</small>`;
   }

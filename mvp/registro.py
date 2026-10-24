@@ -89,7 +89,8 @@ def main() -> None:
             continue
         if args.paciente and l.get("paciente") != args.paciente:
             continue
-        que = {"pregunta": l.get("pregunta"), "tarjeta": "; ".join(l.get("alertas") or []),
+        que = {"pregunta": l.get("pregunta"), "dictado": l.get("texto"),
+               "tarjeta": "; ".join(l.get("alertas") or []),
                "resumen": f"{l.get('filas', '')} filas"}.get(l.get("accion"), l.get("detalle") or "")
         print(f"{l.get('hora')}  {l.get('medico') or '¿?':14} {l.get('paciente') or '':10} "
               f"{l.get('accion'):16} {que or ''}")
